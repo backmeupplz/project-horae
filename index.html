@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project Horae</title>
+<meta name="description" content="Building a thinner, band-shaped, open-source e-paper watch in public. A miniaturized successor to Watchy.">
+<meta property="og:title" content="Project Horae">
+<meta property="og:description" content="A thinner, band-shaped, open-source e-paper watch, built in public from day one.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 32'><rect x='1' y='1' width='14' height='30' rx='5' fill='%23111'/><rect x='3' y='5' width='10' height='22' rx='2' fill='%23e8e6df'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #ecebe4; --ink: #151515; --muted: #6b6a63; --line: #c9c7bd; --card: #f6f5f0; --accent: #151515;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --paper: #121212; --ink: #e6e4dc; --muted: #8d8b84; --line: #2e2d2a; --card: #1a1a19; }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.6 "IBM Plex Sans", system-ui, sans-serif; }
+a { color: inherit; text-underline-offset: 3px; }
+.wrap { max-width: 760px; margin: 0 auto; padding: 0 16px; }
+.mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+
+header { padding: 72px 0 56px; display: grid; grid-template-columns: 1fr auto; gap: 32px; align-items: center; }
+header h1 { font-size: clamp(40px, 8vw, 64px); line-height: 1; margin: 0 0 16px; letter-spacing: -0.03em; font-weight: 600; }
+header p { margin: 0 0 12px; max-width: 34em; }
+.kicker { font-size: 13px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin-bottom: 20px; }
+.links { display: flex; gap: 20px; flex-wrap: wrap; font-size: 14px; margin-top: 20px; }
+.device { width: 92px; }
+@media (max-width: 520px) { header { grid-template-columns: 1fr; } .device { width: 72px; order: -1; } }
+
+.timeline { list-style: none; margin: 0; padding: 0 0 96px; border-left: 1px solid var(--line); }
+.entry { position: relative; padding: 0 0 64px 28px; }
+.entry::before { content: ""; position: absolute; left: -5px; top: 9px; width: 9px; height: 9px; background: var(--ink); border-radius: 50%; }
+.entry time { font-size: 13px; color: var(--muted); }
+.entry h2 { font-size: 22px; margin: 4px 0 8px; letter-spacing: -0.01em; font-weight: 600; }
+.entry p, .entry ul { margin: 0 0 12px; }
+.entry ul { padding-left: 20px; }
+.tag { display: inline-block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; border: 1px solid var(--line); padding: 1px 8px; border-radius: 99px; margin-left: 8px; color: var(--muted); vertical-align: 2px; }
+.photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; margin: 16px 0; }
+.photos img { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 6px; display: block; background: var(--card); }
+.photos a:only-child { grid-column: 1 / -1; }
+.photos a:only-child img { aspect-ratio: auto; }
+.pending { border: 1px dashed var(--line); border-radius: 6px; padding: 28px; text-align: center; color: var(--muted); font-size: 14px; margin: 16px 0; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; margin: 16px 0; }
+.cards a { display: block; background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; text-decoration: none; }
+.cards a:hover { border-color: var(--ink); }
+.cards b { display: block; font-weight: 600; margin-bottom: 2px; }
+.cards span { font-size: 14px; color: var(--muted); }
+footer { border-top: 1px solid var(--line); padding: 24px 0 48px; font-size: 13px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div>
+    <div class="kicker mono">Open hardware · built in public</div>
+    <h1>Project Horae</h1>
+    <p>A miniaturized successor to <a href="https://watchy.sqfmi.com/">Watchy</a>: an open-source e-paper watch, rebuilt as thin as possible in a slim band form factor, like a Fitbit Charge instead of a square.</p>
+    <p>This page is the build log. It starts on day one and every milestone gets a photo or a screenshot.</p>
+    <div class="links mono">
+      <a href="https://github.com/backmeupplz/project-horae">GitHub</a>
+      <a href="#latest">Latest entry ↓</a>
+    </div>
+  </div>
+  <!-- the target: a narrow e-paper band -->
+  <svg class="device" viewBox="0 0 92 200" aria-label="Sketch of the target band-shaped watch">
+    <rect x="16" y="0" width="60" height="22" rx="4" fill="var(--line)"/>
+    <rect x="16" y="178" width="60" height="22" rx="4" fill="var(--line)"/>
+    <rect x="4" y="16" width="84" height="168" rx="22" fill="var(--ink)"/>
+    <rect x="14" y="30" width="64" height="140" rx="6" fill="#e8e6df"/>
+    <text x="46" y="92" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="30" font-weight="500" fill="#151515">10</text>
+    <text x="46" y="124" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="30" font-weight="500" fill="#151515">42</text>
+    <text x="46" y="152" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" fill="#555">SAT 03</text>
+  </svg>
+</header>
+
+<ol class="timeline">
+
+  <li class="entry">
+    <time class="mono" datetime="2026-10-03">2026-10-03 · Day 0</time>
+    <h2>Unboxing the Watchy</h2>
+    <p>The starting point: an original <a href="https://watchy.sqfmi.com/">Watchy</a> by SQFMI. ESP32, a 1.54" 200×200 square e-paper panel, four buttons, a LiPo, fully open hardware and firmware. Project Horae keeps the idea and changes the shape: thinner, narrower, and a better fit on a wrist.</p>
+    <div class="pending mono">Unboxing photos coming later today</div>
+  </li>
+
+  <li class="entry" id="latest">
+    <time class="mono" datetime="2026-10-03">2026-10-03 · Day 0</time>
+    <h2>Research: tools, batteries, displays <span class="tag">research</span></h2>
+    <p>Before designing anything, we surveyed what's available. The first-pass picks:</p>
+    <ul>
+      <li><b>Display:</b> a 0.97" 184×88 bar-shaped e-paper (Good Display GDEM0097T61). It's 30×14×1 mm and uses an SSD1680, close kin to Watchy's controller. The runner-up is Sharp's 1.08" 160×68 memory LCD, which is the most Fitbit-like but hard to source.</li>
+      <li><b>Battery:</b> a stock 2.4–3 mm, 100–130 mAh LiPo pouch. Sodium-ion is a no for now: the smallest cells sold are 18650s.</li>
+      <li><b>Electronics:</b> fork Watchy's KiCad files into KiCad 10 and script everything with <code>kicad-cli</code>. Boards come from JLCPCB, 4-layer at 0.6–0.8 mm, assembled, shipped by DHL to Vancouver.</li>
+      <li><b>CAD:</b> build123d (Python, STEP in and out) for the case. The KiCad board drops straight in for fit checks. Slicing and printing on the Bambu A1 mini run from the command line.</li>
+    </ul>
+    <p>The open question is the chip: keep the ESP32-S3 and Watchy's firmware, or switch to an nRF52/nRF54 for roughly 5× the battery life.</p>
+    <div class="cards">
+      <a href="https://github.com/backmeupplz/project-horae/blob/main/research/displays.md"><b>Displays</b><span>Bar-shaped e-paper vs memory LCD</span></a>
+      <a href="https://github.com/backmeupplz/project-horae/blob/main/research/batteries.md"><b>Batteries</b><span>Thin LiPo, sodium-ion, power budget</span></a>
+      <a href="https://github.com/backmeupplz/project-horae/blob/main/research/electronics.md"><b>Electronics</b><span>EDA tools, fabs, ICs, import costs</span></a>
+      <a href="https://github.com/backmeupplz/project-horae/blob/main/research/cad-tools.md"><b>CAD &amp; printing</b><span>Code-CAD and headless A1 mini printing</span></a>
+    </div>
+  </li>
+
+</ol>
+
+<footer class="mono">Project Horae · <a href="https://github.com/backmeupplz/project-horae">source</a> · The Horae were the Greek goddesses of the hours.</footer>
+</div>
+</body>
+</html>
