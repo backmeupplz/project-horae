@@ -7,27 +7,29 @@ Goal: get every function working on the desk first, using off-the-shelf boards a
 ## Step 0: the Watchy we already have
 The Watchy is already a working ESP32 + e-paper + accelerometer board. Use it for firmware experiments while the parts ship.
 
-## Step 1: breadboard kit
-The two XIAO boards have the same footprint and pinout, so the same wiring can test **ESP32-S3 vs nRF52840** side by side.
+## Step 1: XIAO carrier PCB, hand-soldered
+Skip the breadboard. Design a small 2-layer carrier board in KiCad, about 25×40 mm, with:
+- castellated pads for a XIAO module. ESP32S3 and nRF52840 Sense share a footprint, so the chip decision becomes a module swap.
+- the 0.97" display's FPC connector plus its booster circuit, using the Watchy / Good Display reference design.
+- 4 buttons, a motor MOSFET, and LiPo pads.
 
-| Part | Why | Link | ~Price |
-|---|---|---|---|
-| Seeed XIAO ESP32S3 | Watchy-compatible chip, LiPo charger, USB-C, 21×17.5 mm | [seeedstudio.com](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html) | $7.50 |
-| Seeed XIAO nRF52840 Sense | The low-power alternative, with a 6-axis IMU (step counter) and BQ25101 charger | [seeedstudio.com](https://www.seeedstudio.com/Seeed-XIAO-BLE-Sense-nRF52840-p-5253.html) | $16 |
-| GDEM0097T61 0.97" 184×88 e-paper | Bar-shaped display candidate | [Good Display](https://www.good-display.com/product/486.html), [buy-lcd](https://www.buy-lcd.com/products/gdem0097t61) (out of stock 2026-10-03) | $4–5 |
-| DESPI-C02-CV0097 adapter | Converts the display's 18-pin FPC to 2.54 mm header pins | [openelab](https://openelab.io/products/goodisplay-0-97-inch-epaper) | ? |
-| 150 mAh LiPo (3.8×19.75×26) | Battery, soldered to the XIAO BAT pads | [Adafruit 1317](https://www.adafruit.com/product/1317) | $6 |
-| Vibration motor disc | Haptics | [Adafruit 1201](https://www.adafruit.com/product/1201) | $2 |
-| 4× tactile buttons, breadboard, jumpers | Watchy-style inputs | any | $5 |
-| **Nordic PPK2** | Measures real µA, which decides the chip and battery size | [nordicsemi.com](https://www.nordicsemi.com/Products/Development-hardware/Power-Profiler-Kit-2) | ~$100 |
+Every part is hand-solderable: 0603/0805 passives, SOT-23, a 0.5 mm FPC connector (drag-solder with flux), and the castellated module. The Sense's onboard IMU avoids hand-placing a 2×2 mm LGA accelerometer.
 
-The kit is about $45 without the PPK2. The PPK2 is the one tool worth buying, because every battery-life number so far is an estimate.
+Order bare boards from OSH Park (no duty, slow) or JLC (fast). Print a build123d case around the board.
 
-## Step 2: chunky printed case
-Print a build123d case around the breadboarded stack on the A1 mini, so we can wear it and test the band form factor early.
+### Parts
+| Part | Link | ~Price |
+|---|---|---|
+| Seeed XIAO ESP32S3 | [seeedstudio.com](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html) | $7.50 |
+| Seeed XIAO nRF52840 Sense | [seeedstudio.com](https://www.seeedstudio.com/Seeed-XIAO-BLE-Sense-nRF52840-p-5253.html) | $16 |
+| GDEM0097T61 0.97" e-paper | [Good Display](https://www.good-display.com/product/486.html), [buy-lcd](https://www.buy-lcd.com/products/gdem0097t61) | $4–5 |
+| DESPI-C02-CV0097 adapter (bench testing the panel before our board arrives) | [openelab](https://openelab.io/products/goodisplay-0-97-inch-epaper) | ? |
+| 150 mAh LiPo | [Adafruit 1317](https://www.adafruit.com/product/1317) | $6 |
+| Vibration motor disc | [Adafruit 1201](https://www.adafruit.com/product/1201) | $2 |
+| **Nordic PPK2** (real µA numbers) | [nordicsemi.com](https://www.nordicsemi.com/Products/Development-hardware/Power-Profiler-Kit-2) | ~$100 |
 
-## Step 3: first custom board, hand-soldered
-Order bare 2-layer PCBs from JLC (about $2 for 5 plus shipping) as a carrier for the XIAO and the display connector. Solder them by hand. Factory assembly isn't needed until Step 4.
+## Step 2–3: iterate
+Revise the board and case together until everything works and fits on a wrist.
 
 ## Step 4: miniaturize
 Make a custom 4-layer board with a bare chip and factory assembly. This is the expensive step, so it waits until v0 works.
