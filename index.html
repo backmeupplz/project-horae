@@ -44,7 +44,10 @@ header p { margin: 0 0 12px; max-width: 34em; }
 .photos img { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 6px; display: block; background: var(--card); }
 .photos a:only-child { grid-column: 1 / -1; }
 .photos a:only-child img { aspect-ratio: auto; }
-.pending { border: 1px dashed var(--line); border-radius: 6px; padding: 28px; text-align: center; color: var(--muted); font-size: 14px; margin: 16px 0; }
+/* two landscape shots stacked left, one portrait shot right */
+.trio { grid-template-columns: 1fr 1fr; }
+.trio a:last-child { grid-column: 2; grid-row: 1 / span 2; }
+.trio a:last-child img { height: 100%; aspect-ratio: auto; }
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; margin: 16px 0; }
 .cards a { display: block; background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; text-decoration: none; }
 .cards a:hover { border-color: var(--ink); }
@@ -85,7 +88,12 @@ footer { border-top: 1px solid var(--line); padding: 24px 0 48px; font-size: 13p
     <time class="mono" datetime="2026-10-03">2026-10-03 · Day 0</time>
     <h2>Unboxing the Watchy</h2>
     <p>The starting point: an original <a href="https://watchy.sqfmi.com/">Watchy</a> by SQFMI. ESP32, a 1.54" 200×200 square e-paper panel, four buttons, a LiPo, fully open hardware and firmware. Project Horae keeps the idea and changes the shape: thinner, narrower, and a better fit on a wrist.</p>
-    <div class="pending mono">Unboxing photos coming later today</div>
+    <p>Inside: the 1.54" e-paper panel, the PCB, a 200 mAh LiPo, the case parts and a strap. That's everything Horae has to shrink.</p>
+    <div class="photos trio">
+      <a href="media/2026-10-03/box.jpg"><img src="media/2026-10-03/box.jpg" alt="Watchy retail box: e-paper watch, fully open source, Arduino compatible" loading="lazy"></a>
+      <a href="media/2026-10-03/inner-box.jpg"><img src="media/2026-10-03/inner-box.jpg" alt="Yellow Watchy inner box" loading="lazy"></a>
+      <a href="media/2026-10-03/open.jpg"><img src="media/2026-10-03/open.jpg" alt="Open box: e-paper display, PCB, 200 mAh battery, case parts and strap in foam, with assembly instructions" loading="lazy"></a>
+    </div>
   </li>
 
   <li class="entry" id="latest">
