@@ -9,6 +9,7 @@ Build log: **[projecthorae.com](https://projecthorae.com)**
 - [Batteries](research/batteries.md): thin LiPo, sodium-ion reality check, power budget
 - [Electronics](research/electronics.md): EDA tools, fabs shipping to Vancouver, key ICs
 - [CAD & printing](research/cad-tools.md): code-CAD and the headless Bambu A1 mini pipeline
+- [Prototype v0](research/prototyping.md): breadboard kit, steps, charging
 
 ## Adding a timeline entry
 Copy an `<li class="entry">` block in `index.html` and put its photos in `media/YYYY-MM-DD/`. Move `id="latest"` to the new entry.

@@ -96,7 +96,7 @@ footer { border-top: 1px solid var(--line); padding: 24px 0 48px; font-size: 13p
     </div>
   </li>
 
-  <li class="entry" id="latest">
+  <li class="entry">
     <time class="mono" datetime="2026-10-03">2026-10-03 · Day 0</time>
     <h2>Research: tools, batteries, displays <span class="tag">research</span></h2>
     <p>Before designing anything, we surveyed what's available. The first-pass picks:</p>
@@ -112,6 +112,20 @@ footer { border-top: 1px solid var(--line); padding: 24px 0 48px; font-size: 13p
       <a href="https://github.com/backmeupplz/project-horae/blob/main/research/batteries.md"><b>Batteries</b><span>Thin LiPo, sodium-ion, power budget</span></a>
       <a href="https://github.com/backmeupplz/project-horae/blob/main/research/electronics.md"><b>Electronics</b><span>EDA tools, fabs, ICs, import costs</span></a>
       <a href="https://github.com/backmeupplz/project-horae/blob/main/research/cad-tools.md"><b>CAD &amp; printing</b><span>Code-CAD and headless A1 mini printing</span></a>
+    </div>
+  </li>
+
+  <li class="entry" id="latest">
+    <time class="mono" datetime="2026-10-03">2026-10-03 · Day 0</time>
+    <h2>First decisions <span class="tag">plan</span></h2>
+    <ul>
+      <li><b>CAD:</b> build123d. <b>Electronics:</b> KiCad.</li>
+      <li><b>Prototype before miniaturizing.</b> v0 is off-the-shelf boards on a breadboard, then a chunky printed case, then a hand-soldered carrier PCB. Factory assembly only once everything works.</li>
+      <li><b>Chip shoot-out:</b> XIAO ESP32-S3 vs XIAO nRF52840 share a pinout, so the same wiring tests both. A power profiler settles which one we use.</li>
+      <li><b>Charging:</b> USB-C on the prototype. Magnetic pogo pins on the final watch, because a USB-C socket alone is ~3.2 mm tall.</li>
+    </ul>
+    <div class="cards">
+      <a href="https://github.com/backmeupplz/project-horae/blob/main/research/prototyping.md"><b>Prototype v0 plan</b><span>Parts list, steps, charging</span></a>
     </div>
   </li>
 
