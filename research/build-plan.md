@@ -2,22 +2,58 @@
 
 _Drafted 2026-10-03. This replaces the XIAO carrier from [prototyping.md](prototyping.md) if we go straight to a custom board. Costs are estimates; get real quotes at order time._
 
-Target: **~34 × 18 × 7 mm**, ESP32-S3 with Wi-Fi + BLE, 0.97" e-paper, hand-assembled at home.
+Target: **~36 × 17.5 × 6.6 mm** (see optimizations below), ESP32-S3 with Wi-Fi + BLE, 0.97" e-paper, hand-assembled at home.
 
-## 0. Rev A at a glance
-- **Board:** 4-layer, 0.8 mm. **Every part on one side**, so a hot plate can reflow the whole board in one pass.
-- **Layout:** display on top of the board, parts under it (≤1.2 mm tall), battery below.
-- **Reused from Watchy (proven blocks):**
-  - ESP32-S3 core with in-package flash, crystal and antenna section
-  - e-paper booster (cross-checked against the display datasheet's reference circuit)
-  - BMA423 accelerometer, buttons, motor driver
-- **New:**
-  - 18-pin display socket (Hirose FH34SRJ-18S-0.5SH)
-  - RV-3028-C7 RTC (Watchy v3 relies on the ESP32's own RTC)
-  - 4 gold **pogo pads** on the back for charging and USB flashing. No USB socket: it would be 3.2 mm tall
-  - test pads for serial, boot, enable and power
-- **Battery:** LiPo with protection board, ~2.4–3.0 mm thick, ~100 mAh, soldered to pads.
-- **Charging dock:** printed on the A1 mini, with spring pogo pins and magnets, wired to a USB-C breakout.
+## 0. Rev A, optimized for parts count, thickness and battery
+
+### Fewer parts: ~44 placed vs Watchy's ~75
+| Change | Saves |
+|---|---|
+| **[ESP32-S3-PICO-1](https://documentation.espressif.com/esp32-s3-pico-1_datasheet_en.html)** SiP instead of a bare ESP32-S3. It's 7×7×≤1.06 mm and contains the crystal, 8 MB flash, PSRAM, decoupling and RF matching. Externally it needs only 22 µF, 100 nF, an EN RC pair and a pi-match footprint (start it as a 0 Ω + 2 unfitted parts). Same chip, same Wi-Fi + BLE | ~15 parts |
+| PCB trace antenna (Watchy's inverted-F) | 0 antenna parts |
+| One user button wired to GPIO0, doubling as BOOT. EN on a test pad. Buttons use the chip's internal RTC pull-ups | 1 button + pull-ups |
+| RV-3028-C7 RTC (crystal built in) replaces the 32 kHz crystal + 2 caps | 1 part, and ±1–3 ppm accuracy |
+| Native USB over pogo pads instead of a USB socket | the socket |
+| Vibration motor footprint left **unfitted** in rev A | 4 parts (optional) |
+
+**Soldering:** everything sits on one side and goes through **one hot-plate pass**. The only hand-soldering is the 2 battery wires, plus 2 motor wires if fitted. The display ribbon plugs into its socket.
+
+**Kept on purpose:**
+- The charger (TP4054). If the battery connected straight to the pogo pads, they'd sit at 3.7 V against sweaty skin and corrode.
+- One ESD part (USBLC6-2P6) on the exposed USB pads.
+
+### Thinnest stack (display on top, parts under it, battery below)
+| Layer | mm |
+|---|---|
+| Printed lip over the display edge (0.2 mm nozzle) | 0.5 |
+| GDEM0097T61 | 1.0 |
+| Adhesive/gap | 0.1 |
+| Tallest parts (PICO-1 1.06, FH34SRJ 1.0, booster inductor ≤1.0) | 1.06 |
+| PCB, 4-layer **0.6 mm** (confirm with JLC, else 0.8) | 0.6 |
+| Battery ~2.4–2.5 mm + swelling | 2.75 |
+| Case floor with pogo windows | 0.6 |
+| **Total** | **~6.6** |
+
+- **Footprint:** ~36 × 17.5 mm, compared with the [Charge 6](https://store.google.com/product/fitbit_charge_6_specs) at 36.7 × 23.1 × 11.2. Length is the 30 mm display plus an antenna end that sits past the display glass. Width is the 14.15 mm display + 0.8 mm walls + side buttons.
+- **Height budget:** every part under the display must be ≤1.06 mm. That means 0402 passives, SOD-323/523 diodes, an SOT-323 MOSFET, and a 47 µH inductor in a 2520 or 3×3×1.0 package.
+- **Alternative layout (~5.5 mm):** put the board and battery side by side under the display instead of stacked. The catch is that the battery shrinks to ~15×15×3 mm, about 50 mAh. Consider it for rev B once real current draw is measured.
+- **Carbon fiber later:** a CNC-cut 0.3–0.5 mm CF back or shell (PCBWay/JLC CNC) allows thinner walls. **CF is conductive and blocks Wi-Fi/BLE**, so the antenna end has to stay plastic or glass. Printing CF-filled filament on the A1 mini needs the hardened steel nozzle.
+
+### Battery life
+| Item | ~µA |
+|---|---|
+| ESP32-S3 deep sleep, RTC peripherals off (datasheet) | 7–10 |
+| RT9080 LDO (600 mA for Wi-Fi bursts, [2 µA Iq](https://www.richtek.com/assets/product_file/RT9080/DS9080-09.pdf)) | 2 |
+| RV-3028-C7 | 0.05 |
+| **BMA400** step counter ([4 µA](https://www.bosch-sensortec.com/media/boschsensortec/downloads/product_flyer/bst-bma400-fl000.pdf)) instead of BMA423 (its sibling BMA422 is listed at 25 µA). Needs a new driver | 4 |
+| Battery divider (10 MΩ total) + e-paper deep sleep | ~1.3 |
+| Wake every minute, fast boot (~40–60 ms at ~35 mA) | 25–35 |
+| Partial refresh, 6 mW × 0.3 s per minute | ~8 |
+| Wi-Fi sync once a day | ~4 |
+| **Total** | **~50–65 µA ≈ 1.2–1.6 mAh/day** |
+
+- **Estimate:** on a ~90–100 mAh cell that's **~4–8 weeks on paper**. Treat it as 2–6 weeks until a PPK2 measures the real board.
+- **Wiring for later savings:** connect the display, RTC INT and buttons to **RTC-capable GPIOs** (GPIO0–21). Later firmware can then use the ULP core or a deep-sleep wake stub to update the minute digits without a full boot, cutting the biggest line in the table. This costs nothing in hardware.
 
 ## 1. Design (Claude, ~2–4 days with your reviews)
 1. Fork [sqfmi/watchy-hardware](https://github.com/sqfmi/watchy-hardware) into this repo (`hardware/`) and upgrade it to KiCad 10.
