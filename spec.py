@@ -2,6 +2,9 @@
 
 Axes: X = watch length (strap direction), -X = display FPC end, +X = antenna end.
 Y = width. Z = up, z=0 at the bottom of the case floor. Origin XY = case centre.
+NOTE: Y values of PCB-placed items (MIC_Y, POGO_PADS, BATPAD_Y, the PPG/test pads in gen_pcb) are written straight into
+KiCad board coordinates, where Y points DOWN; on the physical board they appear at -Y. Symmetric items don't care; the
+mic sits at physical -Y and the dock must wire its pins by the physical pad positions (cad/horae.py reads them from the STEP).
 """
 
 # --- case shell ---

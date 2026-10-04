@@ -5,7 +5,7 @@
     .venv/bin/python cad/horae.py --no-render
 
 All shared dimensions come from spec.py. Splash-resistant case, PETG-CF body with a plain-PETG RF window:
-  frame  walls, glass ledges, 4 PETG touch windows, 16 mm NATO lugs with fixed pins (PCB goes in from below, glass from
+  frame  walls, glass ledges, 4 PETG touch windows, 16 mm spring-bar lugs, mic duct (PCB goes in from below, glass from
          above). Split at x = ANT_X0 - 1: frame_cf (PETG-CF) + frame_rf (PETG, antenna end), Z-stepped lap joint.
   back   0.6 mm floor + pogo/magnet block (-X) + support block (+X). Split the same way: back_cf + back_rf.
   bezel  0.5 mm lip with the display window, plain PETG (no CF over the antenna; 0.2 mm nozzle)
@@ -42,12 +42,15 @@ POGO_HOLE_D = 1.3     # P50-style pin: 1.0 barrel + 0.3
 PIN_L, PIN_D, PLUNGER_D, PLUNGER_L = 16.0, 1.0, 0.6, 2.5
 PIN_PRELOAD = 0.5     # free pin tip sits this far above the pad -> 0.5 mm of stroke used when docked
 PIN_BORE = 1.1
-STRAP_W = 16.0        # NATO pull-through; 18 mm would leave 0.15 mm ears on the 18.5 mm body
-STRAP_T = 1.3         # typical NATO webbing (1.2-1.4)
-NATO_GAP = 1.5        # bar surface to case end face: the strap runs down through here and under the back
-LUG_PIN_D = 2.0       # fixed through-pins, glued: -X 2 mm steel dowel, +X 2 mm nylon/PETG rod (RF window)
-PIN_HOLE = LUG_PIN_D + 0.1
-EAR_R = 2.0           # ear radius around the pin -> 0.95 mm of plastic around the hole
+STRAP_W = 16.0        # two-piece quick-release strap on standard spring bars; lug gap = STRAP_W
+BAR_D = 1.5           # spring-bar body (1.78 bars also fit the tip holes)
+BAR_TIP_HOLE, BAR_TIP_DEPTH = 1.1, 0.9   # blind holes from the inner ear faces -> 0.35 mm outer skin on 1.25 ears
+BAR_DX = 2.2          # bar axis past the case end face: room for the curved strap end, back stays exposed
+EAR_R = 1.8           # ear radius around the bar axis
+MIC_GASKET = 0.25     # TPU/foam ring on the mic top around its port (compressed)
+MIC_BORE, MIC_HOLE = 1.0, 0.7          # duct bore in the frame boss, outlet hole in the bezel
+VENT_D, VENT_T = 2.2, 0.3              # pocket in the boss top for a 2.0 mm hydrophobic vent (GORE-style), under the gasket
+MIC_BOSS_D, MIC_BOSS_OFF = 2.8, 0.25   # boss around duct + vent, shifted outward in |y| to clear the FPC edge
 FFC_L, FFC_D, FFC_H = 12.5, 3.5, 1.0        # FH34SRJ-18S body (Y x X x Z), centred at S.FFC_X
 BACK_GASKET = 0.3     # TPU ring between frame and back (compressed; printed 0.4). Frame starts above it
 POGO_GASKET = 0.5     # TPU pad under the PCB around the pogo pads (compressed; printed 0.6)
@@ -56,7 +59,7 @@ X_MZ1 = S.BAT_X0 - 0.25                 # end of the motor-zone block in the bac
 MOTOR_POCKET = S.MOTOR_D + 0.4
 MOTOR_TAPE = 0.2      # foam tape under the motor
 MOTOR_SPRING_FREE = 1.1   # free spring height above the motor can (check the part; 0.5 mm compression wanted)
-GASKET_PRINT = {"gasket_back": 0.4, "gasket_bezel": 0.25, "gasket_pogo": 0.6}   # printed (free) thickness
+GASKET_PRINT = {"gasket_back": 0.4, "gasket_bezel": 0.25, "gasket_pogo": 0.6, "mic_gasket": 0.3}   # printed (free) thickness
 X_RF = S.ANT_X0 - 1.5 # RF window (no carbon) from here; antenna copper starts ~0.3 before ANT_X0 (feed)
 RF_LAP = 1.5          # frame lap joint: the PETG upper half overhangs the CF lower half by this
 TOUCH_Y = S.PCB_W / 2 - 0.3 - S.TOUCH_W / 2      # electrode centre |y|
@@ -80,8 +83,8 @@ Z_FRAME0 = S.FLOOR + BACK_GASKET
 AA_X1 = S.DISP_X1 - S.DISP_AA_MARGIN_FAR
 AA_X0 = AA_X1 - S.DISP_AA_L
 AA_CX = (AA_X0 + AA_X1) / 2
-X_BAR = OL + NATO_GAP + LUG_PIN_D / 2
-Z_BAR = Z_FRAME0 + EAR_R
+X_BAR = OL + BAR_DX
+Z_BAR = Z_FRAME0 + EAR_R + 0.2
 EAR_TIP = X_BAR + EAR_R
 PIN_TIP_FREE = S.Z_PCB0 + PIN_PRELOAD
 DOCK_ZB = PIN_TIP_FREE - PIN_L - 0.6         # dock bottom (pin tail ends 0.6 above the table)
@@ -304,27 +307,66 @@ def magnets(z0):
     return [cyl(MAG_X, sy * MAG_Y, z0, z0 + MAG_T, MAG_D) for sy in (-1, 1)]
 
 
+def spring_bar(sx):
+    """Standard 16 mm spring bar: body + tips in the blind ear holes."""
+    return (ycyl(sx * X_BAR, -STRAP_W / 2 + 0.05, STRAP_W / 2 - 0.05, Z_BAR, BAR_D)
+            + ycyl(sx * X_BAR, -STRAP_W / 2 - BAR_TIP_DEPTH + 0.1, STRAP_W / 2 + BAR_TIP_DEPTH - 0.1, Z_BAR, 0.8))
+
+
 def spring_bars():
-    """Steel through-pin at -X (name kept for the render groups)."""
-    return ycyl(-X_BAR, -OW + 0.25, OW - 0.25, Z_BAR, LUG_PIN_D)
+    return spring_bar(-1)
 
 
 def rf_pin():
-    """Plastic through-pin at the +X (antenna) lug."""
-    return ycyl(X_BAR, -OW + 0.25, OW - 0.25, Z_BAR, LUG_PIN_D)
+    """+X spring bar (steel; kept as far from the antenna as the lug allows). Key name kept for the renders."""
+    return spring_bar(1)
 
 
 def nato():
-    """NATO strap path near the case: down each gap, under the back, out over each pin (render + clearance only)."""
-    w, t = STRAP_W / 2 - 0.1, STRAP_T
-    zb = -0.05                                            # under the back
-    ztop = Z_BAR + LUG_PIN_D / 2 + 0.05                       # over the pins
-    g0 = OL + 0.05                                        # inner face of the gap
-    parts = [box(-g0 - t, g0 + t, -w, w, zb - t, zb)]
+    """Two-piece strap stubs: curved end around each bar + 12 mm of strap (render + clearance only)."""
+    w, t, r = STRAP_W / 2 - 0.1, 1.8, BAR_D / 2 + 1.1
+    parts = []
     for sx in (-1, 1):
-        parts.append(box(sx * g0, sx * (g0 + t), -w, w, zb - t, ztop + t))
-        parts.append(box(sx * g0, sx * (EAR_TIP + 9), -w, w, ztop, ztop + t))
-    return union(parts)
+        parts.append(ycyl(sx * X_BAR, -w, w, Z_BAR, 2 * r))
+        parts.append(box(sx * X_BAR, sx * (X_BAR + 12), -w, w, Z_BAR + r - t, Z_BAR + r))
+    return union(parts) - union([ycyl(sx * X_BAR, -w - 1, w + 1, Z_BAR, BAR_D + 0.1) for sx in (-1, 1)])
+
+
+def mic_port():
+    """(x, y, top z) of the mic's acoustic port: from the board STEP model when present, else from spec."""
+    return MIC_PORT
+
+
+MIC_PORT = (S.MIC_X - 0.595, S.MIC_Y, S.Z_PCB1 + 0.9)   # replaced by build() from the STEP
+MIC_BOX = None                                          # mic body bbox (x0, x1, y0, y1, z1) from the STEP
+
+
+def find_mic(comps):
+    """Locate MIC1 and its port (small circle on the top face) in the board bodies."""
+    from build123d import GeomType
+    for ref, val, sh in comps:
+        if ref.startswith("MIC"):
+            bb = sh.bounding_box()
+            ports = [e.arc_center for e in sh.edges() if e.geom_type == GeomType.CIRCLE and e.radius < 0.3
+                     and abs(e.arc_center.Z - bb.max.Z) < 0.02]
+            c = ports[0] if ports else bb.center()
+            return (c.X, c.Y, bb.max.Z), (bb.min.X, bb.max.X, bb.min.Y, bb.max.Y, bb.max.Z)
+    return None, None
+
+
+def mic_gasket(t=MIC_GASKET):
+    x, y, z = mic_port()
+    return cyl(x, y, z, z + t, 1.5) - cyl(x, y, z - 1, z + t + 1, 0.6)
+
+
+def vent_xy():
+    x, y, _ = mic_port()
+    return x - 0.2, y + math.copysign(MIC_BOSS_OFF, y)   # away from the glass gap and the FPC
+
+
+def vent():
+    x, y = vent_xy()
+    return cyl(x, y, S.Z_DISP1 - VENT_T, S.Z_DISP1 - 0.05, VENT_D - 0.2)
 
 
 # ---------------------------------------------------------------- case
@@ -347,9 +389,9 @@ def skin(style=None):
 def frame():
     """Whole frame, before the touch windows and the CF/RF split."""
     outer = slab(S.CASE_L, S.CASE_W, S.CORNER_R, Z_FRAME0, S.Z_DISP1)
-    for sx in (-1, 1):                                   # NATO lug ears
+    for sx in (-1, 1):                                   # spring-bar lug ears
         for sy in (-1, 1):
-            y0, y1 = sy * (STRAP_W / 2 + 0.1), sy * OW   # ear = 1.15 mm
+            y0, y1 = sy * STRAP_W / 2, sy * OW           # ear = 1.25 mm
             outer += box(sx * (OL - S.CORNER_R), sx * X_BAR, y0, y1, Z_FRAME0, Z_BAR + EAR_R)
             outer += ycyl(sx * X_BAR, y0, y1, Z_BAR, 2 * EAR_R)
     f = outer - slab(S.CAV_L, S.CAV_W, IN_R, Z_FRAME0 - 1, S.Z_DISP1 + 1)
@@ -364,8 +406,23 @@ def frame():
     gw = S.DISP_W / 2 + GLASS_FIT
     f -= box(S.DISP_X0 - GLASS_FIT, S.DISP_X1 + GLASS_FIT, -gw, gw, S.Z_DISP0, S.Z_DISP1 + 1)
 
-    for sx in (-1, 1):
-        f -= ycyl(sx * X_BAR, -OW - 1, OW + 1, Z_BAR, PIN_HOLE)
+    for sx in (-1, 1):                                   # blind spring-bar tip holes
+        for sy in (-1, 1):
+            f -= ycyl(sx * X_BAR, sy * (STRAP_W / 2 - 0.5), sy * (STRAP_W / 2 + BAR_TIP_DEPTH), Z_BAR, BAR_TIP_HOLE)
+
+    x, y, zt = mic_port()                                # mic: relieve the ledge, sealed duct up to the bezel
+    if MIC_BOX:
+        x0, x1, y0, y1, ztop = MIC_BOX
+        zr = ztop + MIC_GASKET
+        f -= box(x0 - 0.2, x1 + 0.2, y0 - 0.2, y1 + 0.2, S.Z_PCB1, zr)
+        f -= box(S.DISP_X0 - GLASS_FIT, x1 + 0.2, y0 - 0.2, y1 + 0.2, S.Z_PCB1, S.Z_DISP0)
+    else:
+        zr = zt + MIC_GASKET
+    vx, vy = vent_xy()
+    f += (cyl(vx, vy, zr, S.Z_DISP1, MIC_BOSS_D) & slab(S.CAV_L, S.CAV_W, IN_R, zr, S.Z_DISP1)
+          & box(-HL - 1, S.DISP_X0 - GLASS_FIT, -HW, HW, zr, S.Z_DISP1))
+    f -= cyl(x, y, zr - 1, S.Z_DISP1 + 1, MIC_BORE)
+    f -= cyl(vx, vy, S.Z_DISP1 - VENT_T, S.Z_DISP1 + 1, VENT_D)          # vent pocket, capped by the bezel gasket
     return f
 
 
@@ -434,12 +491,15 @@ def window(z0, h):
 
 def gasket_bezel(t=S.BEZEL_GASKET):
     g = slab(S.CASE_L, S.CASE_W, S.CORNER_R, S.Z_DISP1, S.Z_DISP1 + t)
-    return g - window(S.Z_DISP1 - 1, 3)
+    x, y, _ = mic_port()
+    return g - window(S.Z_DISP1 - 1, 3) - cyl(x, y, S.Z_DISP1 - 1, S.Z_DISP1 + 1, MIC_HOLE + 0.2)
 
 
 def bezel():
-    b = slab(S.CASE_L, S.CASE_W, S.CORNER_R, S.Z_DISP1 + S.BEZEL_GASKET, S.CASE_T)
-    return b - window(S.Z_DISP1 - 1, 3)
+    z0 = S.Z_DISP1 + S.BEZEL_GASKET
+    b = slab(S.CASE_L, S.CASE_W, S.CORNER_R, z0, S.CASE_T) - window(S.Z_DISP1 - 1, 3)
+    x, y, _ = mic_port()
+    return b - cyl(x, y, z0 - 1, S.CASE_T + 1, MIC_HOLE)
 
 
 def case_parts(style=None):
@@ -452,7 +512,7 @@ def case_parts(style=None):
     back_cf, back_rf = split_rf(back() & e, lap=False)
     return dict(frame_cf=frame_cf, frame_rf=frame_rf, touch_windows=tw, back_cf=back_cf, back_rf=back_rf,
                 bezel=bezel() & e, gasket_back=gasket_back() & e, gasket_bezel=gasket_bezel() & e,
-                gasket_pogo=gasket_pogo())
+                gasket_pogo=gasket_pogo(), mic_gasket=mic_gasket())
 
 
 # ---------------------------------------------------------------- dock (watch bottom = z 0)
@@ -507,7 +567,11 @@ def interference(a, b):
 
 
 def build():
+    global MIC_PORT, MIC_BOX
     board, groups, comps, note = load_board()
+    port, mbox = find_mic(comps)
+    if port:
+        MIC_PORT, MIC_BOX = port, mbox
     tail, stiff, fit = fpc()
     bat, tabs = battery()
     m = case_parts()
@@ -517,6 +581,7 @@ def build():
     m.update(groups)
     m["pads"] = pads()
     m["touch"] = touch_pads()
+    m["vent"] = vent()
     m["motor"], m["motor_springs"] = motor()
     m["pins_docked"] = union([pogo_pin(x, y, S.Z_PCB0 - 0.03) for x, y in POGO_XY])
     m["pins_free"] = union([pogo_pin(x, y, PIN_TIP_FREE) for x, y in POGO_XY])
@@ -525,9 +590,9 @@ def build():
 
 
 CASE = ["frame_cf", "frame_rf", "touch_windows", "back_cf", "back_rf", "bezel", "gasket_back", "gasket_bezel",
-        "gasket_pogo"]
+        "gasket_pogo", "mic_gasket"]
 INTERNAL = ["display", "fpc", "stiffener", "pcb", "qfn", "ffc", "chips", "switches", "touch", "antenna", "pads",
-            "battery", "bat_tabs", "case_magnets", "motor", "motor_springs"]
+            "battery", "bat_tabs", "case_magnets", "motor", "motor_springs", "vent"]
 METAL = ["case_magnets", "bars"]
 
 
@@ -581,9 +646,13 @@ def checks(m, fit, comps):
     comp = S.FLOOR + MOTOR_TAPE + S.MOTOR_T + MOTOR_SPRING_FREE - S.Z_PCB0
     print(f"  motor spring compression {comp:.2f} mm (free {MOTOR_SPRING_FREE}), pocket {MOTOR_POCKET} dia, "
           f"battery {S.BAT_L:.1f} x {S.BAT_W} x {S.BAT_T} at x {S.BAT_X0:.2f}..{S.BAT_X1:.2f}")
-    ear = OW - (STRAP_W / 2 + 0.1)
-    print(f"  NATO {STRAP_W:.0f} mm: ears {ear:.2f} mm, gap {NATO_GAP} mm, {LUG_PIN_D} mm fixed pins, "
-          f"lug-to-lug {2 * EAR_TIP:.1f} mm")
+    ear = OW - STRAP_W / 2
+    print(f"  straps {STRAP_W:.0f} mm on spring bars: ears {ear:.2f} mm, tip holes {BAR_TIP_HOLE} x {BAR_TIP_DEPTH} deep "
+          f"({ear - BAR_TIP_DEPTH:.2f} skin), lug-to-lug {2 * EAR_TIP:.1f} mm")
+    print(f"  +X spring bar: axis {X_BAR - OL:.2f} mm past the +X case end, {X_BAR - S.PCB_L / 2:.2f} mm past the PCB edge "
+          f"(bar surface {X_BAR - BAR_D / 2 - S.PCB_L / 2:.2f} mm)")
+    x, y, z = mic_port()
+    print(f"  mic port at ({x:.2f}, {y:+.2f}, z {z:.2f}), {S.DISP_X0 - x:.2f} mm past the glass edge; spec MIC_Y {S.MIC_Y:+.2f}")
     worst = 0.0
     for a, b in pairs:
         v = interference(m[a], m[b])
@@ -614,6 +683,7 @@ PRINT = {  # part -> (material, rotation into print orientation, note)
     "gasket_back": ("tpu", (0, 0, 0), "flat, printed 0.40 (0.30 compressed), 0.1 layers"),
     "gasket_bezel": ("tpu", (0, 0, 0), "flat, printed 0.25 (0.20 compressed), 0.08 layers"),
     "gasket_pogo": ("tpu", (0, 0, 0), "flat, printed 0.60 (0.50 compressed)"),
+    "mic_gasket": ("tpu", (0, 0, 0), "1.5 OD ring, printed 0.3; die-cut PORON is easier"),
     "dock": ("petg", (0, 0, 0), "upright, open bays down; bay ceilings bridge"),
 }
 DENSITY = {"petg-cf": 1.29e-3, "petg": 1.27e-3, "tpu": 1.21e-3}
@@ -623,7 +693,7 @@ def printable(m, k):
     """Part in print orientation, at its printed (uncompressed) thickness."""
     if k in GASKET_PRINT:
         s = globals()[k](GASKET_PRINT[k])
-        if k != "gasket_pogo":
+        if k not in ("gasket_pogo", "mic_gasket"):
             s = s & skin()
     else:
         s = m[k]
@@ -667,7 +737,7 @@ def export(m):
 # ---------------------------------------------------------------- renders
 COLORS = dict(
     frame_cf="#2e3238", back_cf="#3a3f47", frame_rf="#dcd6c4", back_rf="#cfc8b4", bezel="#1f2227",
-    gasket_back="#e4572e", gasket_bezel="#e4572e", gasket_pogo="#e4572e", touch_windows="#cfc8b4", touch="#d9a92e", rf_pin="#f2efe6", strap="#56603f", motor="#a7adb4", motor_springs="#d8b246", display="#d9d7cf", fpc="#c8861a", stiffener="#9c6610",
+    gasket_back="#e4572e", gasket_bezel="#e4572e", gasket_pogo="#e4572e", touch_windows="#cfc8b4", touch="#d9a92e", rf_pin="#c9cdd3", strap="#2b2d31", mic_gasket="#e4572e", vent="#f7f7f2", motor="#a7adb4", motor_springs="#d8b246", display="#d9d7cf", fpc="#c8861a", stiffener="#9c6610",
     pcb="#1e5b3e", qfn="#2b2b2d", ffc="#e6dfca", chips="#3a3a3c", switches="#b9bec5", actuators="#1d1d1f",
     pads="#d9a92e", antenna="#c9a24a", battery="#c4c9cf", bat_tabs="#e3e6ea", case_magnets="#9ea4ab", dock_magnets="#9ea4ab",
     bars="#c9cdd3", dock="#e9e7e1", pins_docked="#d8b246", pins_free="#d8b246", usb_pcb="#23306a", usb_c="#c9cdd2",
@@ -801,7 +871,7 @@ def render_exploded(m):
     groups = [  # (label, keys, z offset, anchor z)
         ("Bezel, plain PETG, on a TPU gasket", ["bezel", "gasket_bezel"], 36, S.CASE_T),
         ("Display GDEM0097T61 + FPC tail", ["display", "fpc", "stiffener"], 27, S.Z_DISP1),
-        ("Frame: PETG-CF + PETG RF window,\n4 PETG touch windows, NATO lugs", ["frame_cf", "frame_rf", "touch_windows", "bars", "rf_pin"],
+        ("Frame: PETG-CF + PETG RF window,\n4 PETG touch windows, 16 mm lugs", ["frame_cf", "frame_rf", "touch_windows", "bars", "rf_pin"],
          18, S.Z_DISP1 - 1),
         ("PCB 0.8 mm + parts, touch pads", ["pcb", "qfn", "ffc", "chips", "touch", "antenna", "pads"], 8, S.Z_PCB1),
         (f"Battery {S.BAT_L:.1f} x {S.BAT_W:.0f} x {S.BAT_T}\n+ {S.MOTOR_D:.0f} x {S.MOTOR_T:.0f} coin vibration motor", ["battery", "bat_tabs", "motor", "motor_springs"],
@@ -817,7 +887,7 @@ def render_exploded(m):
 def render_sealing(m):
     ghost = {k: 0.22 for k in ("frame_cf", "back_cf", "bezel", "pcb", "display")}
     off = dict(bezel=(0, 0, 30), gasket_bezel=(0, 0, 25), display=(0, 0, 19), frame_cf=(0, 0, 12), frame_rf=(0, 0, 12),
-               touch_windows=(0, 0, 12), pcb=(0, 0, 4), touch=(0, 0, 4), gasket_pogo=(0, 0, -2), gasket_back=(0, 0, -7), back_cf=(0, 0, -12),
+               touch_windows=(0, 0, 12), pcb=(0, 0, 4), touch=(0, 0, 4), mic_gasket=(0, 0, 4), gasket_pogo=(0, 0, -2), gasket_back=(0, 0, -7), back_cf=(0, 0, -12),
                back_rf=(0, 0, -12), case_magnets=(0, 0, -12))
     gx = (S.MOTOR_X, -S.POGO_Y - 1, S.Z_PCB0 - 2.2)
     groups = [
@@ -826,6 +896,7 @@ def render_sealing(m):
         ("Frame RF window: plain PETG,\nZ-step lap joint to PETG-CF", ["frame_rf"], (OL - 1, -OW, S.Z_DISP1 + 12)),
         ("4 PETG touch windows (no carbon\nnear the electrodes, 0.6 face)", ["touch_windows"], (S.TOUCH_X[1], -OW, S.Z_PCB1 + 12)),
         ("TPU pogo seal under the PCB pads", ["gasket_pogo"], gx),
+        ("Mic: TPU ring + duct + vent in the bezel", ["mic_gasket"], (mic_port()[0], mic_port()[1], mic_port()[2] + 4)),
         ("TPU back gasket 0.3 (frame / back)", ["gasket_back"], (OL - 3, -OW + 0.4, S.FLOOR - 7)),
         ("Back RF window: plain PETG", ["back_rf"], (OL - 1.5, -OW, S.FLOOR - 12)),
     ]
@@ -906,7 +977,7 @@ def render_section(m):
     from matplotlib.path import Path as MPath
 
     y, y2 = 0.0, S.POGO_Y
-    keys = CASE + INTERNAL + ["bars", "rf_pin", "strap", "motor", "motor_springs"]
+    keys = CASE + INTERNAL + ["bars", "rf_pin", "motor", "motor_springs"]
     hatch = {"frame_cf", "frame_rf", "back_cf", "back_rf", "bezel"}
     fig = plt.figure(figsize=(16, 10), dpi=100, facecolor="#f4f5f7")
     ax1 = fig.add_axes([0.03, 0.55, 0.94, 0.38])
@@ -952,13 +1023,12 @@ def render_section(m):
              weight="bold")
     ax1.annotate("", (-OL, -2.4), (OL, -2.4), arrowprops=dict(arrowstyle="<->", lw=1.0, color="#333333",
                                                               shrinkA=0, shrinkB=0))
-    ax1.text(0, -3.1, f"case body {S.CASE_L:.1f} mm   (lug-to-lug {2 * EAR_TIP:.1f} mm, NATO strap {STRAP_T} mm under the back)", ha="center",
+    ax1.text(0, -3.1, f"case body {S.CASE_L:.1f} mm   (lug-to-lug {2 * EAR_TIP:.1f} mm, 16 mm spring-bar straps)", ha="center",
              fontsize=11)
     for x, label in [(S.DISP_X0 - 0.2, "-X: FPC end"), (S.DISP_X1 + 2.2, "+X: antenna end (plastic only)")]:
         ax1.text(x, S.CASE_T + 0.6, label, ha="center", fontsize=10, color="#555")
-    ax1.text(-X_BAR, Z_BAR - 1.3, "steel pin", ha="center", va="top", fontsize=9, color="#555")
-    ax1.text(X_BAR, Z_BAR - 1.3, "nylon pin", ha="center", va="top", fontsize=9, color="#555")
-    ax1.text(0, -0.75, "NATO strap", ha="center", va="center", fontsize=9, color="#f0f0e8")
+    ax1.text(-X_BAR, Z_BAR - 2.2, "spring bar", ha="center", va="top", fontsize=9, color="#555")
+    ax1.text(X_BAR, Z_BAR - 2.2, "spring bar", ha="center", va="top", fontsize=9, color="#555")
     ax1.annotate("coin motor + springs", (S.MOTOR_X, 1.8), (S.MOTOR_X + 4, -1.6), fontsize=9, color="#333",
                  arrowprops=dict(arrowstyle="-", lw=0.6, color="#333"))
 
@@ -1104,6 +1174,52 @@ def render_board(m, comps, note):
     plt.close(fig)
 
 
+def render_mic(m, comps):
+    """Close-up XZ section through the mic port: duct, gaskets, vent."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import PathPatch
+    from matplotlib.path import Path as MPath
+    px, py, pz = mic_port()
+    keys = CASE + ["display", "fpc", "pcb", "chips", "ffc", "vent", "battery", "case_magnets"]
+    mic = [sh for ref, _, sh in comps if ref.startswith("MIC")]
+    fig, ax = plt.subplots(figsize=(16, 9), dpi=100, facecolor="#f4f5f7")
+    fig.subplots_adjust(0.02, 0.02, 0.98, 0.92)
+
+    def area(a):
+        return 0.5 * np.sum(a[:-1, 0] * a[1:, 1] - a[1:, 0] * a[:-1, 1])
+    shapes = [(k, m[k]) for k in keys if k in m] + [("mic", sh) for sh in mic]
+    for k, shp in shapes:
+        for outer, holes in section_polys(shp, py):
+            rings = [outer if area(outer) > 0 else outer[::-1]] + [h if area(h) < 0 else h[::-1] for h in holes]
+            verts = np.concatenate(rings)
+            codes = np.concatenate([[MPath.MOVETO] + [MPath.LINETO] * (len(r) - 1) for r in rings])
+            ax.add_patch(PathPatch(MPath(verts, codes), facecolor=COLORS.get(k, "#7a7f86"), edgecolor="#111", lw=0.6,
+                                   hatch="////" if k in ("frame_cf", "frame_rf", "back_cf", "bezel") else None))
+    z0 = S.Z_DISP1 + S.BEZEL_GASKET
+    notes = [((px, S.CASE_T - 0.1), (px - 2.4, S.CASE_T + 0.7), f"outlet {MIC_HOLE} mm through gasket + bezel"),
+             ((px + 0.7, S.Z_DISP1 - 0.15), (px + 2.0, S.CASE_T + 0.7), f"2.0 mm hydrophobic vent in a {VENT_D} x {VENT_T} pocket"),
+             ((px + 0.6, S.Z_DISP1 + 0.1), (px + 3.6, S.Z_DISP1 + 0.45), "TPU bezel gasket"),
+             ((px - 0.3, (pz + S.Z_DISP1) / 2), (px - 3.2, 5.9), f"duct {MIC_BORE} mm in a frame boss"),
+             ((px + 0.55, pz + 0.12), (px - 3.2, 4.75), "TPU/foam ring on the mic top"),
+             ((px + 0.9, pz - 0.4), (px + 2.6, 3.9), "LMD2718 top-port mic"),
+             ((S.DISP_X0 + 0.6, S.Z_DISP0 + 0.5), (S.DISP_X0 + 2.2, 4.75), "glass (ledge relieved at this corner)"),
+             ((px - 0.3, S.Z_PCB0 + 0.4), (px - 3.2, 3.55), "PCB")]
+    for xy, txt, label in notes:
+        ax.annotate(label, xy, txt, fontsize=12, arrowprops=dict(arrowstyle="-", lw=0.7, color="#333"))
+    ax.annotate("", (px, pz), (px, S.CASE_T + 0.4), arrowprops=dict(arrowstyle="<-", lw=1.5, color="#1a73e8"))
+    ax.text(px + 0.12, S.CASE_T + 0.35, "sound", color="#1a73e8", fontsize=11)
+    ax.set_xlim(px - 3.8, px + 6.5)
+    ax.set_ylim(3.2, S.CASE_T + 1.0)
+    ax.set_aspect("equal")
+    ax.axis("off")
+    ax.set_title(f"Mic duct, section at y = {py:+.2f} (through the port at x = {px:.2f}, "
+                 f"{S.DISP_X0 - px:.2f} mm past the glass edge)", fontsize=15, loc="left")
+    fig.savefig(MEDIA / "cad-mic.png", dpi=100, facecolor=fig.get_facecolor())
+    plt.close(fig)
+
+
 def render_shape_options(m):
     """Two outer-shape candidates side by side (3/4 view + end-on profile)."""
     keys = ["frame_cf", "frame_rf", "touch_windows", "back_cf", "back_rf", "bezel", "gasket_back", "gasket_bezel"]
@@ -1140,6 +1256,7 @@ def main():
             f(m)
         render_board(m, comps, note)
         render_shape_options(m)
+        render_mic(m, comps)
         print(f"renders -> {MEDIA.relative_to(ROOT)}/cad-*.png")
     if not ok:
         sys.exit("checks FAILED")
