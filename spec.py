@@ -21,11 +21,11 @@ FPC_LEN = 11.38              # tail length beyond the glass edge
 FPC_BEND = 1.5               # room beyond the glass for the U-bend
 
 # --- board ---
-ANTENNA_ZONE = 5.0    # PCB past the display glass at +X; Watchy meander IFA (14.35 x 5.4) sits 0.8 mm in from the end
-ANT_UNDER_GLASS = 1.0 # antenna keep-out also runs 1.0 mm under the glass end margin (no active area there)
+ANTENNA_ZONE = 6.0    # PCB past the display glass at +X: the whole antenna sits clear of the glass (less detuning, more room under it)
+ANT_UNDER_GLASS = 0.0 # keep-out starts at the glass edge
 PCB_T = 0.8           # JLC Economic PCBA minimum
 PCB_W = 16.5          # 15.5 was too dense to place + route at JLC 4-layer rules (2026-10-03)
-PART_H = 1.35         # tallest top-side part (EVQ-P7M01P side switch); everything else <= 1.06
+PART_H = 1.45         # tallest top-side part: EVQ-P7M01P 3D model is 1.45 (datasheet 1.35); everything else <= 1.06
 GAP = 0.05
 
 # --- battery (placeholder envelope until a real cell is picked) ---
@@ -65,8 +65,8 @@ POGO_NETS = ["VBUS", "USB_DM", "USB_DP", "GND"]   # order along +Y
 BUTTON_X = [-5.2, 5.5]          # clear of the FFC connector mounting pads (-X) and the ESP32 (+X)
 
 # case ledges under the glass ends rest on the PCB top (GAP above it): no top-side parts there.
-# -X: x <= DISP_X0 + LEDGE and |y| >= LEDGE_Y (the FPC passes between). +X: x >= DISP_X1 - LEDGE, full width
-# (inside the antenna keep-out as long as LEDGE <= ANT_UNDER_GLASS).
+# Both glass ends: |y| >= LEDGE_Y and within LEDGE inside the glass end (x <= DISP_X0 + LEDGE, x >= DISP_X1 - LEDGE);
+# the case also rests full-width on the antenna strip past the glass (x >= DISP_X1 + 0.15, copper only there).
 LEDGE = 1.0
 LEDGE_Y = FPC_W / 2 + 0.5
 

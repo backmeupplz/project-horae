@@ -33,10 +33,10 @@ BOTTOM = {  # bottom-side pads
     "TP9": (-12.0, -2.5), "TP10": (-9.8, -2.5), "TP11": (-7.6, -2.5), "TP12": (-3.4, -2.5), "TP13": (-1.2, -2.5),
 }
 TARGET = {  # loose targets for the legalizer, grouped near the IC they serve
-    "Y1": (8.6, 5.6), "C1": (10.3, 5.2), "C2": (10.3, 6.4), "L1": (10.5, 3.9),
+    "C1": (10.6, 5.4), "C2": (10.6, 6.6), "L1": (7.6, 4.6),
     "C3": (11.2, 1.0), "L2": (11.2, -1.0), "C5": (11.2, -2.2), "C6": (11.2, -3.3), "C7": (8.6, -6.6),
     "C8": (6.0, -5.2), "C9": (4.5, -5.2), "R1": (2.4, 1.5), "C10": (2.4, 2.6),
-    "C11": (11.2, 2.4), "L3": (11.4, 3.6), "C12": (11.6, 4.9),
+    
     "U2": (-13.6, -6.4), "R2": (-11.8, -6.6), "C13": (-11.8, -5.6), "C15": (-1.0, 6.4),
     "U3": (-1.5, 4.6), "C16": (-3.2, 6.4), "C17": (-5.5, 4.8), "R3": (-3.6, 4.4), "R4": (-3.6, 3.4), "C18": (-3.6, 2.4),
     "U4": (-13.6, 6.4), "R7": (-11.8, 6.6), "R8": (-11.8, 5.6),
@@ -77,11 +77,11 @@ def main():
     board.SetCopperLayerCount(4)
     ds = board.GetDesignSettings()
     ds.SetBoardThickness(MM(S.PCB_T))
-    ds.m_TrackMinWidth, ds.m_MinClearance = MM(0.09), MM(0.1)
-    ds.m_ViasMinSize, ds.m_MinThroughDrill = MM(0.25), MM(0.15)
+    ds.m_TrackMinWidth, ds.m_MinClearance = MM(0.09), MM(0.09)   # JLC multilayer 0.09/0.09
+    ds.m_ViasMinSize, ds.m_MinThroughDrill = MM(0.4), MM(0.2)
     nc = ds.m_NetSettings.GetDefaultNetclass()
-    nc.SetTrackWidth(MM(0.1)); nc.SetClearance(MM(0.125));  # 0.075 annular + 0.125 = JLC 0.2 hole-to-copper
-    nc.SetViaDiameter(MM(0.3)); nc.SetViaDrill(MM(0.15))
+    nc.SetTrackWidth(MM(0.1)); nc.SetClearance(MM(0.11))  # 0.01 margin for widening necked wires; 0.4/0.2 vias: 0.1 annular + 0.1 = JLC 0.2 hole-to-copper; no small-hole fee
+    nc.SetViaDiameter(MM(0.4)); nc.SetViaDrill(MM(0.2))
 
     nets = {}
     for p in PARTS:
@@ -165,7 +165,34 @@ def main():
         put(fps[ref], *PIN[ref])
     for ref, (x, y) in BOTTOM.items():
         put(fps[ref], x, y, 0, flip=True)
-    placed = [box(fps[r]) for r in ("U1", "J1", "SW1", "SW2", "SW3", "SW4")]
+    # RF chain in a straight line from LNA_IN: C11 shunt, L3 series, C12 shunt, then the feed (pinned by pad)
+    def pin_pad(ref, num, x, y, direction):
+        fp = fps[ref]
+        for rot in (0, 90, 180, 270):
+            put(fp, 0, 0, rot)
+            a = pad_xy(fp, num); b = pad_xy(fp, "2" if num == "1" else "1")
+            v = (round(b[0] - a[0], 2), round(b[1] - a[1], 2))
+            if (direction == "+x" and v[0] > 0.2) or (direction == "+y" and v[1] > 0.2) or (direction == "-y" and v[1] < -0.2):
+                put(fp, x - a[0], y - a[1], rot); return
+        raise SystemExit(f"cannot orient {ref}")
+    rx, ry = pad_xy(u1, "1")                      # LNA_IN pad centre
+    fx, fy = feed
+    W = 0.2                                       # 50-ohm GCPW on F.Cu over the In1 plane: 0.20 mm, 0.15 mm gap
+    pin_pad("C11", "1", rx + 1.05, ry, "-y")          # shunt caps point away from the feed run
+    pin_pad("L3", "1", rx + 1.55, ry, "+x")
+    l3a, l3b = pad_xy(fps["L3"], "1"), pad_xy(fps["L3"], "2")
+    pin_pad("C12", "1", l3b[0] + 0.42, ry, "-y")
+    c11a, c12a = pad_xy(fps["C11"], "1"), pad_xy(fps["C12"], "1")
+    put(fps["Y1"], 10.0, 6.3, 0)                 # crystal in the corner between SW2 and the RF feed
+    def track(net, pts, w=W):
+        for a, b in zip(pts, pts[1:]):
+            t = pcbnew.PCB_TRACK(board); t.SetStart(V(*a)); t.SetEnd(V(*b)); t.SetWidth(MM(w))
+            t.SetLayer(pcbnew.F_Cu); t.SetNet(nets[net]); t.SetLocked(True); board.Add(t)
+    track("RF_CHIP", [(rx, ry), c11a, l3a])           # segments break at every pad so the router sees them connected
+    track("RF_ANT", [l3b, c12a, (fx, ry), (fx, fy)])
+    # RF ground vias + fence are added after routing (route.py), with collision checks
+    placed = [box(fps[r]) for r in ("U1", "J1", "SW1", "SW2", "SW3", "SW4", "C11", "L3", "C12", "Y1")]
+    placed.append((rx, ry - 0.35, fx + 0.35, ry + 0.35)); placed.append((fx - 0.35, ry, fx + 0.35, fy))   # keep parts off the feed
     ae_box = box(ae)
 
     keep = [(S.ANT_X0 - 0.2, Y0 - 1, X1 + 1, Y1 + 1), FPC_LANE] + LEDGES
@@ -174,7 +201,9 @@ def main():
         return (b[0] >= X0 + EDGE and b[2] <= X1 - EDGE and b[1] >= Y0 + EDGE and b[3] <= Y1 - EDGE
                 and not any(overlap(b, k, 0) for k in keep)
                 and not any(overlap(b, p, 0.0) for p in placed))
-    order = sorted(TARGET, key=lambda r: -(lambda b: (b[2] - b[0]) * (b[3] - b[1]))(box(fps[r])))
+    first = ["C24", "C25", "C26", "C27", "C28", "C29", "C30", "C3", "L2", "C5", "C6", "C7", "C8", "C9"]   # pin-critical caps first
+    order = sorted(TARGET, key=lambda r: (-(lambda b: (b[2] - b[0]) * (b[3] - b[1]))(box(fps[r])) if box(fps[r])[2] - box(fps[r])[0] > 2.2 else 0,
+                                          first.index(r) if r in first else len(first)))
     for ref in order:
         fp, (tx, ty) = fps[ref], TARGET[ref]
         done = False
@@ -192,14 +221,6 @@ def main():
         if not done:
             put(fp, tx, ty, 0); b = box(fp)
             print(f"COULD NOT PLACE {ref} (left at target, overlapping)")
-            reasons = {}
-            for gx in [X0 + 0.5 * i for i in range(int(S.PCB_L / 0.5))]:
-                for gy in [Y0 + 0.5 * j for j in range(int(S.PCB_W / 0.5))]:
-                    put(fp, gx, gy, 0); b = box(fp)
-                    why = ("edge" if not (b[0] >= X0 + EDGE and b[2] <= X1 - EDGE and b[1] >= Y0 + EDGE and b[3] <= Y1 - EDGE)
-                           else "keep" if any(overlap(b, k, 0) for k in keep) else "parts")
-                    reasons[why] = reasons.get(why, 0) + 1
-            print("   grid scan:", reasons, "box size", round(b[2]-b[0],2), round(b[3]-b[1],2), "placed boxes", len(placed))
 
     # zones: GND on all four layers, keep-out over the antenna
     def rect_zone(layer, net, x0, y0, x1, y1, prio=0):
@@ -207,7 +228,7 @@ def main():
         o = z.Outline(); o.NewOutline()
         for x, y in ((x0, y0), (x1, y0), (x1, y1), (x0, y1)):
             o.Append(MM(OX + x), MM(OY + y))
-        z.SetAssignedPriority(prio); z.SetMinThickness(MM(0.15)); z.SetLocalClearance(MM(0.15))
+        z.SetAssignedPriority(prio); z.SetMinThickness(MM(0.1)); z.SetLocalClearance(MM(0.1))
         z.SetPadConnection(pcbnew.ZONE_CONNECTION_FULL)   # solid: 0201 pads starve thermal spokes
         board.Add(z); return z
     # In1 is the solid GND plane the router drops vias into; the other pours are added after routing (route.py)

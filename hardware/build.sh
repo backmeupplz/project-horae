@@ -10,7 +10,11 @@ mkdir -p out
 ./kicad kicad-cli sch erc --format json --severity-all -o out/erc.json horae.kicad_sch >/dev/null
 ./kicad kicad-cli sch export pdf -o out/horae-schematic.pdf horae.kicad_sch >/dev/null
 ./kicad python3 gen_pcb.py
-"$JAVA" -Djava.awt.headless=true -jar "$FR" -de out/horae.dsn -do out/horae.ses -mp 50 --gui.enabled=false > out/freerouting.log 2>&1
+for strategy in prioritized random sequential; do   # retry until only GND (handled by pours) is left unrouted
+  "$JAVA" -Djava.awt.headless=true -jar "$FR" -de out/horae.dsn -do out/horae.ses -mp 50 -is $strategy --gui.enabled=false > out/freerouting.log 2>&1
+  grep -E "^\s+Net '" out/freerouting.log | grep -qv "Net 'GND'" || break
+  echo "router ($strategy) left signal nets unrouted; retrying"
+done
 grep -E "Optimization stage completed" out/freerouting.log | sed -E 's/.*(final score)/router \1/' | cut -c1-70
 ./kicad python3 route.py
 ./kicad kicad-cli pcb drc --format json --severity-all -o out/drc.json horae.kicad_pcb >/dev/null

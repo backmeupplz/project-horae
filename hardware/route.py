@@ -6,7 +6,7 @@ from gen_pcb import X0, Y0, Y1, OX, OY, MM, S
 
 import re
 ses = open("out/horae.ses").read()
-ses = re.sub(r"\(path (\S+) 750(\s)", r"(path \1 900\2", ses)   # Freerouting necks some wires to 0.075; JLC minimum is 0.09
+ses = re.sub(r"\(path (\S+) ([1-8]\d\d)(\s)", r"(path \1 900\3", ses)   # Freerouting necks wires down (0.05-0.08); JLC minimum is 0.09
 from sexpr import parse, dump, find
 tree = parse(ses)
 nets_out = find(find(find(tree, "routes")[0], "network_out")[0], "net")
@@ -40,11 +40,19 @@ for lay in (pcbnew.F_Cu, pcbnew.In2_Cu, pcbnew.B_Cu):
     o = z.Outline(); o.NewOutline()
     for x, y in ((X0, Y0), (ANT_KEEP_X, Y0), (ANT_KEEP_X, Y1), (X0, Y1)):
         o.Append(MM(OX + x), MM(OY + y))
-    z.SetMinThickness(MM(0.15)); z.SetLocalClearance(MM(0.15))
+    z.SetMinThickness(MM(0.1)); z.SetLocalClearance(MM(0.1))   # RF keeps 0.15 via horae.kicad_dru
     z.SetPadConnection(pcbnew.ZONE_CONNECTION_FULL)
     z.SetIslandRemovalMode(pcbnew.ISLAND_REMOVAL_MODE_ALWAYS)
     board.Add(z)
 pcbnew.ZONE_FILLER(board).Fill(board.Zones())
+
+def place_via_near(x0, y0, offsets):
+    for dx, dy in offsets:
+        v = pcbnew.PCB_VIA(board); v.SetPosition(pcbnew.VECTOR2I(MM(OX + x0 + dx), MM(OY + y0 + dy)))
+        v.SetWidth(MM(0.4)); v.SetDrill(MM(0.2)); v.SetNet(gnd)
+        if all(not (o.IsOnLayer(l) and v.GetEffectiveShape(l).Collide(o.GetEffectiveShape(l), MM(0.1))) for l in lay_all for o in others):
+            board.Add(v); return True
+    return False
 
 # GND stitching: a via wherever one fits clear of other nets on every layer, so no pour island floats
 lay_all = [pcbnew.F_Cu, pcbnew.In1_Cu, pcbnew.In2_Cu, pcbnew.B_Cu]
@@ -53,13 +61,19 @@ others += [p for fp in board.GetFootprints() for p in fp.Pads() if p.GetNetCode(
 holes = [p for fp in board.GetFootprints() for p in fp.Pads() if p.GetAttribute() == pcbnew.PAD_ATTRIB_NPTH]
 gnd_pads = [p for fp in board.GetFootprints() for p in fp.Pads() if p.GetNetCode() == gnd.GetNetCode()]   # no grid vias inside pads
 added = 0
+# RF: shunt-cap ground vias right at the pads, and a fence along the feed
+ring = [(dx * 0.1, dy * 0.1) for r_ in range(4, 10) for dx, dy in ((0, -r_), (-r_, 0), (r_, 0), (0, r_), (-r_, -r_), (r_, -r_))]
+for ref in ("C11", "C12"):
+    pad = [p for p in board.FindFootprintByReference(ref).Pads() if p.GetNumber() == "2"][0]
+    px, py = pcbnew.ToMM(pad.GetPosition().x) - OX, pcbnew.ToMM(pad.GetPosition().y) - OY
+    print(f"RF via {ref}: {'ok' if place_via_near(px, py, ring) else 'NO ROOM'}")
 step = 0.8
 nx, ny = int((ANT_KEEP_X - X0) / step), int((Y1 - Y0) / step)
 for i in range(1, nx):
     for j in range(1, ny):
         x, y = X0 + i * step, Y0 + j * step
         v = pcbnew.PCB_VIA(board); v.SetPosition(pcbnew.VECTOR2I(MM(OX + x), MM(OY + y)))
-        v.SetWidth(MM(0.3)); v.SetDrill(MM(0.15)); v.SetNet(gnd)
+        v.SetWidth(MM(0.4)); v.SetDrill(MM(0.2)); v.SetNet(gnd)
         ok = True
         for lay in lay_all:
             vs = v.GetEffectiveShape(lay)
@@ -86,13 +100,14 @@ print("grid stitching done")
 # any top/bottom GND island still without a via gets one at the first free spot inside it
 def fits(x, y):
     v = pcbnew.PCB_VIA(board); v.SetPosition(pcbnew.VECTOR2I(MM(OX + x), MM(OY + y)))
-    v.SetWidth(MM(0.3)); v.SetDrill(MM(0.15)); v.SetNet(gnd)
+    v.SetWidth(MM(0.4)); v.SetDrill(MM(0.2)); v.SetNet(gnd)
     for lay in lay_all:
         vs = v.GetEffectiveShape(lay)
         if any(o.IsOnLayer(lay) and vs.Collide(o.GetEffectiveShape(lay), MM(0.13)) for o in others):
             return None
     return v
 vias = [t for t in board.GetTracks() if t.GetClass() == "PCB_VIA" and t.GetNetCode() == gnd.GetNetCode()]
+vias += [p for fp in board.GetFootprints() for p in fp.Pads() if p.GetNetCode() == gnd.GetNetCode() and p.GetAttribute() == pcbnew.PAD_ATTRIB_PTH]   # e.g. QFN thermal vias
 for z in [z for z in board.Zones() if not z.GetIsRuleArea() and z.GetLayer() in (pcbnew.F_Cu, pcbnew.B_Cu)]:
     polys = z.GetFilledPolysList(z.GetLayer())
     for k in range(polys.OutlineCount()):
@@ -108,12 +123,12 @@ for z in [z for z in board.Zones() if not z.GetIsRuleArea() and z.GetLayer() in 
                     placed_v = fits(x, y)
                     if placed_v: break
             if placed_v: break
-        if not placed_v:   # fallback: via-in-pad on the island's GND pad (JLC: filled + capped)
+        if False:   # via-in-pad disabled: JLC charges POFV on 4-layer boards
             pads = [p for fp in board.GetFootprints() for p in fp.Pads()
                     if p.GetNetCode() == gnd.GetNetCode() and p.IsOnLayer(z.GetLayer()) and out.PointInside(p.GetPosition())]
             for p in sorted(pads, key=lambda p: -p.GetSize().x * p.GetSize().y):
                 v = pcbnew.PCB_VIA(board); v.SetPosition(p.GetPosition())
-                v.SetWidth(MM(0.25)); v.SetDrill(MM(0.15)); v.SetNet(gnd)
+                v.SetWidth(MM(0.4)); v.SetDrill(MM(0.2)); v.SetNet(gnd)
                 if all(not (o.IsOnLayer(lay) and v.GetEffectiveShape(lay).Collide(o.GetEffectiveShape(lay), MM(0.1)))
                        for lay in lay_all for o in others):
                     placed_v = v
@@ -125,8 +140,8 @@ for z in [z for z in board.Zones() if not z.GetIsRuleArea() and z.GetLayer() in 
             print(f"island without via on {z.GetLayerName()} near {pcbnew.ToMM(bb.Centre().x)-OX:.2f},{pcbnew.ToMM(bb.Centre().y)-OY:.2f}")
 pcbnew.ZONE_FILLER(board).Fill(board.Zones())
 print(f"stitching vias: {added}")
-# routed at 0.125 mm; widening necked wires to JLC's 0.09 mm minimum eats up to 0.0075 mm of that
-board.GetDesignSettings().m_NetSettings.GetDefaultNetclass().SetClearance(MM(0.12))
+# routed at 0.1 mm; widening necked wires to JLC's 0.09 mm minimum eats up to 0.0075 mm (JLC spacing min is 0.09)
+board.GetDesignSettings().m_NetSettings.GetDefaultNetclass().SetClearance(MM(0.09))
 board.Save("horae.kicad_pcb")
 tracks = [t for t in board.GetTracks()]
 print(f"imported: {sum(1 for t in tracks if t.GetClass()=='PCB_TRACK')} tracks, {sum(1 for t in tracks if t.GetClass()=='PCB_VIA')} vias")

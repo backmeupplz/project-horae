@@ -12,9 +12,9 @@ PAD15, PAD20 = "TestPoint:TestPoint_Pad_D1.5mm", "TestPoint:TestPoint_Pad_2.0x2.
 PAD10 = "TestPoint:TestPoint_Pad_D1.0mm"
 
 # LCSC parts (basic where possible)
-C100N, C1U25, C10U, C22U, C4U7_25 = "C66938", "C52923", "C15525", "C59461", "C69335"   # C100N is 0201
-C1U = "C76935"   # 1uF 10V 0201
-R10K, R1M, R10M, R20K, R22, R2R2 = "C473048", "C295786", "C320452", "C295787", "C155743", "C327251"   # 0201 except R2R2
+C100N, C1U25, C10U, C22U, C4U7_25 = "C66938", "C52923", "C15525", "C59461", "C69335"   # C100N is 0201 (space); others basic 0402 except C4U7_25
+C1U = "C76935"   # 1uF 10V 0201 (space)
+R10K, R1M, R10M, R20K, R22, R2R2 = "C473048", "C295786", "C320452", "C295787", "C155743", "C327251"   # 0201 (space; no basic 0201 exists) except R2R2
 
 
 def R(ref, val, lcsc, a, b, block, fp=R0201):
@@ -59,8 +59,8 @@ PARTS = [
     ("U1", "MCU_Espressif:ESP32-S3", "ESP32-S3FN8", "Package_DFN_QFN:QFN-56-1EP_7x7mm_P0.4mm_EP4x4mm_ThermalVias", "C2913196", ESP_PINS, "mcu"),
     ("Y1", "Device:Crystal_GND24", "40MHz 15pF", "Crystal:Crystal_SMD_2520-4Pin_2.5x2.0mm", "C284176",
      {"1": "XTAL_P", "2": "GND", "3": "XTAL_N", "4": "GND"}, "mcu"),
-    C("C1", "22pF", "C272881", "XTAL_P", "GND", "mcu"),
-    C("C2", "22pF", "C272881", "XTAL_N", "GND", "mcu"),
+    C("C1", "24pF", "C285108", "XTAL_P", "GND", "mcu"),
+    C("C2", "24pF", "C285108", "XTAL_N", "GND", "mcu"),
     ("L1", "Device:L", "24nH", L0201, "C2991767", {"1": "XTAL_P_L", "2": "XTAL_P"}, "mcu"),  # Espressif: series L on XTAL_P
     ("L2", "Device:L", "2nH", L0201, "C86125", {"1": "+3V3", "2": "VDD3P3"}, "mcu"),       # LC filter on VDD3P3
     C("C3", "1uF", C1U, "VDD3P3", "GND", "mcu"),
@@ -116,9 +116,9 @@ PARTS = [
     ("L4", "Device:L", "47uH", "Inductor_SMD:L_Sunlord_SWPA3012S", "C83420", {"1": "+3V3", "2": "EPD_SW"}, "display"),
     R("R11", "1M", R1M, "EPD_GDR", "GND", "display"),
     R("R12", "2.2", R2R2, "EPD_RESE", "GND", "display", R0402),   # booster current sense: keep 0402 for power
-    ("D1", "Device:D_Schottky", "1N5819WS", "Diode_SMD:D_SOD-323", "C2927280", {"1": "EPD_PUMP", "2": "PREVGL"}, "display"),
-    ("D2", "Device:D_Schottky", "1N5819WS", "Diode_SMD:D_SOD-323", "C2927280", {"1": "GND", "2": "EPD_PUMP"}, "display"),
-    ("D3", "Device:D_Schottky", "1N5819WS", "Diode_SMD:D_SOD-323", "C2927280", {"1": "PREVGH", "2": "EPD_SW"}, "display"),
+    ("D1", "Device:D_Schottky", "B5819WS", "Diode_SMD:D_SOD-323", "C64886", {"1": "EPD_PUMP", "2": "PREVGL"}, "display"),
+    ("D2", "Device:D_Schottky", "B5819WS", "Diode_SMD:D_SOD-323", "C64886", {"1": "GND", "2": "EPD_PUMP"}, "display"),
+    ("D3", "Device:D_Schottky", "B5819WS", "Diode_SMD:D_SOD-323", "C64886", {"1": "PREVGH", "2": "EPD_SW"}, "display"),
     C("C22", "4.7uF/25V", C4U7_25, "EPD_SW", "EPD_PUMP", "display", C0603),
     C("C24", "1uF/25V", C1U25, "PREVGL", "GND", "display", C0402),
     C("C25", "1uF/25V", C1U25, "PREVGH", "GND", "display", C0402),

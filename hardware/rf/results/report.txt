@@ -1,0 +1,29 @@
+# Antenna at pad 1 (vs In1), 50 ohm reference
+
+bare: series resonance (X=0, rising) at [2.308] GHz; S11 min -7.5 dB at 2.248 GHz; -10 dB band None; Z [2.40: 12.3+19.6j, 2.44: 11.2+26.3j, 2.48: 10.4+32.1j]; rad. eff. @2.44 0.84
+env: series resonance (X=0, rising) at [1.985] GHz; S11 min -5.8 dB at 1.905 GHz; -10 dB band None; Z [2.40: 4.4+54.6j, 2.44: 4.3+57.9j, 2.48: 4.2+61.2j]; rad. eff. @2.44 0.69
+wrist: series resonance (X=0, rising) at [1.892] GHz; S11 min -11.8 dB at 1.815 GHz; -10 dB band (np.float64(1.7725), np.float64(1.8575)); Z [2.40: 4.0+58.2j, 2.44: 3.9+61.6j, 2.48: 3.8+64.9j]; rad. eff. @2.44 0.25
+
+## minimax over ['env', 'wrist']: top 8 (worst in-band transducer loss dB, worst S11 dB, C11 pF / L3 nH / C12 pF)
+   2.95    -4.0  0 / 7.5 / 0.9
+   3.03    -3.9  0.3 / 8.2 / 0.9
+   3.04    -4.8  0 / 8.2 / 0.9
+   3.07    -4.0  0.6 / 9.1 / 0.9
+   3.12    -4.3  0.5 / 9.1 / 0.9
+   3.23    -4.7  0.4 / 9.1 / 0.9
+   3.25    -3.6  0.4 / 8.2 / 0.9
+   3.30    -3.7  0.7 / 9.1 / 0.9
+  recommended -> bare: band S11 worst -1.4 dB, best -2.1; -10 dB band (np.float64(2.6225), np.float64(2.6925)); worst mismatch loss 5.54 dB; part loss @2.44 0.43 dB; worst in-band transducer loss 6.20 dB
+  recommended -> env: band S11 worst -4.0 dB, best -10.1; -10 dB band (np.float64(2.4775), np.float64(2.5025)); worst mismatch loss 2.24 dB; part loss @2.44 1.11 dB; worst in-band transducer loss 2.95 dB
+  recommended -> wrist: band S11 worst -5.0 dB, best -9.1; -10 dB band (np.float64(1.6), np.float64(1.6775)); worst mismatch loss 1.65 dB; part loss @2.44 1.60 dB; worst in-band transducer loss 2.82 dB
+  Watchy 3/7.5/3 -> bare: band S11 worst -0.2 dB, best -0.3; -10 dB band None; worst mismatch loss 13.28 dB; part loss @2.44 6.94 dB; worst in-band transducer loss 22.54 dB
+  Watchy 3/7.5/3 -> env: band S11 worst -0.2 dB, best -0.2; -10 dB band None; worst mismatch loss 13.90 dB; part loss @2.44 17.37 dB; worst in-band transducer loss 32.56 dB
+  Watchy 3/7.5/3 -> wrist: band S11 worst -0.2 dB, best -0.2; -10 dB band None; worst mismatch loss 13.92 dB; part loss @2.44 18.46 dB; worst in-band transducer loss 33.58 dB
+
+robustness of the recommended values (band worst S11 dB): antenna resonance shifted -3% / +3%, parts at tolerance
+  env: shift -6.4 / -2.4; C +-0.1 pF, L +-5% corners worst -1.8
+  wrist: shift -5.9 / -3.3; C +-0.1 pF, L +-5% corners worst -2.1
+
+C11 0 pF {'lcsc': 'DNP'}
+L3  7.5 nH {'lcsc': 'C6890513', 'lib': 'expand', 'stock': 29180, 'desc': '14@500MHz 3.7GHz 300mA 600mΩ 7.5nH ±3% 0201 Inductors (SMD) ROHS'}
+C12 0.9 pF {'lcsc': 'C471401', 'lib': 'expand', 'stock': 16050, 'desc': '0.9pF 25V C0G 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS'}

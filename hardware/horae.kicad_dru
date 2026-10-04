@@ -1,0 +1,7 @@
+(version 1)
+(rule "RF match chain sits tighter than courtyards (0201 pad gaps stay >= 0.15 mm)"
+  (constraint courtyard_clearance (min -0.6mm))
+  (condition "(A.Reference == 'C11' || A.Reference == 'L3' || A.Reference == 'C12') && (B.Reference == 'C11' || B.Reference == 'L3' || B.Reference == 'C12' || B.Reference == 'U1')"))
+(rule "RF feed keeps a 0.15 mm gap to the GND pour (50-ohm GCPW)"
+  (constraint clearance (min 0.15mm))
+  (condition "A.NetName == 'RF_CHIP' || A.NetName == 'RF_ANT'"))

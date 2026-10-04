@@ -1,6 +1,6 @@
 # Horae rev A hardware
 
-ESP32-S3 band watch board, **36.3 × 16.5 × 0.8 mm, 4 layers**, fully assembled by JLCPCB.
+ESP32-S3 band watch board, **37.3 × 16.5 × 0.8 mm, 4 layers**, fully assembled by JLCPCB.
 
 **Status (2026-10-03):** first complete pass, ready for review, **not ordered**.
 - ERC: 0 errors and warnings.
@@ -42,31 +42,47 @@ It needs Docker (it runs KiCad 10 from the official `kicad/kicad:10.0` image thr
 1. **Display pin 1 orientation.** The ribbon makes a U-bend into the FH34SRJ, which flips it.
    - The connector takes either contact side, but pin order still has to match.
    - Check with a real panel, using the DESPI adapter, before ordering.
-2. **RF.** Watchy's antenna sits on a much smaller ground plane here, the RF trace was autorouted (not impedance-controlled), and the match values are Watchy's.
-   - Expect to retune the C/L/C values. Hand-routing the RF path is a good idea before ordering.
-3. **Via-in-pad** at C5.2, C15.2 and U6.9 (BMA400 GND), where no via fit beside the pad. This needs JLC's filled + capped via option (possibly a fee).
-4. **0.3 mm vias with 0.15 mm holes** cost extra at JLC. 0.2 mm holes would need a looser placement or a reroute.
-5. **Crystal load caps** are 22 pF (basic part) against the crystal's 15 pF load spec, so the clock runs a few ppm fast. 24 pF is the exact value.
+2. **RF.**
+   - Done: the feed is hand-routed as a 50 Ω GCPW (0.20 mm track, 0.15 mm gap, In1 ground below, JLC 0.8 mm 4-layer stack-up). The pi match sits in a straight line at the RF pin, and the shunt capacitors have their own ground vias. The antenna now sits entirely past the display glass.
+   - Still needed: the C/L/C values come from an EM simulation (`rf/`). Verify them on real hardware with RSSI, or ideally a VNA.
+3. **Via-in-pad:** removed. No POFV fee.
+4. **Vias:** standard 0.4/0.2 mm, so no small-hole fee. Routing clearance is 0.11 mm and JLC's minimum is 0.09 mm.
+5. **Crystal load caps:** 24 pF C0G, matching the crystal's 15 pF load spec plus ~3 pF of board stray. Trim ±2 pF after measuring the clock offset.
 6. **RV-3032 VBACKUP and EVI are tied to GND** (backup unused). Confirm against the datasheet.
 7. **No vibration motor in rev A.** There's no room in the 7 mm stack. GPIO17 is reserved.
 8. **No load-sharing power path.** While docked, the TP4054 charges the battery while the ESP32 runs from it.
 9. **JLC CPL rotations:** LCSC-imported footprints sometimes need rotation offsets. Check JLC's placement preview.
 10. **Battery** is a placeholder envelope (27 × 15 × 2.5 mm with PCM). Pick the real cell.
 
-## Cost (JLC Economic PCBA, 2026-10-03 prices)
-- **BOM:** 30 lines, about 24 of them extended parts at a $3 loading fee each, so ~$72 per order.
-- **Parts:** ~$25.40 per board. The BMA400 alone is $14.91 at JLC; LCSC lists it at $2–3.
-- **2 assembled boards (of 5):**
+## Cost breakdown (JLC Economic PCBA, live prices 2026-10-03)
+| Item | 2 boards assembled (of 5 made) | 5 boards assembled |
+|---|---|---|
+| Bare PCB: 4-layer, 0.8 mm, ENIG, standard 0.4/0.2 vias, impedance stack-up | ~$10–20 | ~$10–20 |
+| Assembly setup + stencil | $9.50 | $9.50 |
+| Loading fees: 23 extended lines × $3 | $69 | $69 |
+| Parts at $25.44 per board (BMA400 is $14.91 of that) | $51 | $127 |
+| Solder joints | ~$1 | ~$2 |
+| **Subtotal (USD)** | **≈ $140–150** | **≈ $220–230** |
+| Shipping: DHL Express ~$25, or Global Standard ~$10 (1–2 weeks) | $10–25 | $10–25 |
+| GST+PST 12% + brokerage (CAD) | ~$30–40 | ~$40–50 |
 
-| Item | Cost |
-|---|---|
-| Boards | ~$10–25 (fine vias and via-in-pad may add) |
-| Setup + stencil | $9.50 |
-| Loading fees | ~$72 |
-| Parts | ~$51 |
-| **Subtotal** | **≈ USD 145–160** |
-| DHL | +$25 |
-| Tax and brokerage | +~CAD 40 |
-| **Landed** | **≈ CAD 280** |
+**Where the money goes:**
+- **BMA400:** $15 at both JLC and LCSC; it's scarce. That's ~60% of per-board parts cost.
+- **Loading fees:** $45 of the $69 is for 15 lines of tiny passives that cost under a cent each.
+- JLC has essentially no basic or preferred 0201 parts. Swapping them for same-spec basic 0402 parts would need more board area than this board has.
 
-Cheaper options: BMA456 instead of BMA400 (−$10/board), basic-library swaps for some 0201 parts, or assembling only the hard parts at JLC.
+**Already applied, with no component downgrade:**
+- 1N5819WS → B5819WS diodes: same spec, preferred, so no fee.
+- Standard 0.4/0.2 mm vias instead of 0.3/0.15: avoids the small-hole fee.
+- Via-in-pad removed: avoids the 4-layer POFV fee.
+
+**Further options, none of them downgrades:**
+1. **Global Standard shipping** instead of DHL: saves ~$15, costs about a week.
+2. **DHL with DDP** (taxes prepaid at checkout): avoids DHL's separate brokerage bill.
+3. **Merge two values onto existing lines:**
+   - R11 1 MΩ → 10 MΩ: gate pull-down, works the same.
+   - R1 10 kΩ → 20 kΩ: EN pull-up, 20 ms RC instead of 10 ms.
+
+   That's −$6, but it moves away from the reference values.
+4. **More boards per order:** fees are per order. Each extra assembled board costs ~$25 more, so 5 boards instead of 2 gives you spares for experiments.
+5. **JLC Global Sourcing** for the BMA400: check Digi-Key/Mouser pricing at order time.
