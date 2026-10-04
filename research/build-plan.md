@@ -122,3 +122,39 @@ Have JLC assemble just the hard parts: ESP32-S3, crystal, BMA423, RTC, regulator
 - **QFN56 at 0.4 mm pitch** is the hardest part to solder by hand-reflow. Mitigations: buy spare chips and boards, or use the JLC alternative above.
 - **Display stock:** GDEM0097T61 is out of stock at buy-lcd today. Order early from AliExpress.
 - **Rev A will have mistakes.** Budget for a rev B (another ~$40 of boards).
+
+## JLC full assembly: estimate (checked 2026-10-03)
+Live JLC parts-library stock on 2026-10-03:
+
+| Part | JLC/LCSC | Stock | ~$ each |
+|---|---|---|---|
+| ESP32-S3-PICO-1-N8R2 | C7558093 | **0** (would need Global Sourcing from Digi-Key) | 5.0 |
+| **ESP32-S3FN8** (bare chip, Watchy's) | C2913196 | 660 | 3.33 |
+| RV-3028-C7 | C2829066 | **0** | – |
+| **RV-3032-C7** (2.5 ppm, crystal inside) | C5127802 | 4572 | 3.44 |
+| BMA400 | C437655 | 226 | listed 14.9 at JLC (LCSC lists ~$2–3) |
+| BMA456 (same BMA4 API as Watchy's BMA423) | C189518 | 2540 | 4.88 |
+| FH34SRJ-18S-0.5SH(50) | C3169386 | 26512 | 0.28 |
+| EVQ-PUC02K / EVQ-P7M01P buttons | C79174 / C7275646 | 6 / 265 | 0.17 / 0.58 |
+| RT9080-33GJ5 | C841192 | 39625 | 0.12 |
+| TP4054 | C32574 | 26354 | 0.13 |
+
+**Decision:** because JLC places every part, part count no longer costs soldering time. So use the in-stock **ESP32-S3FN8 + crystal**, exactly as Watchy does, and copy Watchy's proven RF layout. That adds ~14 robot-placed parts and no Global Sourcing delay.
+
+| Line (Economic PCBA, 4-layer **0.8 mm**, the minimum for Economic) | 2 boards assembled | 5 boards assembled |
+|---|---|---|
+| 5 bare boards | ~$8 | ~$8 |
+| Setup + stencil | $9.50 | $9.50 |
+| Extended-part loading, ~10 lines × $3 | ~$30 | ~$30 |
+| Parts, ~$15–18 per board | ~$34 | ~$85 |
+| Joints, ~250 × $0.0016 | ~$1 | ~$2 |
+| **Subtotal (USD)** | **~$83** | **~$135** |
+| DHL to Vancouver | ~$20–25 | ~$20–25 |
+| GST+PST 12% + brokerage (CAD) | ~$30 | ~$40 |
+| **Landed (CAD)** | **~$170** | **~$260** |
+
+**Lead time:** ~3–4 days for the boards, +1–2 days for assembly, +3–5 days DHL, so **~1.5–2 weeks**.
+
+**Cost compared with DIY:** self-assembly saves only ~$40–60 in fees, but needs ~$60–100 of tools and carries real risk on the QFN.
+
+**Left for us:** plug in the display ribbon, solder 2 battery wires, and assemble the case.
