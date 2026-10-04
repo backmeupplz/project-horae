@@ -46,6 +46,19 @@ header p { margin: 0 0 12px; max-width: 34em; }
 .device { width: 92px; }
 @media (max-width: 520px) { header { grid-template-columns: 1fr; } .device { width: 72px; order: -1; } }
 
+.waitlist { padding: 24px; margin: 0 0 56px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); }
+.waitlist h2 { font-size: 22px; line-height: 1.4; margin: 0 0 16px; }
+.waitlist label { display: block; font-size: 14px; margin-bottom: 6px; }
+.waitlist-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.waitlist input, .waitlist button { font: inherit; border: 1px solid var(--line); border-radius: 4px; padding: 10px 12px; }
+.waitlist input { flex: 1 1 220px; min-width: 0; background: var(--paper); color: var(--ink); }
+.waitlist button { background: var(--ink); color: var(--paper); cursor: pointer; }
+.waitlist button:disabled { opacity: 0.65; cursor: wait; }
+.waitlist :focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.waitlist-note { font-size: 14px; margin: 12px 0 0; }
+.waitlist-status { min-height: 1.6em; margin: 12px 0 0; font-size: 15px; }
+.waitlist-trap { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+
 .timeline { list-style: none; margin: 0; padding: 0 0 96px; border-left: 1px solid var(--line); }
 .entry { position: relative; padding: 0 0 64px 28px; }
 .entry::before { content: ""; position: absolute; left: -5px; top: 9px; width: 9px; height: 9px; background: var(--ink); border-radius: 50%; }
@@ -94,6 +107,27 @@ footer { border-top: 1px solid var(--line); padding: 24px 0 48px; font-size: 13p
     <text x="46" y="152" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" fill="#555">SAT 03</text>
   </svg>
 </header>
+
+<section class="waitlist" aria-labelledby="waitlist-title">
+  <h2 id="waitlist-title">Join the waitlist to get email when it's done and available to purchase</h2>
+  <form id="waitlist-form" action="https://horae-waitlist.borodutch.com/api/waitlist" method="post" aria-describedby="waitlist-purpose">
+    <fieldset id="waitlist-fields" disabled style="border:0;padding:0;margin:0;min-width:0">
+      <label for="waitlist-email">Email address</label>
+      <div class="waitlist-row">
+        <input id="waitlist-email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="254" required aria-describedby="waitlist-purpose waitlist-status">
+        <button id="waitlist-submit" type="submit">Join the waitlist</button>
+      </div>
+      <div class="waitlist-trap" aria-hidden="true">
+        <label for="waitlist-website">Leave this field empty</label>
+        <input id="waitlist-website" name="website" type="text" tabindex="-1" autocomplete="off" maxlength="256">
+      </div>
+    </fieldset>
+    <p id="waitlist-purpose" class="waitlist-note">By joining, you ask to receive an email about Project Horae's availability. Your email is saved for that purpose and sent privately to the project owner as a signup notification.</p>
+    <p id="waitlist-status" class="waitlist-status" role="status" aria-live="polite" aria-atomic="true"></p>
+    <noscript><p>JavaScript is needed to join this waitlist. Enable it and reload this page, or follow the build log below for updates.</p></noscript>
+  </form>
+</section>
+<script src="waitlist.js" defer></script>
 
 <ol class="timeline">
 
