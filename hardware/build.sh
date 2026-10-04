@@ -11,7 +11,7 @@ mkdir -p out
 ./kicad kicad-cli sch export pdf -o out/horae-schematic.pdf horae.kicad_sch >/dev/null
 ./kicad python3 gen_pcb.py
 for strategy in prioritized random sequential; do   # retry until only GND (handled by pours) is left unrouted
-  "$JAVA" -Djava.awt.headless=true -jar "$FR" -de out/horae.dsn -do out/horae.ses -mp 50 -is $strategy --gui.enabled=false > out/freerouting.log 2>&1
+  "$JAVA" -Djava.awt.headless=true -jar "$FR" -de out/horae.dsn -do out/horae.ses -mp 80 -is $strategy --gui.enabled=false > out/freerouting.log 2>&1
   grep -E "^\s+Net '" out/freerouting.log | grep -qv "Net 'GND'" || break
   echo "router ($strategy) left signal nets unrouted; retrying"
 done

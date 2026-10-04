@@ -5,3 +5,6 @@
 (rule "RF feed keeps a 0.15 mm gap to the GND pour (50-ohm GCPW)"
   (constraint clearance (min 0.15mm))
   (condition "A.NetName == 'RF_CHIP' || A.NetName == 'RF_ANT'"))
+(rule "Bare test/pogo pads (no parts): courtyards may overlap, copper gaps stay >= 0.5 mm"
+  (constraint courtyard_clearance (min -1.5mm))
+  (condition "A.Reference == 'TP*' && B.Reference == 'TP*'"))

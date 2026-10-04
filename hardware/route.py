@@ -48,6 +48,8 @@ pcbnew.ZONE_FILLER(board).Fill(board.Zones())
 
 def place_via_near(x0, y0, offsets):
     for dx, dy in offsets:
+        if not via_allowed(x0 + dx, y0 + dy):
+            continue
         if any((pcbnew.ToMM(w.GetPosition().x) - OX - x0 - dx) ** 2 + (pcbnew.ToMM(w.GetPosition().y) - OY - y0 - dy) ** 2 < 0.6 ** 2
                for w in board.GetTracks() if w.GetClass() == "PCB_VIA"):
             continue
@@ -59,6 +61,15 @@ def place_via_near(x0, y0, offsets):
 
 # GND stitching: a via wherever one fits clear of other nets on every layer, so no pour island floats
 lay_all = [pcbnew.F_Cu, pcbnew.In1_Cu, pcbnew.In2_Cu, pcbnew.B_Cu]
+no_via = [z.Outline() for z in board.Zones() if z.GetIsRuleArea() and z.GetDoNotAllowVias()]   # antenna + touch keep-outs
+ae = board.FindFootprintByReference("AE1")
+ANT_CU_X = min([pcbnew.ToMM(g.GetBoundingBox().GetLeft()) for g in ae.GraphicalItems() if g.GetLayer() == pcbnew.F_Cu] +
+               [pcbnew.ToMM(p.GetBoundingBox().GetLeft()) for p in ae.Pads()]) - OX
+def via_allowed(x, y):
+    pt = pcbnew.VECTOR2I(MM(OX + x), MM(OY + y))
+    if x > ANT_CU_X - 0.6:
+        return False   # 0.2 mm hole-to-copper from the antenna meander, plus margin
+    return not any(o.Contains(pt) or o.SquaredDistance(pt) < MM(0.3) ** 2 for o in no_via)
 others = [t for t in board.GetTracks() if t.GetNetCode() != gnd.GetNetCode()]
 others += [p for fp in board.GetFootprints() for p in fp.Pads() if p.GetNetCode() != gnd.GetNetCode()]
 holes = [p for fp in board.GetFootprints() for p in fp.Pads() if p.GetAttribute() == pcbnew.PAD_ATTRIB_NPTH]
@@ -88,7 +99,7 @@ for i in range(1, nx):
             ok = False
         if ok and any(p.IsOnLayer(lay) and v.GetEffectiveShape(lay).Collide(p.GetEffectiveShape(lay), MM(0.05)) for p in gnd_pads for lay in (pcbnew.F_Cu, pcbnew.B_Cu)):
             ok = False
-        if ok and (x < X0 + 0.6 or y < Y0 + 0.6 or y > Y1 - 0.6):
+        if ok and (x < X0 + 0.6 or y < Y0 + 0.6 or y > Y1 - 0.6 or not via_allowed(x, y)):
             ok = False
         if ok and any((pcbnew.ToMM(w.GetPosition().x) - OX - x) ** 2 + (pcbnew.ToMM(w.GetPosition().y) - OY - y) ** 2 < 0.6 ** 2
                       for w in board.GetTracks() if w.GetClass() == "PCB_VIA"):
@@ -105,6 +116,8 @@ pcbnew.ZONE_FILLER(board).Fill(board.Zones())
 print("grid stitching done")
 # any top/bottom GND island still without a via gets one at the first free spot inside it
 def fits(x, y):
+    if not via_allowed(x, y):
+        return None
     if any((pcbnew.ToMM(w.GetPosition().x) - OX - x) ** 2 + (pcbnew.ToMM(w.GetPosition().y) - OY - y) ** 2 < 0.6 ** 2
            for w in board.GetTracks() if w.GetClass() == "PCB_VIA"):
         return None

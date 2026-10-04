@@ -31,25 +31,28 @@ def TP(ref, net, fp, block):
 
 ESP_PINS = {
     "1": "RF_CHIP", "2": "VDD3P3", "3": "VDD3P3", "4": "EN",
-    "5": "BTN_UP",        # GPIO0, also BOOT strap
+    "5": "BOOT",          # GPIO0 strap: test pad only
     "6": "EPD_BUSY",      # GPIO1   display on RTC GPIOs so a ULP/wake-stub can drive it later
     "7": "EPD_RES",       # GPIO2
+    "8": "TOUCH_UP",      # GPIO3  T3
     "9": "EPD_SCK",       # GPIO4
     "10": "RTC_INT",      # GPIO5
-    "11": "BTN_BACK",     # GPIO6   buttons on Watchy's pins
-    "12": "BTN_MENU",     # GPIO7
-    "13": "BTN_DOWN",     # GPIO8
+    "11": "TOUCH_BACK",   # GPIO6  T6   capacitive touch (Watchy button GPIOs where possible)
+    "12": "TOUCH_MENU",   # GPIO7  T7   deep-sleep touch wake
+    "13": "TOUCH_DOWN",   # GPIO8  T8
     "14": "BAT_ADC",      # GPIO9   ADC1_CH8
     "15": "CHG_STAT",     # GPIO10
     "16": "I2C_SCL",      # GPIO11
     "17": "I2C_SDA",      # GPIO12
     "18": "EPD_MOSI",     # GPIO13
-    "19": "ACC_INT1",     # GPIO14
+    
     "20": "+3V3",         # VDD3P3_RTC
     "21": "EPD_DC",       # GPIO15
     "22": "EPD_CS",       # GPIO16
     "23": "VIB",          # GPIO17  haptic motor
-        "24": "ACC_INT2",     # GPIO18
+    "19": "PPG_INT",      # GPIO14  spare wake-capable pin, brought to a pad for a future heart-rate flex
+    "24": "ACC_INT1",     # GPIO18
+    "27": "ACC_INT2",     # GPIO21
     "25": "ESP_DM", "26": "ESP_DP",
         "29": "VDD_SPI", "46": "+3V3", "49": "TXD0", "50": "RXD0",
     "53": "XTAL_N", "54": "XTAL_P_L", "55": "+3V3", "56": "+3V3", "57": "GND",
@@ -129,11 +132,9 @@ PARTS = [
     C("C29", "1uF/25V", C1U25, "EPD_VSL", "GND", "display", C0402),
     C("C30", "1uF/25V", C1U25, "EPD_VCOM", "GND", "display", C0402),
 
-    # --- UI: buttons ---
-    ("SW1", "horae:EVQ-P7M01P", "UP/BOOT", "horae:SW-SMD_L3.5-W2.9_EVQ-P7M01P", "C7275646", {"1": "BTN_UP", "2": "GND"}, "ui"),
-    ("SW2", "horae:EVQ-P7M01P", "DOWN", "horae:SW-SMD_L3.5-W2.9_EVQ-P7M01P", "C7275646", {"1": "BTN_DOWN", "2": "GND"}, "ui"),
-    ("SW3", "horae:EVQ-P7M01P", "MENU", "horae:SW-SMD_L3.5-W2.9_EVQ-P7M01P", "C7275646", {"1": "BTN_MENU", "2": "GND"}, "ui"),
-    ("SW4", "horae:EVQ-P7M01P", "BACK", "horae:SW-SMD_L3.5-W2.9_EVQ-P7M01P", "C7275646", {"1": "BTN_BACK", "2": "GND"}, "ui"),
+    # --- UI: capacitive touch + haptics ---
+    TP("TCH1", "TOUCH_UP", "horae:TouchPad_4.0x1.6mm", "ui"), TP("TCH2", "TOUCH_DOWN", "horae:TouchPad_4.0x1.6mm", "ui"),
+    TP("TCH3", "TOUCH_MENU", "horae:TouchPad_4.0x1.6mm", "ui"), TP("TCH4", "TOUCH_BACK", "horae:TouchPad_4.0x1.6mm", "ui"),
     ("Q2", "horae:CJ3134K_C62503", "CJ3134K", "horae:SOT-723_L1.2-W0.8-P0.40-LS1.2-BR", "C62503",
      {"1": "VIB", "2": "GND", "3": "MOT_N"}, "ui"),            # coin ERM low-side switch (~80 mA)
     R("R13", "1M", R1M, "VIB", "GND", "ui"),                     # gate pull-down: motor off while the ESP32 boots
@@ -145,7 +146,8 @@ PARTS = [
     TP("TP5", "VBAT", PAD20, "pads"), TP("TP6", "GND", PAD20, "pads"),          # battery wires
     TP("TP7", "VBAT", PAD15, "pads"), TP("TP8", "MOT_N", PAD15, "pads"),        # coin motor: spring contacts or wires
     TP("TP9", "TXD0", PAD10, "pads"), TP("TP10", "RXD0", PAD10, "pads"),
-    TP("TP11", "EN", PAD10, "pads"), TP("TP12", "BTN_UP", PAD10, "pads"), TP("TP13", "+3V3", PAD10, "pads"),
+    TP("TP14", "I2C_SDA", PAD10, "pads"), TP("TP15", "I2C_SCL", PAD10, "pads"), TP("TP16", "PPG_INT", PAD10, "pads"),   # PPG flex hookup
+    TP("TP11", "EN", PAD10, "pads"), TP("TP12", "BOOT", PAD10, "pads"), TP("TP13", "+3V3", PAD10, "pads"),
 ]
 
 POWER_NETS = ["GND", "+3V3", "VBAT", "VBUS", "VDD3P3", "VDD_SPI"]   # get PWR_FLAGs (VDD_SPI is driven inside the ESP32)

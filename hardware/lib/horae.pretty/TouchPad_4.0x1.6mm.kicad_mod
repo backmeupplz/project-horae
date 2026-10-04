@@ -1,0 +1,11 @@
+(footprint "TouchPad_4.0x1.6mm"
+  (version 20240108)
+  (generator "horae")
+  (layer "F.Cu")
+  (descr "Capacitive touch electrode under solder mask (no paste, no mask opening); sensed through the case wall")
+  (attr smd exclude_from_pos_files exclude_from_bom)
+  (fp_text reference "REF**" (at 0 -1.4) (layer "F.SilkS") hide (effects (font (size 0.5 0.5) (thickness 0.1))))
+  (fp_text value "TOUCH" (at 0 1.4) (layer "F.Fab") hide (effects (font (size 0.5 0.5) (thickness 0.1))))
+  (fp_rect (start -2.25 -1.05) (end 2.25 1.05) (layer "F.CrtYd") (stroke (width 0.05) (type default)) (fill none))
+  (pad "1" smd roundrect (at 0 0) (size 4.0 1.6) (layers "F.Cu") (roundrect_rratio 0.25))
+)

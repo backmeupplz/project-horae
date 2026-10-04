@@ -5,7 +5,7 @@
     .venv/bin/python cad/horae.py --no-render
 
 All shared dimensions come from spec.py. Splash-resistant case, PETG-CF body with a plain-PETG RF window:
-  frame  walls, glass ledges, 4 sealed TPU buttons, 14 mm spring-bar lugs (PCB goes in from below, glass from
+  frame  walls, glass ledges, 4 sealed TPU buttons, 16 mm NATO lugs with fixed pins (PCB goes in from below, glass from
          above). Split at x = ANT_X0 - 1: frame_cf (PETG-CF) + frame_rf (PETG, antenna end), Z-stepped lap joint.
   back   0.6 mm floor + pogo/magnet block (-X) + support block (+X). Split the same way: back_cf + back_rf.
   bezel  0.5 mm lip with the display window, plain PETG (no CF over the antenna; 0.2 mm nozzle)
@@ -40,15 +40,20 @@ POGO_HOLE_D = 1.3     # P50-style pin: 1.0 barrel + 0.3
 PIN_L, PIN_D, PLUNGER_D, PLUNGER_L = 16.0, 1.0, 0.6, 2.5
 PIN_PRELOAD = 0.5     # free pin tip sits this far above the pad -> 0.5 mm of stroke used when docked
 PIN_BORE = 1.1
-STRAP_W = 14.0        # spring-bar strap; 16 mm bars would leave 1.25 mm lug ears on an 18.5 mm case (too flexy)
-BAR_D = 1.0           # spring-bar tip hole (0.8 tips), -X lug
-PIN_RF_D = 1.5        # +X lug: plastic (nylon/PETG) through-pin instead of a steel spring bar (RF window)
-EAR_R = 1.8
-BAR_DX = 2.2          # bar axis past the case end face (room for the strap loop)
+STRAP_W = 16.0        # NATO pull-through; 18 mm would leave 0.15 mm ears on the 18.5 mm body
+STRAP_T = 1.3         # typical NATO webbing (1.2-1.4)
+NATO_GAP = 1.5        # bar surface to case end face: the strap runs down through here and under the back
+LUG_PIN_D = 2.0       # fixed through-pins, glued: -X 2 mm steel dowel, +X 2 mm nylon/PETG rod (RF window)
+PIN_HOLE = LUG_PIN_D + 0.1
+EAR_R = 2.0           # ear radius around the pin -> 0.95 mm of plastic around the hole
 FFC_L, FFC_D, FFC_H = 12.5, 3.5, 1.0        # FH34SRJ-18S body (Y x X x Z), centred at S.FFC_X
 BACK_GASKET = 0.3     # TPU ring between frame and back (compressed; printed 0.4). Frame starts above it
 POGO_GASKET = 0.5     # TPU pad under the PCB around the pogo pads (compressed; printed 0.6)
 POGO_SEAL_D = 0.8     # gasket hole around each 0.6 mm plunger; seals on the 1.0 mm pad ring
+X_POGO1 = -S.CAV_L / 2 + S.POGO_STRIP   # end of the pogo strip / start of the motor bay
+MOTOR_POCKET = S.MOTOR_D + 0.4
+MOTOR_TAPE = 0.2      # foam tape under the motor
+MOTOR_SPRING_FREE = 1.1   # free spring height above the motor can (check the part; 0.5 mm compression wanted)
 GASKET_PRINT = {"gasket_back": 0.4, "gasket_bezel": 0.25, "gasket_pogo": 0.6}   # printed (free) thickness
 X_RF = S.ANT_X0 - 1.5 # RF window (no carbon) from here; antenna copper starts ~0.3 before ANT_X0 (feed)
 RF_LAP = 1.5          # frame lap joint: the PETG upper half overhangs the CF lower half by this
@@ -68,7 +73,7 @@ AA_X1 = S.DISP_X1 - S.DISP_AA_MARGIN_FAR
 AA_X0 = AA_X1 - S.DISP_AA_L
 AA_CX = (AA_X0 + AA_X1) / 2
 POGO_Y = [(i - 1.5) * S.POGO_PITCH for i in range(4)]
-X_BAR = OL + BAR_DX
+X_BAR = OL + NATO_GAP + LUG_PIN_D / 2
 Z_BAR = Z_FRAME0 + EAR_R
 EAR_TIP = X_BAR + EAR_R
 ACT_Z = (S.Z_PCB1 + 0.3, S.Z_PCB1 + 1.1)    # switch actuator band
@@ -141,6 +146,7 @@ def switch(x, y):
 
 def pads():
     return union([cyl(S.POGO_X, y, S.Z_PCB0 - 0.03, S.Z_PCB0, POGO_PAD_D) for y in POGO_Y]
+                 + [cyl(S.MOTOR_X + dx, 0, S.Z_PCB0 - 0.03, S.Z_PCB0, 1.5) for dx in (-S.MOTOR_PAD_DX, S.MOTOR_PAD_DX)]
                  + [box(S.POGO_X - 1, S.POGO_X + 1, sy * (S.BATPAD_Y - 1), sy * (S.BATPAD_Y + 1), S.Z_PCB0 - 0.03,
                         S.Z_PCB0) for sy in (-1, 1)])
 
@@ -286,18 +292,39 @@ def battery():
     return body + seal, tabs
 
 
+def motor():
+    """8 x 2.0 coin ERM on 0.2 foam tape; two contact springs (shown compressed) up to the PCB pads."""
+    z0 = S.FLOOR + MOTOR_TAPE
+    body = cyl(S.MOTOR_X, 0, z0, z0 + S.MOTOR_T, S.MOTOR_D)
+    springs = union([cyl(S.MOTOR_X + dx, 0, z0 + S.MOTOR_T, S.Z_PCB0 - 0.03, 0.9) for dx in (-S.MOTOR_PAD_DX, S.MOTOR_PAD_DX)])
+    return body, springs
+
+
 def magnets(z0):
     return [cyl(S.POGO_X, sy * MAG_Y, z0, z0 + MAG_T, MAG_D) for sy in (-1, 1)]
 
 
 def spring_bars():
-    """Steel spring bar at -X only."""
-    return ycyl(-X_BAR, -STRAP_W / 2, STRAP_W / 2, Z_BAR, 1.5) + ycyl(-X_BAR, -OW + 0.3, OW - 0.3, Z_BAR, 0.8)
+    """Steel through-pin at -X (name kept for the render groups)."""
+    return ycyl(-X_BAR, -OW + 0.25, OW - 0.25, Z_BAR, LUG_PIN_D)
 
 
 def rf_pin():
-    """Plastic through-pin at the +X (antenna) lug, flush with the ear faces."""
-    return ycyl(X_BAR, -OW + 0.05, OW - 0.05, Z_BAR, PIN_RF_D)
+    """Plastic through-pin at the +X (antenna) lug."""
+    return ycyl(X_BAR, -OW + 0.25, OW - 0.25, Z_BAR, LUG_PIN_D)
+
+
+def nato():
+    """NATO strap path near the case: down each gap, under the back, out over each pin (render + clearance only)."""
+    w, t = STRAP_W / 2 - 0.1, STRAP_T
+    zb = -0.05                                            # under the back
+    ztop = Z_BAR + LUG_PIN_D / 2 + 0.05                       # over the pins
+    g0 = OL + 0.05                                        # inner face of the gap
+    parts = [box(-g0 - t, g0 + t, -w, w, zb - t, zb)]
+    for sx in (-1, 1):
+        parts.append(box(sx * g0, sx * (g0 + t), -w, w, zb - t, ztop + t))
+        parts.append(box(sx * g0, sx * (EAR_TIP + 9), -w, w, ztop, ztop + t))
+    return union(parts)
 
 
 # ---------------------------------------------------------------- case
@@ -306,7 +333,7 @@ def frame():
     outer = slab(S.CASE_L, S.CASE_W, S.CORNER_R, Z_FRAME0, S.Z_DISP1)
     for sx in (-1, 1):                                   # spring-bar lug ears
         for sy in (-1, 1):
-            y0, y1 = sy * (STRAP_W / 2 + 0.1), sy * OW
+            y0, y1 = sy * (STRAP_W / 2 + 0.1), sy * OW   # ear = 1.15 mm
             outer += box(sx * (OL - S.CORNER_R), sx * X_BAR, y0, y1, Z_FRAME0, Z_BAR + EAR_R)
             outer += ycyl(sx * X_BAR, y0, y1, Z_BAR, 2 * EAR_R)
     f = outer - slab(S.CAV_L, S.CAV_W, IN_R, Z_FRAME0 - 1, S.Z_DISP1 + 1)
@@ -321,7 +348,7 @@ def frame():
     f -= box(S.DISP_X0 - GLASS_FIT, S.DISP_X1 + GLASS_FIT, -gw, gw, S.Z_DISP0, S.Z_DISP1 + 1)
 
     for sx in (-1, 1):
-        f -= ycyl(sx * X_BAR, -OW - 1, OW + 1, Z_BAR, BAR_D if sx < 0 else PIN_RF_D + 0.1)
+        f -= ycyl(sx * X_BAR, -OW - 1, OW + 1, Z_BAR, PIN_HOLE)
 
     wl, wh = BTN_WIN
     m = BTN_FLANGE
@@ -358,8 +385,9 @@ def back():
     b = fillet(b.edges().group_by(Axis.Z)[0], 0.4)
     top = S.Z_PCB0 - S.GAP
     blocks = slab(S.CAV_L - 2 * FIT, S.CAV_W - 2 * FIT, IN_R - FIT, S.FLOOR - 0.1, top)
-    x_pogo1 = S.BAT_X0 - 0.25
-    b += blocks & (box(-HL, x_pogo1, -HW, HW, 0, top) + box(S.BAT_X1 + 0.25, HL, -HW, HW, 0, top))
+    x_pogo1 = X_POGO1
+    b += blocks & (box(-HL, S.BAT_X0 - 0.25, -HW, HW, 0, top) + box(S.BAT_X1 + 0.25, HL, -HW, HW, 0, top))
+    b -= cyl(S.MOTOR_X, 0, S.FLOOR, top + 1, MOTOR_POCKET)               # motor pocket down to the floor
     gy = POGO_Y[-1] + 1.15                               # pogo gasket pocket (gasket_pogo sits in it)
     b -= box(-HL + 0.5, x_pogo1 - 0.4, -gy, gy, S.Z_PCB0 - 0.03 - POGO_GASKET, top + 1)
     for y in POGO_Y:
@@ -368,7 +396,7 @@ def back():
                                              align=(Align.CENTER, Align.CENTER, Align.MIN))
     for sy in (-1, 1):
         b -= cyl(S.POGO_X, sy * MAG_Y, -1, MAG_T + 0.05, MAG_D + 0.1)          # blind from the skin side
-        b -= box(-HL - 1, x_pogo1 + 1, sy * (gy + 0.5), sy * (HW + 1), MAG_T + 0.45, top + 1)  # battery wires
+        b -= box(-HL - 1, S.BAT_X0, sy * (gy + 0.5), sy * (HW + 1), MAG_T + 0.45, top + 1)  # battery wires
     return b
 
 
@@ -380,7 +408,7 @@ def gasket_back(t=BACK_GASKET):
 def gasket_pogo(t=POGO_GASKET):
     gy = POGO_Y[-1] + 1.15
     z1 = S.Z_PCB0 - 0.03                                 # under the 30 um pads
-    g = box(-HL + 0.55, S.BAT_X0 - 0.25 - 0.45, -gy + 0.05, gy - 0.05, z1 - t, z1)
+    g = box(-HL + 0.55, X_POGO1 - 0.45, -gy + 0.05, gy - 0.05, z1 - t, z1)
     for y in POGO_Y:
         g -= cyl(S.POGO_X, y, z1 - t - 1, z1 + 1, POGO_SEAL_D)
     return g
@@ -460,9 +488,10 @@ def build():
              buttons=union([button(bx, sy) for bx in S.BUTTON_X for sy in (-1, 1)]),
              display=display(), fpc=tail, stiffener=stiff,
              pcb=board, battery=bat, bat_tabs=tabs, case_magnets=union(magnets(0.0)),
-             bars=spring_bars(), rf_pin=rf_pin(), dock=dock(), dock_magnets=union(magnets(-MAG_T)))
+             bars=spring_bars(), rf_pin=rf_pin(), strap=nato(), dock=dock(), dock_magnets=union(magnets(-MAG_T)))
     m.update(groups)
     m["pads"] = pads()
+    m["motor"], m["motor_springs"] = motor()
     m["pins_docked"] = union([pogo_pin(S.POGO_X, y, S.Z_PCB0 - 0.03) for y in POGO_Y])
     m["pins_free"] = union([pogo_pin(S.POGO_X, y, PIN_TIP_FREE) for y in POGO_Y])
     m["usb_pcb"], m["usb_c"] = usb_board()
@@ -472,7 +501,7 @@ def build():
 CASE = ["frame_cf", "frame_rf", "back_cf", "back_rf", "bezel", "gasket_back", "gasket_bezel", "gasket_pogo",
         "buttons"]
 INTERNAL = ["display", "fpc", "stiffener", "pcb", "qfn", "ffc", "chips", "switches", "actuators", "antenna", "pads",
-            "battery", "bat_tabs", "case_magnets"]
+            "battery", "bat_tabs", "case_magnets", "motor", "motor_springs"]
 METAL = ["case_magnets", "bars"]
 
 
@@ -512,6 +541,14 @@ def checks(m, fit, comps):
     pairs += [("dock", k) for k in CASE + ["pins_docked", "dock_magnets", "usb_pcb", "usb_c"]]
     pairs += [("pins_docked", k) for k in CASE + ["pcb", "battery", "case_magnets"]]
     pairs += [(k, "rf_pin") for k in CASE + ["dock"]]
+    pairs += [("strap", k) for k in CASE + ["bars", "rf_pin"]]
+    pairs += [("motor", k) for k in ["battery", "bat_tabs", "case_magnets", "pcb"]]
+    comp = S.FLOOR + MOTOR_TAPE + S.MOTOR_T + MOTOR_SPRING_FREE - S.Z_PCB0
+    print(f"  motor spring compression {comp:.2f} mm (free {MOTOR_SPRING_FREE}), pocket {MOTOR_POCKET} dia, "
+          f"battery {S.BAT_L:.1f} x {S.BAT_W} x {S.BAT_T} at x {S.BAT_X0:.2f}..{S.BAT_X1:.2f}")
+    ear = OW - (STRAP_W / 2 + 0.1)
+    print(f"  NATO {STRAP_W:.0f} mm: ears {ear:.2f} mm, gap {NATO_GAP} mm, {LUG_PIN_D} mm fixed pins, "
+          f"lug-to-lug {2 * EAR_TIP:.1f} mm")
     worst = 0.0
     for a, b in pairs:
         v = interference(m[a], m[b])
@@ -597,7 +634,7 @@ def export(m):
 # ---------------------------------------------------------------- renders
 COLORS = dict(
     frame_cf="#2e3238", back_cf="#3a3f47", frame_rf="#dcd6c4", back_rf="#cfc8b4", bezel="#1f2227",
-    gasket_back="#e4572e", gasket_bezel="#e4572e", gasket_pogo="#e4572e", buttons="#e4572e", rf_pin="#f2efe6", display="#d9d7cf", fpc="#c8861a", stiffener="#9c6610",
+    gasket_back="#e4572e", gasket_bezel="#e4572e", gasket_pogo="#e4572e", buttons="#e4572e", rf_pin="#f2efe6", strap="#56603f", motor="#a7adb4", motor_springs="#d8b246", display="#d9d7cf", fpc="#c8861a", stiffener="#9c6610",
     pcb="#1e5b3e", qfn="#2b2b2d", ffc="#e6dfca", chips="#3a3a3c", switches="#b9bec5", actuators="#1d1d1f",
     pads="#d9a92e", antenna="#c9a24a", battery="#c4c9cf", bat_tabs="#e3e6ea", case_magnets="#9ea4ab", dock_magnets="#9ea4ab",
     bars="#c9cdd3", dock="#e9e7e1", pins_docked="#d8b246", pins_free="#d8b246", usb_pcb="#23306a", usb_c="#c9cdd2",
@@ -676,8 +713,8 @@ def cam(p, pos, focal, zoom=1.0, up=(0, 0, 1)):
 
 def render_assembled(m):
     p = plotter(1600, 1000)
-    add(p, m, WATCH)
-    cam(p, (-48, -78, 58), (0, 0, 2.5), 1.55)
+    add(p, m, WATCH + ["strap"])
+    cam(p, (-48, -78, 58), (0, 0, 2.0), 1.3)
     p.screenshot(str(MEDIA / "cad-assembled.png"))
     p.close()
 
@@ -731,10 +768,11 @@ def render_exploded(m):
     groups = [  # (label, keys, z offset, anchor z)
         ("Bezel, plain PETG, on a TPU gasket", ["bezel", "gasket_bezel"], 36, S.CASE_T),
         ("Display GDEM0097T61 + FPC tail", ["display", "fpc", "stiffener"], 27, S.Z_DISP1),
-        ("Frame: PETG-CF + PETG RF window,\n4 TPU buttons, 14 mm lugs", ["frame_cf", "frame_rf", "buttons", "bars", "rf_pin"],
+        ("Frame: PETG-CF + PETG RF window,\n4 TPU buttons, 16 mm NATO lugs", ["frame_cf", "frame_rf", "buttons", "bars", "rf_pin"],
          18, S.Z_DISP1 - 1),
         ("PCB 0.8 mm + parts", ["pcb", "qfn", "ffc", "chips", "switches", "actuators", "antenna", "pads"], 8, S.Z_PCB1),
-        ("Battery envelope 27 x 15 x 2.5", ["battery", "bat_tabs"], 0, S.Z_BAT1),
+        (f"Battery {S.BAT_L:.1f} x {S.BAT_W:.0f} x {S.BAT_T}\n+ 8 x 2 coin vibration motor", ["battery", "bat_tabs", "motor", "motor_springs"],
+         0, S.Z_BAT1),
         ("Back: PETG-CF + PETG RF window,\nTPU gaskets, 2x2 magnets",
          ["back_cf", "back_rf", "case_magnets", "gasket_back", "gasket_pogo"], -9, S.FLOOR),
     ]
@@ -800,7 +838,7 @@ def render_section(m):
     from matplotlib.path import Path as MPath
 
     y = POGO_Y[2]
-    keys = CASE + INTERNAL + ["bars", "rf_pin"]
+    keys = CASE + INTERNAL + ["bars", "rf_pin", "strap"]
     hatch = {"frame_cf", "frame_rf", "back_cf", "back_rf", "bezel"}
     fig = plt.figure(figsize=(16, 10), dpi=100, facecolor="#f4f5f7")
     ax1 = fig.add_axes([0.03, 0.55, 0.94, 0.38])
@@ -822,7 +860,7 @@ def render_section(m):
         ax.set_facecolor("#f4f5f7")
         ax.axis("off")
     ax1.set_xlim(-OL - 4.5, OL + 17.5)
-    ax1.set_ylim(-2.2, S.CASE_T + 1.6)
+    ax1.set_ylim(-3.6, S.CASE_T + 1.6)
     ax1.set_title(f"Section at y = {y:+.2f} mm (through a pogo pin hole), looking from -Y", fontsize=15, loc="left")
 
     # stack dimensions on the right of the full section
@@ -843,21 +881,22 @@ def render_section(m):
                                                               shrinkA=0, shrinkB=0))
     ax1.text(xt + 0.5, S.CASE_T / 2, f"{S.CASE_T:.2f} mm\ntotal", va="center", fontsize=13, color="#c0392b",
              weight="bold")
-    ax1.annotate("", (-OL, -1.2), (OL, -1.2), arrowprops=dict(arrowstyle="<->", lw=1.0, color="#333333",
+    ax1.annotate("", (-OL, -2.4), (OL, -2.4), arrowprops=dict(arrowstyle="<->", lw=1.0, color="#333333",
                                                               shrinkA=0, shrinkB=0))
-    ax1.text(0, -1.9, f"case body {S.CASE_L:.1f} mm   (lug-to-lug {2 * EAR_TIP:.1f} mm)", ha="center",
+    ax1.text(0, -3.1, f"case body {S.CASE_L:.1f} mm   (lug-to-lug {2 * EAR_TIP:.1f} mm, NATO strap {STRAP_T} mm under the back)", ha="center",
              fontsize=11)
     for x, label in [(S.DISP_X0 - 0.2, "-X: FPC end"), (S.DISP_X1 + 2.2, "+X: antenna end (plastic only)")]:
         ax1.text(x, S.CASE_T + 0.6, label, ha="center", fontsize=10, color="#555")
-    ax1.text(-X_BAR, Z_BAR - 1.6, "steel spring bar", ha="center", va="top", fontsize=9, color="#555")
-    ax1.text(X_BAR, Z_BAR - 1.6, "plastic pin", ha="center", va="top", fontsize=9, color="#555")
+    ax1.text(-X_BAR, Z_BAR - 1.3, "steel pin", ha="center", va="top", fontsize=9, color="#555")
+    ax1.text(X_BAR, Z_BAR - 1.3, "nylon pin", ha="center", va="top", fontsize=9, color="#555")
+    ax1.text(0, -0.75, "NATO strap", ha="center", va="center", fontsize=9, color="#f0f0e8")
 
-    ax2.set_xlim(-OL - 0.8, -7.5)
-    ax2.set_ylim(-1.0, S.CASE_T + 1.6)
+    ax2.set_xlim(-OL - 0.8, -5.5)
+    ax2.set_ylim(-1.6, S.CASE_T + 1.6)
     ax2.set_title("Detail, -X end", fontsize=13, loc="left")
     notes = [((-17.0, 5.15), (-19.6, 7.9), "FPC U-bend"), ((-12, 4.7), (-12.5, 7.9), "FFC connector"),
              ((S.POGO_X, 1.5), (-13.6, 1.3), "pogo hole 1.3, pad above"),
-             ((-11, 2.4), (-9.6, 3.0), "battery"), ((-18.6, 3), (-19.6, -0.8), "frame wall"),
+             ((-4.5, 2.0), (-7.0, 3.0), "battery"), ((S.MOTOR_X, 1.5), (-12.6, 0.15), "coin motor"), ((-18.6, 3), (-19.6, -0.8), "frame wall"),
              ((-16.0, 0.3), (-15.0, -0.8), "back plate"), ((-15.5, 7.0), (-16.0, 7.9), "bezel"),
              ((-18.7, Z_FRAME0 - 0.15), (-21.2, 1.6), "TPU gasket"),
              ((S.POGO_X + 0.9, S.Z_PCB0 - 0.3), (-13.6, 2.3), "TPU pogo seal"),

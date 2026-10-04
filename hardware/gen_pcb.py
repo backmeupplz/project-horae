@@ -23,14 +23,15 @@ LEDGES = [(X0 - 1, Y0 - 1, S.DISP_X0 + S.LEDGE, -S.LEDGE_Y), (X0 - 1, S.LEDGE_Y,
 PIN = {
     "U1": (6.0, 0.0, None),            # rotation chosen to face pin 1 at the antenna feed
     "J1": (S.FFC_X, 0.0, None),
-    "SW1": (S.BUTTON_X[1], Y0 + 1.45 + S.BUTTON_INSET, 180), "SW2": (S.BUTTON_X[1], Y1 - 1.45 - S.BUTTON_INSET, 0),   # nub points outward (+y local)
-    "SW3": (S.BUTTON_X[0], Y0 + 1.45 + S.BUTTON_INSET, 180), "SW4": (S.BUTTON_X[0], Y1 - 1.45 - S.BUTTON_INSET, 0),
+    # capacitive touch electrodes along the long edges (TCH1 UP, TCH2 DOWN at +X; TCH3 MENU, TCH4 BACK at -X)
+    "TCH1": (S.TOUCH_X[1], Y0 + S.TOUCH_W / 2 + 0.3, 0), "TCH2": (S.TOUCH_X[1], Y1 - S.TOUCH_W / 2 - 0.3, 0),
+    "TCH3": (S.TOUCH_X[0], Y0 + S.TOUCH_W / 2 + 0.3, 0), "TCH4": (S.TOUCH_X[0], Y1 - S.TOUCH_W / 2 - 0.3, 0),
 }
-POGO_Y = [(i - 1.5) * S.POGO_PITCH for i in range(4)]
 BOTTOM = {  # bottom-side pads
-    "TP1": (S.POGO_X, POGO_Y[0]), "TP2": (S.POGO_X, POGO_Y[1]), "TP3": (S.POGO_X, POGO_Y[2]), "TP4": (S.POGO_X, POGO_Y[3]),
-    "TP5": (S.POGO_X + 0.2, -S.BATPAD_Y), "TP6": (S.POGO_X + 0.2, S.BATPAD_Y),
+    **{tp: S.POGO_PADS[k][:2] for k, tp in enumerate(("TP1", "TP2", "TP3", "TP4"))},   # VBUS, D-, D+, GND
+    "TP5": (S.BATPAD_X, -S.BATPAD_Y), "TP6": (S.BATPAD_X, S.BATPAD_Y),
     "TP7": (S.MOTOR_X - S.MOTOR_PAD_DX, 0.0), "TP8": (S.MOTOR_X + S.MOTOR_PAD_DX, 0.0),   # under the motor: spring fingers or wires
+    "TP14": (S.BAT_X0 - 0.75, 5.8), "TP15": (S.BAT_X0 - 0.75, -5.8), "TP16": (S.BAT_X0 - 0.75, 7.3),   # next to the battery end, where a flex tail can reach
     "TP9": (-4.4, -3.5), "TP10": (-2.2, -3.5), "TP11": (0.0, -3.5), "TP12": (2.2, -3.5), "TP13": (4.4, -3.5),   # over the battery pouch, clear of the motor can
 }
 TARGET = {  # loose targets for the legalizer, grouped near the IC they serve
@@ -128,6 +129,8 @@ def main():
     # antenna: long axis across the board at the +X end, feed/ground pads facing the board (-X)
     ae = fps["AE1"]
     put(ae, X1 - 5.70, -9.845, -90)   # pinned: the position the antenna was simulated and trimmed at (hardware/rf)
+    ant_cu_x = min([pcbnew.ToMM(gr.GetBoundingBox().GetLeft()) for gr in ae.GraphicalItems() if gr.GetLayer() == pcbnew.F_Cu] +
+                   [pcbnew.ToMM(p.GetBoundingBox().GetLeft()) for p in ae.Pads()]) - OX
     best = (None, -90)
     feed = [p for p in ae.Pads() if p.GetNumber() == "1"][0].GetPosition()
     feed = (pcbnew.ToMM(feed.x) - OX, pcbnew.ToMM(feed.y) - OY)
@@ -152,7 +155,7 @@ def main():
         put(j1, *PIN["J1"][:2], rot)
         if pad_xy(j1, "1")[0] < PIN["J1"][0]:
             break
-    for ref in ("SW1", "SW2", "SW3", "SW4"):
+    for ref in ("TCH1", "TCH2", "TCH3", "TCH4"):
         put(fps[ref], *PIN[ref])
     for ref, (x, y) in BOTTOM.items():
         put(fps[ref], x, y, 0, flip=True)
@@ -174,20 +177,24 @@ def main():
     l3a, l3b = pad_xy(fps["L3"], "1"), pad_xy(fps["L3"], "2")
     pin_pad("C12", "1", l3b[0] + 0.42, ry, "-y")
     c11a, c12a = pad_xy(fps["C11"], "1"), pad_xy(fps["C12"], "1")
-    put(fps["Y1"], 10.0, 6.3, 0)                 # crystal in the corner between SW2 and the RF feed
+    put(fps["Y1"], 10.0, 6.3, 0)                 # crystal in the corner between the +X touch pad and the RF feed
     put(fps["U6"], 0.5, 1.4, 0)                  # accelerometer pinned next to the RTC so its LGA ground pads reach the pour
     def track(net, pts, w=W):
         for a, b in zip(pts, pts[1:]):
             t = pcbnew.PCB_TRACK(board); t.SetStart(V(*a)); t.SetEnd(V(*b)); t.SetWidth(MM(w))
             t.SetLayer(pcbnew.F_Cu); t.SetNet(nets[net]); t.SetLocked(True); board.Add(t)
+    ae2 = pad_xy(ae, "2")                         # IFA short to ground: make sure the pour reaches it
+    track("GND", [ae2, (ae2[0] - 0.6, ae2[1])], w=0.3)
     track("RF_CHIP", [(rx, ry), c11a, l3a])           # segments break at every pad so the router sees them connected
     track("RF_ANT", [l3b, c12a, (fx, ry), (fx, fy)])
     # RF ground vias + fence are added after routing (route.py), with collision checks
-    placed = [box(fps[r]) for r in ("U1", "J1", "SW1", "SW2", "SW3", "SW4", "C11", "L3", "C12", "Y1", "U6")]
+    touch_keep = [(x - S.TOUCH_L / 2 - 0.6, y - S.TOUCH_W / 2 - 0.6, x + S.TOUCH_L / 2 + 0.6, y + S.TOUCH_W / 2 + 0.6)
+                  for x, y, _ in (PIN[t] for t in ("TCH1", "TCH2", "TCH3", "TCH4"))]   # parts stay 0.6 mm off the electrodes
+    placed = [box(fps[r]) for r in ("U1", "J1", "C11", "L3", "C12", "Y1", "U6")] + touch_keep
     placed.append((rx, ry - 0.35, fx + 0.35, ry + 0.35)); placed.append((fx - 0.35, ry, fx + 0.35, fy))   # keep parts off the feed
     ae_box = box(ae)
 
-    keep = [(S.ANT_X0 - 0.2, Y0 - 1, X1 + 1, Y1 + 1), FPC_LANE] + LEDGES
+    keep = [(min(S.ANT_X0 - 0.2, ant_cu_x - 1.0), Y0 - 1, X1 + 1, Y1 + 1), FPC_LANE] + LEDGES   # parts >= 1 mm from antenna copper
     small = lambda b: (b[2] - b[0]) * (b[3] - b[1]) < 4
     def legal(b):  # courtyards may touch, not overlap
         return (b[0] >= X0 + EDGE and b[2] <= X1 - EDGE and b[1] >= Y0 + EDGE and b[3] <= Y1 - EDGE
@@ -240,8 +247,10 @@ def main():
             for d in (half + 0.35, half + 0.55, half + 0.8):
                 for ang in range(0, 360, 45):
                     x, y = px + d * math.cos(math.radians(ang)), py + d * math.sin(math.radians(ang))
-                    if not (X0 + 0.5 < x < min(X1, ANT_KEEP_X) - 0.4 and Y0 + 0.5 < y < Y1 - 0.5):
+                    if not (X0 + 0.5 < x < min(X1, ANT_KEEP_X, ant_cu_x - 0.2) - 0.4 and Y0 + 0.5 < y < Y1 - 0.5):
                         continue
+                    if any(a - 0.3 < x < c + 0.3 and b - 0.3 < y < d + 0.3 for a, b, c, d in touch_keep):
+                        continue   # no vias near the touch electrodes
                     v = pcbnew.PCB_VIA(board); v.SetPosition(V(x, y)); v.SetWidth(MM(0.4)); v.SetDrill(MM(0.2)); v.SetNet(gnd_net)
                     t = pcbnew.PCB_TRACK(board); t.SetStart(V(px, py)); t.SetEnd(V(x, y)); t.SetWidth(MM(0.2))
                     t.SetLayer(pcbnew.F_Cu); t.SetNet(gnd_net)
@@ -270,11 +279,22 @@ def main():
     k.SetDoNotAllowTracks(True); k.SetDoNotAllowVias(True); k.SetDoNotAllowZoneFills(True)
     k.SetDoNotAllowPads(False); k.SetDoNotAllowFootprints(False)
     k.SetZoneName("antenna keep-out")
+    for n, (x0_, y0_, x1_, y1_) in enumerate(touch_keep):
+        t_ = rect_zone(pcbnew.F_Cu, None, x0_ + 0.1, y0_ + 0.1, x1_ - 0.1, y1_ - 0.1)
+        t_.SetIsRuleArea(True); t_.SetLayerSet(pcbnew.LSET.AllCuMask())
+        t_.SetDoNotAllowZoneFills(True); t_.SetDoNotAllowTracks(False); t_.SetDoNotAllowVias(True)
+        t_.SetDoNotAllowPads(False); t_.SetDoNotAllowFootprints(False); t_.SetZoneName(f"touch {n + 1} no-pour")
 
     pcbnew.ZONE_FILLER(board).Fill(board.Zones())
     board.Save("horae.kicad_pcb")
     os.makedirs("out", exist_ok=True)
     pcbnew.ExportSpecctraDSN(board, "out/horae.dsn")
+    dsn = open("out/horae.dsn").read()
+    for n in ("RF_CHIP", "RF_ANT"):
+        dsn = dsn.replace(f" {n} ", " ", 1) if f" {n} " in dsn.split("(class kicad_default", 1)[1].split("(circuit", 1)[0] else dsn
+    rf_class = '    (class RF RF_CHIP RF_ANT\n      (circuit\n        (use_via "Via[0-3]_400:200_um")\n      )\n      (rule\n        (width 200)\n        (clearance 150)\n      )\n    )\n'
+    dsn = dsn.replace("    (class kicad_default", rf_class + "    (class kicad_default", 1)
+    open("out/horae.dsn", "w").write(dsn)
     print(f"placed {len(fps)} footprints; antenna rot {best[1]}, feed at {feed[0]:.2f},{feed[1]:.2f}; U1 rot {min(rots)[1]}")
 
 
