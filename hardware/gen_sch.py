@@ -122,7 +122,7 @@ def main():
 
         inst = ["symbol", ["lib_id", q(lib_id)], ["at", f"{X:.2f}", f"{Y:.2f}", "0"], ["unit", "1"],
                 ["exclude_from_sim", "no"], ["in_bom", "no" if ref.startswith(("#", "TP")) else "yes"],
-                ["on_board", "no" if ref.startswith("#") else "yes"], ["dnp", "no"], ["uuid", q(uid("s", ref))],
+                ["on_board", "no" if ref.startswith("#") else "yes"], ["dnp", "yes" if value.startswith("DNP") else "no"], ["uuid", q(uid("s", ref))],
                 prop("Reference", ref, X + minx, Y - maxy - 1.5, hide=ref.startswith("#")),
                 prop("Value", value, X + minx, Y - miny + 2.5, hide=ref.startswith("#")),
                 prop("Footprint", fp, X, Y, hide=True), prop("Datasheet", "", X, Y, hide=True)]

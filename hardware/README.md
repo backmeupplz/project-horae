@@ -28,7 +28,8 @@ It needs Docker (it runs KiCad 10 from the official `kicad/kicad:10.0` image thr
 
 ## Design summary
 - **MCU:** ESP32-S3FN8 (Watchy's chip, 8 MB in-package flash) with a 40 MHz crystal and a 24 nH series L on XTAL_P (per Espressif).
-  - **Antenna:** Watchy's meander IFA with its 3 pF / 7.5 nH / 3 pF pi match.
+  - **Antenna:** Watchy's meander IFA, **trimmed 6.64 mm** after an openEMS simulation (`rf/`). As drawn it resonated at ~1.99 GHz in the case and would barely radiate.
+  - **Match:** C11 0.9 pF, L3 0.6 nH; C12 is a not-fitted tuning spot.
 - **Power:**
   - Charging and USB data come in through 4 pogo pads on the bottom (VBUS, D−, D+, GND), with a USBLC6 for ESD.
   - TP4054 charger at 50 mA, RT9080 LDO (2 µA quiescent).
@@ -44,7 +45,14 @@ It needs Docker (it runs KiCad 10 from the official `kicad/kicad:10.0` image thr
    - Check with a real panel, using the DESPI adapter, before ordering.
 2. **RF.**
    - Done: the feed is hand-routed as a 50 Ω GCPW (0.20 mm track, 0.15 mm gap, In1 ground below, JLC 0.8 mm 4-layer stack-up). The pi match sits in a straight line at the RF pin, and the shunt capacitors have their own ground vias. The antenna now sits entirely past the display glass.
-   - Still needed: the C/L/C values come from an EM simulation (`rf/`). Verify them on real hardware with RSSI, or ideally a VNA.
+   - Simulated in openEMS (FDTD) with the case, glass, battery and a wrist phantom: see `rf/results/report_trim6.64.txt`.
+     - In case: S11 between −8.3 and −15.7 dB across 2.40–2.48 GHz.
+     - On the wrist: −8.8 to −14.1 dB.
+   - Confidence on the absolute frequency is about ±3–5% (PETG εr and infill, simplified case).
+   - **Verify on hardware:**
+     - **Preferred:** VNA through a pigtail on the AE1 feed, with L3 lifted, inside the assembled case.
+     - **Without a VNA:** RSSI and throughput A/B tests. Swap values from the tuning kit listed in the report.
+     - A bare board reads ~2.9 GHz; always test it inside the case.
 3. **Via-in-pad:** removed. No POFV fee.
 4. **Vias:** standard 0.4/0.2 mm, so no small-hole fee. Routing clearance is 0.11 mm and JLC's minimum is 0.09 mm.
 5. **Crystal load caps:** 24 pF C0G, matching the crystal's 15 pF load spec plus ~3 pF of board stray. Trim ±2 pF after measuring the clock offset.

@@ -125,19 +125,8 @@ def main():
 
     # antenna: long axis across the board at the +X end, feed/ground pads facing the board (-X)
     ae = fps["AE1"]
-    best = None
-    for rot in (90, 270):
-        put(ae, 0, 0, rot)
-        cu = [g.GetBoundingBox() for g in ae.GraphicalItems() if g.GetLayer() == pcbnew.F_Cu] + [p.GetBoundingBox() for p in ae.Pads()]
-        bx = (min(pcbnew.ToMM(b.GetLeft()) for b in cu) - OX, min(pcbnew.ToMM(b.GetTop()) for b in cu) - OY,
-              max(pcbnew.ToMM(b.GetRight()) for b in cu) - OX, max(pcbnew.ToMM(b.GetBottom()) for b in cu) - OY)  # copper only
-        dx, dy = (X1 - 0.8) - bx[2], -(bx[1] + bx[3]) / 2   # clear of the rounded corners
-        put(ae, dx, dy, rot)
-        feed = [p for p in ae.Pads() if p.GetNumber() == "1"][0].GetPosition()
-        fx = pcbnew.ToMM(feed.x) - OX
-        if best is None or fx < best[0]:
-            best = (fx, rot, dx, dy)
-    put(ae, best[2], best[3], best[1])
+    put(ae, X1 - 5.70, -9.845, -90)   # pinned: the position the antenna was simulated and trimmed at (hardware/rf)
+    best = (None, -90)
     feed = [p for p in ae.Pads() if p.GetNumber() == "1"][0].GetPosition()
     feed = (pcbnew.ToMM(feed.x) - OX, pcbnew.ToMM(feed.y) - OY)
     global ANT_KEEP_X

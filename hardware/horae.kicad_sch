@@ -4765,7 +4765,7 @@
         (font
           (size 1.27 1.27))
         (justify left)))
-    (property "Value" "3pF"
+    (property "Value" "0.9pF"
       (at 28.45 273.01 0)
       (effects
         (font
@@ -4785,7 +4785,7 @@
           (size 1.27 1.27))
         (justify left)
         (hide yes)))
-    (property "LCSC" "C237430"
+    (property "LCSC" "C471401"
       (at 30.48 266.70 0)
       (effects
         (font
@@ -4832,7 +4832,7 @@
         (font
           (size 1.27 1.27))
         (justify left)))
-    (property "Value" "7.5nH"
+    (property "Value" "0.6nH"
       (at 53.34 273.01 0)
       (effects
         (font
@@ -4852,7 +4852,7 @@
           (size 1.27 1.27))
         (justify left)
         (hide yes)))
-    (property "LCSC" "C6890513"
+    (property "LCSC" "C77699"
       (at 53.34 266.70 0)
       (effects
         (font
@@ -4891,7 +4891,7 @@
     (exclude_from_sim no)
     (in_bom yes)
     (on_board yes)
-    (dnp no)
+    (dnp yes)
     (uuid "ecb399f0-cbe8-5b51-a3c0-1d9eab424c4c")
     (property "Reference" "C12"
       (at 71.63 261.39 0)
@@ -4899,7 +4899,7 @@
         (font
           (size 1.27 1.27))
         (justify left)))
-    (property "Value" "3pF"
+    (property "Value" "DNP"
       (at 71.63 273.01 0)
       (effects
         (font
@@ -4913,13 +4913,6 @@
         (justify left)
         (hide yes)))
     (property "Datasheet" ""
-      (at 73.66 266.70 0)
-      (effects
-        (font
-          (size 1.27 1.27))
-        (justify left)
-        (hide yes)))
-    (property "LCSC" "C237430"
       (at 73.66 266.70 0)
       (effects
         (font

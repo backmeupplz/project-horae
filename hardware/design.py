@@ -71,10 +71,10 @@ PARTS = [
     C("C9", "100nF", C100N, "VDD_SPI", "GND", "mcu"),
     R("R1", "10k", R10K, "+3V3", "EN", "mcu"),
     C("C10", "1uF", C1U, "EN", "GND", "mcu"),
-    # RF: Watchy's tuned pi match into Watchy's meander IFA (retune for our ground plane)
-    C("C11", "3pF", "C237430", "RF_CHIP", "GND", "rf"),
-    ("L3", "Device:L", "7.5nH", L0201, "C6890513", {"1": "RF_CHIP", "2": "RF_ANT"}, "rf"),
-    C("C12", "3pF", "C237430", "RF_ANT", "GND", "rf"),
+    # RF: match from the openEMS sim of the trimmed antenna in the case (hardware/rf); C12 is a tuning spot
+    C("C11", "0.9pF", "C471401", "RF_CHIP", "GND", "rf"),
+    ("L3", "Device:L", "0.6nH", L0201, "C77699", {"1": "RF_CHIP", "2": "RF_ANT"}, "rf"),
+    C("C12", "DNP", "", "RF_ANT", "GND", "rf"),
     ("AE1", "Device:Antenna_Chip", "PCB IFA", "horae:SWRA117D", "", {"1": "RF_ANT", "2": "GND"}, "rf"),
 
     # --- power: pogo USB in, charger, LDO ---

@@ -99,6 +99,37 @@ footer { border-top: 1px solid var(--line); padding: 24px 0 48px; font-size: 13p
 
   <li class="entry">
     <time class="mono" datetime="2026-10-03">2026-10-03 · Day 0</time>
+    <h2>Rev A, designed end to end <span class="tag">design</span></h2>
+    <p>Board, case and antenna, all generated from code and all checks passing. Nothing is ordered yet; this is the design review.</p>
+    <ul>
+      <li><b>Board:</b> 37.3 × 16.5 mm, 4 layers, 54 parts placed by JLC. ESP32-S3, BMA400, RV-3032, display booster and side switches. ERC and DRC clean, routed with Freerouting, RF feed hand-routed as a 50 Ω coplanar line.</li>
+      <li><b>Antenna:</b> an openEMS simulation showed Watchy's antenna would resonate at ~2.0 GHz inside our case and barely radiate. Trimmed by 6.64 mm and re-matched; it's predicted at −8 to −16 dB across the 2.4 GHz band, in the case and on the wrist.</li>
+      <li><b>Case:</b> 39.3 × 18.5 × 7.4 mm (Charge 6: 36.7 × 23.1 × 11.2). Carbon-fiber PETG body, plain-PETG window over the antenna, TPU gaskets and button plugs for splash resistance, magnetic pogo dock.</li>
+      <li><b>Cost:</b> about CAD 250–270 landed for two assembled boards; the BMA400 alone is $15.</li>
+    </ul>
+    <div class="photos">
+      <a href="media/2026-10-03/cad-assembled.png"><img src="media/2026-10-03/cad-assembled.png" alt="Rendered rev A watch: 39.3 × 18.5 × 7.4 mm case with the e-paper bar" loading="lazy"></a>
+      <a href="media/2026-10-03/cad-exploded.png"><img src="media/2026-10-03/cad-exploded.png" alt="Exploded view: bezel, display, frame, board, battery, back" loading="lazy"></a>
+      <a href="media/2026-10-03/cad-section.png"><img src="media/2026-10-03/cad-section.png" alt="Cross-section with the 7.4 mm stack-up dimensioned" loading="lazy"></a>
+      <a href="media/2026-10-03/cad-sealing.png"><img src="media/2026-10-03/cad-sealing.png" alt="Splash sealing: TPU gaskets, TPU button plugs, plain-PETG RF window at the antenna end" loading="lazy"></a>
+      <a href="media/2026-10-03/cad-scale.png"><img src="media/2026-10-03/cad-scale.png" alt="Top view next to a Fitbit Charge 6 outline" loading="lazy"></a>
+      <a href="media/2026-10-03/cad-dock.png"><img src="media/2026-10-03/cad-dock.png" alt="Magnetic pogo charging dock" loading="lazy"></a>
+      <a href="media/2026-10-03/pcb-3d.png"><img src="media/2026-10-03/pcb-3d.png" alt="Rev A board, 3D render: ESP32-S3, antenna, display connector, side switches" loading="lazy"></a>
+      <a href="media/2026-10-03/pcb-top.png"><img src="media/2026-10-03/pcb-top.png" alt="Board top" loading="lazy"></a>
+      <a href="media/2026-10-03/pcb-bottom.png"><img src="media/2026-10-03/pcb-bottom.png" alt="Board bottom: pogo, battery and test pads" loading="lazy"></a>
+      <a href="media/2026-10-03/pcb-rf.png"><img src="media/2026-10-03/pcb-rf.png" alt="Hand-routed 50-ohm RF feed and the trimmed meander antenna" loading="lazy"></a>
+      <a href="media/2026-10-03/rf-s11.png"><img src="media/2026-10-03/rf-s11.png" alt="openEMS simulation: antenna S11 before and after the trim and match" loading="lazy"></a>
+      <a href="media/2026-10-03/schematic.png"><img src="media/2026-10-03/schematic.png" alt="Generated schematic" loading="lazy"></a>
+    </div>
+    <div class="cards">
+      <a href="https://github.com/backmeupplz/project-horae/blob/main/hardware/README.md"><b>Hardware README</b><span>Review checklist, cost breakdown, rebuild</span></a>
+      <a href="https://github.com/backmeupplz/project-horae/tree/main/hardware/rf"><b>Antenna simulation</b><span>openEMS model, results, tuning kit</span></a>
+      <a href="https://github.com/backmeupplz/project-horae/tree/main/cad"><b>Case CAD</b><span>build123d source, STL/3MF per material</span></a>
+    </div>
+  </li>
+
+  <li class="entry">
+    <time class="mono" datetime="2026-10-03">2026-10-03 · Day 0</time>
     <h2>Plan: straight to a custom board <span class="tag">plan</span></h2>
     <ul>
       <li><b>No dev-board stage.</b> Rev A is a custom 4-layer, 0.8 mm board, fully assembled by JLCPCB. We plug in the display, solder the battery, and print the case.</li>
