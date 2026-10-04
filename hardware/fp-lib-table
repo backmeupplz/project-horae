@@ -1,0 +1,4 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "horae")(type "KiCad")(uri "${KIPRJMOD}/lib/horae.pretty")(options "")(descr "Project Horae parts"))
+)

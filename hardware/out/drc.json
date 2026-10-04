@@ -1,0 +1,498 @@
+{
+    "$schema": "https://schemas.kicad.org/drc.v1.json",
+    "coordinate_units": "mm",
+    "date": "2026-10-04T02:20:46",
+    "ignored_checks": [
+        {
+            "description": "Footprint has no courtyard defined",
+            "key": "missing_courtyard"
+        },
+        {
+            "description": "Track endpoint not centered on via",
+            "key": "track_not_centered_on_via"
+        },
+        {
+            "description": "Tuning profile track geometries",
+            "key": "tuning_profile_track_geometries"
+        },
+        {
+            "description": "Footprint doesn't match symbol's footprint filters",
+            "key": "footprint_filters_mismatch"
+        },
+        {
+            "description": "Footprint component type doesn't match footprint pads",
+            "key": "footprint_type_mismatch"
+        }
+    ],
+    "included_severities": [
+        "error",
+        "warning",
+        "exclusion"
+    ],
+    "kicad_version": "10.0.6",
+    "schematic_parity": [],
+    "source": "horae.kicad_pcb",
+    "unconnected_items": [],
+    "violations": [
+        {
+            "description": "Silkscreen clipped by board edge",
+            "items": [
+                {
+                    "description": "Segment on Edge.Cuts",
+                    "pos": {
+                        "x": 83.85,
+                        "y": 91.75
+                    },
+                    "uuid": "92876303-8c2b-40cc-987d-49816cad1f66"
+                },
+                {
+                    "description": "Segment of SW1 on F.Silkscreen",
+                    "pos": {
+                        "x": 104.7,
+                        "y": 91.5
+                    },
+                    "uuid": "2a27acd8-06c8-4d29-a497-eb67e03bb151"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_edge_clearance"
+        },
+        {
+            "description": "Silkscreen clipped by board edge",
+            "items": [
+                {
+                    "description": "Segment on Edge.Cuts",
+                    "pos": {
+                        "x": 83.85,
+                        "y": 91.75
+                    },
+                    "uuid": "92876303-8c2b-40cc-987d-49816cad1f66"
+                },
+                {
+                    "description": "Segment of SW1 on F.Silkscreen",
+                    "pos": {
+                        "x": 106.3,
+                        "y": 91.5
+                    },
+                    "uuid": "7c89966d-b4d8-4c31-ad7a-6d51df1f2fcd"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_edge_clearance"
+        },
+        {
+            "description": "Silkscreen clipped by board edge",
+            "items": [
+                {
+                    "description": "Segment on Edge.Cuts",
+                    "pos": {
+                        "x": 83.85,
+                        "y": 91.75
+                    },
+                    "uuid": "92876303-8c2b-40cc-987d-49816cad1f66"
+                },
+                {
+                    "description": "Segment of SW3 on F.Silkscreen",
+                    "pos": {
+                        "x": 94.0,
+                        "y": 91.5
+                    },
+                    "uuid": "b3a8fc6d-ff6a-4226-8155-c936cd9b8681"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_edge_clearance"
+        },
+        {
+            "description": "Silkscreen clipped by board edge",
+            "items": [
+                {
+                    "description": "Segment on Edge.Cuts",
+                    "pos": {
+                        "x": 83.85,
+                        "y": 91.75
+                    },
+                    "uuid": "92876303-8c2b-40cc-987d-49816cad1f66"
+                },
+                {
+                    "description": "Segment of SW3 on F.Silkscreen",
+                    "pos": {
+                        "x": 95.6,
+                        "y": 91.5
+                    },
+                    "uuid": "9e1db35b-6fc6-4d41-9844-43cf8c3fecb0"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_edge_clearance"
+        },
+        {
+            "description": "Silkscreen clipped by board edge",
+            "items": [
+                {
+                    "description": "Segment on Edge.Cuts",
+                    "pos": {
+                        "x": 116.15,
+                        "y": 108.25
+                    },
+                    "uuid": "0ed542a7-a3e8-4904-9867-c9e3e1d9c95d"
+                },
+                {
+                    "description": "Segment of SW2 on F.Silkscreen",
+                    "pos": {
+                        "x": 104.7,
+                        "y": 108.5
+                    },
+                    "uuid": "e48d0ab3-f7a0-4f08-b7c7-687f02a87c69"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_edge_clearance"
+        },
+        {
+            "description": "Silkscreen clipped by board edge",
+            "items": [
+                {
+                    "description": "Segment on Edge.Cuts",
+                    "pos": {
+                        "x": 116.15,
+                        "y": 108.25
+                    },
+                    "uuid": "0ed542a7-a3e8-4904-9867-c9e3e1d9c95d"
+                },
+                {
+                    "description": "Segment of SW2 on F.Silkscreen",
+                    "pos": {
+                        "x": 106.3,
+                        "y": 108.5
+                    },
+                    "uuid": "585d73a8-6d1c-42b8-9481-a83542f68df5"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_edge_clearance"
+        },
+        {
+            "description": "Silkscreen clipped by board edge",
+            "items": [
+                {
+                    "description": "Segment on Edge.Cuts",
+                    "pos": {
+                        "x": 116.15,
+                        "y": 108.25
+                    },
+                    "uuid": "0ed542a7-a3e8-4904-9867-c9e3e1d9c95d"
+                },
+                {
+                    "description": "Segment of SW4 on F.Silkscreen",
+                    "pos": {
+                        "x": 94.0,
+                        "y": 108.5
+                    },
+                    "uuid": "3c0847bc-41dc-4e01-a4f9-e5cc09c09cec"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_edge_clearance"
+        },
+        {
+            "description": "Silkscreen clipped by board edge",
+            "items": [
+                {
+                    "description": "Segment on Edge.Cuts",
+                    "pos": {
+                        "x": 116.15,
+                        "y": 108.25
+                    },
+                    "uuid": "0ed542a7-a3e8-4904-9867-c9e3e1d9c95d"
+                },
+                {
+                    "description": "Segment of SW4 on F.Silkscreen",
+                    "pos": {
+                        "x": 95.6,
+                        "y": 108.5
+                    },
+                    "uuid": "f57fd14b-bc25-43e6-ae9f-b7b3a5a15b8a"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_edge_clearance"
+        },
+        {
+            "description": "Silkscreen clipped by solder mask",
+            "items": [
+                {
+                    "description": "Segment of SW1 on F.Silkscreen",
+                    "pos": {
+                        "x": 103.75,
+                        "y": 95.05
+                    },
+                    "uuid": "94d951d5-08a2-4b0c-b55b-a30c52943382"
+                },
+                {
+                    "description": "NPTH pad of SW1",
+                    "pos": {
+                        "x": 105.5,
+                        "y": 94.5
+                    },
+                    "uuid": "a29c10c3-1ac5-42c6-bb09-448368a79cc1"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_over_copper"
+        },
+        {
+            "description": "Silkscreen clipped by solder mask",
+            "items": [
+                {
+                    "description": "Segment of SW1 on F.Silkscreen",
+                    "pos": {
+                        "x": 107.25,
+                        "y": 92.15
+                    },
+                    "uuid": "42c10a98-d02b-4118-b73c-0c317deea328"
+                },
+                {
+                    "description": "NPTH pad of SW1",
+                    "pos": {
+                        "x": 105.5,
+                        "y": 92.7
+                    },
+                    "uuid": "d96afb0b-292b-441f-b68c-482c5a1d1d3a"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_over_copper"
+        },
+        {
+            "description": "Silkscreen clipped by solder mask",
+            "items": [
+                {
+                    "description": "Segment of SW3 on F.Silkscreen",
+                    "pos": {
+                        "x": 96.55,
+                        "y": 92.15
+                    },
+                    "uuid": "71fe833a-de69-4a2d-a8dc-16a19ea374e3"
+                },
+                {
+                    "description": "NPTH pad of SW3",
+                    "pos": {
+                        "x": 94.8,
+                        "y": 92.7
+                    },
+                    "uuid": "84ec35cc-0008-45a3-b460-50ab5d032fa6"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_over_copper"
+        },
+        {
+            "description": "Silkscreen clipped by solder mask",
+            "items": [
+                {
+                    "description": "Segment of SW3 on F.Silkscreen",
+                    "pos": {
+                        "x": 93.05,
+                        "y": 95.05
+                    },
+                    "uuid": "f0ab3fe3-989b-45dd-b0cc-8f63cdcc0d53"
+                },
+                {
+                    "description": "NPTH pad of SW3",
+                    "pos": {
+                        "x": 94.8,
+                        "y": 94.5
+                    },
+                    "uuid": "48c3e72b-f26d-40b8-8e90-47551e85cea7"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_over_copper"
+        },
+        {
+            "description": "Silkscreen clipped by solder mask",
+            "items": [
+                {
+                    "description": "Circle of U5 on F.Silkscreen",
+                    "pos": {
+                        "x": 101.25,
+                        "y": 99.4
+                    },
+                    "uuid": "e97a7256-61b7-446b-a288-0a6c55a14a05"
+                },
+                {
+                    "description": "Pad 1 [GND] of U5 on F.Cu",
+                    "pos": {
+                        "x": 101.16,
+                        "y": 99.15
+                    },
+                    "uuid": "01ff0809-c01e-47cf-9e60-f95c4f400b9c"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_over_copper"
+        },
+        {
+            "description": "Silkscreen clipped by solder mask",
+            "items": [
+                {
+                    "description": "Segment of SW2 on F.Silkscreen",
+                    "pos": {
+                        "x": 103.75,
+                        "y": 107.85
+                    },
+                    "uuid": "2f9589bc-98b0-4b50-bc07-4ad20da2f605"
+                },
+                {
+                    "description": "NPTH pad of SW2",
+                    "pos": {
+                        "x": 105.5,
+                        "y": 107.3
+                    },
+                    "uuid": "496260b4-64c5-4da8-9256-8400f15df623"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_over_copper"
+        },
+        {
+            "description": "Silkscreen clipped by solder mask",
+            "items": [
+                {
+                    "description": "Segment of SW2 on F.Silkscreen",
+                    "pos": {
+                        "x": 107.25,
+                        "y": 104.95
+                    },
+                    "uuid": "947204c3-2546-4c7b-8cd6-658339ede449"
+                },
+                {
+                    "description": "NPTH pad of SW2",
+                    "pos": {
+                        "x": 105.5,
+                        "y": 105.5
+                    },
+                    "uuid": "b96b5ac5-e4c2-4e26-aa10-a80ec4854c3e"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_over_copper"
+        },
+        {
+            "description": "Silkscreen clipped by solder mask",
+            "items": [
+                {
+                    "description": "Circle of U6 on F.Silkscreen",
+                    "pos": {
+                        "x": 99.75,
+                        "y": 102.86
+                    },
+                    "uuid": "26040d7c-7191-463e-9034-fae7997079c9"
+                },
+                {
+                    "description": "Pad 4 [<no net>] of U3 on F.Cu",
+                    "pos": {
+                        "x": 99.95,
+                        "y": 103.45
+                    },
+                    "uuid": "b55e2ef7-03d2-493f-a938-00f78e03cb23"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_over_copper"
+        },
+        {
+            "description": "Silkscreen clipped by solder mask",
+            "items": [
+                {
+                    "description": "Polygon of U1 on F.Silkscreen",
+                    "pos": {
+                        "x": 110.11,
+                        "y": 102.6
+                    },
+                    "uuid": "b1282c95-8ecd-440a-a2e5-c9383dfa313c"
+                },
+                {
+                    "description": "Pad 1 [XTAL_P_L] of L1 on F.Cu",
+                    "pos": {
+                        "x": 110.6226,
+                        "y": 102.2069
+                    },
+                    "uuid": "2fc85ecd-6d8f-448d-90f3-315d1384a0a5"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_over_copper"
+        },
+        {
+            "description": "Silkscreen clipped by solder mask",
+            "items": [
+                {
+                    "description": "Circle of U3 on F.Silkscreen",
+                    "pos": {
+                        "x": 97.33,
+                        "y": 105.9
+                    },
+                    "uuid": "6b74cc8d-a9dc-4816-acaa-65dd5fef92fa"
+                },
+                {
+                    "description": "Pad 1 [BTN_BACK] of SW4 on F.Cu",
+                    "pos": {
+                        "x": 96.6,
+                        "y": 105.75
+                    },
+                    "uuid": "a1044c9d-8665-46b8-ad21-3d9504f4dc50"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_over_copper"
+        },
+        {
+            "description": "Silkscreen clipped by solder mask",
+            "items": [
+                {
+                    "description": "Segment of SW4 on F.Silkscreen",
+                    "pos": {
+                        "x": 96.55,
+                        "y": 104.95
+                    },
+                    "uuid": "e8866f68-7b91-4d07-b026-6afec4dd4d01"
+                },
+                {
+                    "description": "NPTH pad of SW4",
+                    "pos": {
+                        "x": 94.8,
+                        "y": 105.5
+                    },
+                    "uuid": "975f3696-ab7c-4b46-882b-5f231f505052"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_over_copper"
+        },
+        {
+            "description": "Silkscreen clipped by solder mask",
+            "items": [
+                {
+                    "description": "Segment of SW4 on F.Silkscreen",
+                    "pos": {
+                        "x": 93.05,
+                        "y": 107.85
+                    },
+                    "uuid": "6934496b-d5cc-47a9-b3b5-011cfd22f0ee"
+                },
+                {
+                    "description": "NPTH pad of SW4",
+                    "pos": {
+                        "x": 94.8,
+                        "y": 107.3
+                    },
+                    "uuid": "355827c6-fec2-4037-bcff-a531a3053ecf"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_over_copper"
+        }
+    ]
+}

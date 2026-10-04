@@ -3,3 +3,16 @@ __pycache__/
 *.kicad_prl
 hardware/*-backups/
 hardware/fp-info-cache
+# hardware build intermediates (deliverables in hardware/out are kept)
+hardware/out/*
+!hardware/out/horae-schematic.pdf
+!hardware/out/horae.step
+!hardware/out/horae-gerbers.zip
+!hardware/out/jlc-bom.csv
+!hardware/out/jlc-cpl.csv
+!hardware/out/erc.json
+!hardware/out/drc.json
+hardware/*.kicad_prl
+hardware/*-backups/
+hardware/fp-info-cache
+cad/__pycache__/
