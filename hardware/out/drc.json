@@ -1,7 +1,7 @@
 {
     "$schema": "https://schemas.kicad.org/drc.v1.json",
     "coordinate_units": "mm",
-    "date": "2026-10-04T15:26:36",
+    "date": "2026-10-04T16:01:26",
     "ignored_checks": [
         {
             "description": "Footprint has no courtyard defined",
@@ -43,11 +43,57 @@
                         "x": 111.66,
                         "y": 101.559999
                     },
-                    "uuid": "28aa995d-ed3b-4851-8934-ec29cc029845"
+                    "uuid": "5fe08d2d-7c81-4ff4-8ffb-2c758bdba99c"
                 }
             ],
             "severity": "warning",
             "type": "via_dangling"
+        },
+        {
+            "description": "Silkscreen clipped by board edge",
+            "items": [
+                {
+                    "description": "Arc on Edge.Cuts",
+                    "pos": {
+                        "x": 82.75,
+                        "y": 106.25
+                    },
+                    "uuid": "4e29b52e-f41a-49d4-a296-869d046bc5ff"
+                },
+                {
+                    "description": "Segment of MIC1 on F.Silkscreen",
+                    "pos": {
+                        "x": 81.05,
+                        "y": 107.09
+                    },
+                    "uuid": "0d5f5c2e-7265-407e-9ae9-98a9435786b8"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_edge_clearance"
+        },
+        {
+            "description": "Silkscreen clipped by board edge",
+            "items": [
+                {
+                    "description": "Arc on Edge.Cuts",
+                    "pos": {
+                        "x": 82.75,
+                        "y": 106.25
+                    },
+                    "uuid": "4e29b52e-f41a-49d4-a296-869d046bc5ff"
+                },
+                {
+                    "description": "Segment of MIC1 on F.Silkscreen",
+                    "pos": {
+                        "x": 81.05,
+                        "y": 107.09
+                    },
+                    "uuid": "77246edb-0bbe-4f79-90fc-e2ee7150d166"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_edge_clearance"
         },
         {
             "description": "Silkscreen clipped by solder mask",
@@ -58,7 +104,7 @@
                         "x": 101.25,
                         "y": 99.4
                     },
-                    "uuid": "461506be-d2fa-42b7-b947-fb1d2f215bfb"
+                    "uuid": "42f0d8c8-46d9-4bde-9ca4-4795a572f093"
                 },
                 {
                     "description": "Pad 1 [GND] of U5 on F.Cu",
@@ -66,7 +112,7 @@
                         "x": 101.16,
                         "y": 99.15
                     },
-                    "uuid": "e2b109e3-4d66-44a4-99fc-ccc95832e92f"
+                    "uuid": "16aa79cf-d275-45f4-905a-f10ce9d98ce5"
                 }
             ],
             "severity": "warning",
@@ -81,7 +127,7 @@
                         "x": 110.11,
                         "y": 102.6
                     },
-                    "uuid": "3487cb14-3aef-48d1-8a1c-725456da4af6"
+                    "uuid": "ed51cd62-99c1-466e-bce5-44f24aa22255"
                 },
                 {
                     "description": "Pad 1 [RF_CHIP] of C11 on F.Cu",
@@ -89,7 +135,7 @@
                         "x": 110.5,
                         "y": 102.6
                     },
-                    "uuid": "1f49cea2-1e36-40e0-a9b7-76602bca2aca"
+                    "uuid": "e1a6d58b-788f-495d-8d5b-0484b103d6e1"
                 }
             ],
             "severity": "warning",
@@ -99,20 +145,20 @@
             "description": "Silkscreen clearance",
             "items": [
                 {
-                    "description": "Circle of TP16 on B.Silkscreen",
-                    "pos": {
-                        "x": 86.8,
-                        "y": 107.3
-                    },
-                    "uuid": "0234faf0-4a85-484e-8eee-aa7132f521b8"
-                },
-                {
                     "description": "Circle of TP14 on B.Silkscreen",
                     "pos": {
                         "x": 86.8,
                         "y": 105.8
                     },
-                    "uuid": "f8872742-4a6a-498d-873b-c59306eda445"
+                    "uuid": "39373267-6b27-4778-be9e-9d189e509c50"
+                },
+                {
+                    "description": "Circle of TP16 on B.Silkscreen",
+                    "pos": {
+                        "x": 86.8,
+                        "y": 107.3
+                    },
+                    "uuid": "6ccda74f-6631-418e-8d8d-853619e8bad2"
                 }
             ],
             "severity": "warning",

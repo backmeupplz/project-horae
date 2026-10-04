@@ -86,3 +86,4 @@ if __name__ == "__main__":
 # board details the case depends on (set by hardware/gen_pcb.py)
 FFC_X = DISP_X0 + 6.9 # FH34SRJ centre; ribbon enters from -X
 PCB_CORNER_R = 2.0    # must stay below the case inner corner radius (CORNER_R - WALL)
+MIC_X, MIC_Y = DISP_X0 - 0.78, 6.07   # LMD2718T top-port PDM mic centre (PCB top, long axis along X); port must sit past the glass edge

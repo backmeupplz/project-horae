@@ -54,7 +54,10 @@ ESP_PINS = {
     "24": "ACC_INT1",     # GPIO18
     "27": "ACC_INT2",     # GPIO21
     "25": "ESP_DM", "26": "ESP_DP",
-        "29": "VDD_SPI", "46": "+3V3", "49": "TXD0", "50": "RXD0",
+        "43": "MIC_VDD",      # GPIO38  powers the mic directly: 0 uA when off
+    "44": "MIC_CLK",      # GPIO39  PDM clock (I2S0 PDM RX)
+    "45": "MIC_DATA",     # GPIO40
+    "29": "VDD_SPI", "46": "+3V3", "49": "TXD0", "50": "RXD0",
     "53": "XTAL_N", "54": "XTAL_P_L", "55": "+3V3", "56": "+3V3", "57": "GND",
 }
 
@@ -132,7 +135,10 @@ PARTS = [
     C("C29", "1uF/25V", C1U25, "EPD_VSL", "GND", "display", C0402),
     C("C30", "1uF/25V", C1U25, "EPD_VCOM", "GND", "display", C0402),
 
-    # --- UI: capacitive touch + haptics ---
+    # --- UI: capacitive touch + haptics + mic ---
+    ("MIC1", "horae:LMD2718T261-OA1", "LMD2718T261", "horae:MIC-SMD_6P-L2.8-W1.9-P0.98-TL", "C5373237",
+     {"1": "GND", "2": "GND", "3": "GND", "4": "MIC_VDD", "5": "MIC_DATA", "6": "MIC_CLK"}, "ui"),   # top-port PDM, L/R=GND (left)
+    C("C31", "100nF", C100N, "MIC_VDD", "GND", "ui"),
     TP("TCH1", "TOUCH_UP", "horae:TouchPad_4.0x1.6mm", "ui"), TP("TCH2", "TOUCH_DOWN", "horae:TouchPad_4.0x1.6mm", "ui"),
     TP("TCH3", "TOUCH_MENU", "horae:TouchPad_4.0x1.6mm", "ui"), TP("TCH4", "TOUCH_BACK", "horae:TouchPad_4.0x1.6mm", "ui"),
     ("Q2", "horae:CJ3134K_C62503", "CJ3134K", "horae:SOT-723_L1.2-W0.8-P0.40-LS1.2-BR", "C62503",

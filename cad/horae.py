@@ -5,12 +5,13 @@
     .venv/bin/python cad/horae.py --no-render
 
 All shared dimensions come from spec.py. Splash-resistant case, PETG-CF body with a plain-PETG RF window:
-  frame  walls, glass ledges, 4 sealed TPU buttons, 16 mm NATO lugs with fixed pins (PCB goes in from below, glass from
+  frame  walls, glass ledges, 4 PETG touch windows, 16 mm NATO lugs with fixed pins (PCB goes in from below, glass from
          above). Split at x = ANT_X0 - 1: frame_cf (PETG-CF) + frame_rf (PETG, antenna end), Z-stepped lap joint.
   back   0.6 mm floor + pogo/magnet block (-X) + support block (+X). Split the same way: back_cf + back_rf.
   bezel  0.5 mm lip with the display window, plain PETG (no CF over the antenna; 0.2 mm nozzle)
   TPU 95A: gasket_back (frame/back ring), gasket_bezel (bezel/glass+frame ring), gasket_pogo (seals the pogo
-         wells on the PCB bottom), button x4 (plug + flange sealing each wall window)
+         wells on the PCB bottom)
+  Outer shape: SHAPE envelope (rounded "pebble" by default) clips every case part.
 If hardware/out/horae.step exists it replaces the placeholder PCB.
 """
 import math
@@ -33,8 +34,9 @@ BOARD_STEP = ROOT / "hardware" / "out" / "horae.step"
 FIT = 0.1             # per-side clearance of the back-plate blocks in the cavity
 GLASS_FIT = 0.15      # per-side clearance around the display glass
 WIN_M = S.DISP_AA_MARGIN_FAR - S.LIP_OVERLAP   # window = active area + this (0.75) -> 1.0 overlap on 3 sides
-MAG_D, MAG_T = 2.0, 2.0   # N52 disc in a blind pocket from the skin side (sealed); 3 mm won't fit the 3 mm strip
-MAG_Y = S.BATPAD_Y    # under the battery pads but 1.4 mm below them; wire/solder channel above the magnet
+MAG_D, MAG_T = 2.0, 2.0   # N52 disc in a blind pocket from the skin side (sealed), under each battery pad
+MAG_X, MAG_Y = S.BATPAD_X, S.BATPAD_Y
+POGO_XY = [(x, y) for x, y, _ in S.POGO_PADS]
 POGO_PAD_D = 1.0
 POGO_HOLE_D = 1.3     # P50-style pin: 1.0 barrel + 0.3
 PIN_L, PIN_D, PLUNGER_D, PLUNGER_L = 16.0, 1.0, 0.6, 2.5
@@ -50,39 +52,43 @@ FFC_L, FFC_D, FFC_H = 12.5, 3.5, 1.0        # FH34SRJ-18S body (Y x X x Z), cent
 BACK_GASKET = 0.3     # TPU ring between frame and back (compressed; printed 0.4). Frame starts above it
 POGO_GASKET = 0.5     # TPU pad under the PCB around the pogo pads (compressed; printed 0.6)
 POGO_SEAL_D = 0.8     # gasket hole around each 0.6 mm plunger; seals on the 1.0 mm pad ring
-X_POGO1 = -S.CAV_L / 2 + S.POGO_STRIP   # end of the pogo strip / start of the motor bay
+X_MZ1 = S.BAT_X0 - 0.25                 # end of the motor-zone block in the back
 MOTOR_POCKET = S.MOTOR_D + 0.4
 MOTOR_TAPE = 0.2      # foam tape under the motor
 MOTOR_SPRING_FREE = 1.1   # free spring height above the motor can (check the part; 0.5 mm compression wanted)
 GASKET_PRINT = {"gasket_back": 0.4, "gasket_bezel": 0.25, "gasket_pogo": 0.6}   # printed (free) thickness
 X_RF = S.ANT_X0 - 1.5 # RF window (no carbon) from here; antenna copper starts ~0.3 before ANT_X0 (feed)
 RF_LAP = 1.5          # frame lap joint: the PETG upper half overhangs the CF lower half by this
-BTN_WIN = (3.6, 2.0)  # button window through the wall (x, z)
-BTN_FLANGE, BTN_RECESS = 0.6, 0.3   # TPU flange margin around the window, recess depth in the inner wall face
-SW_L, SW_D, NUB_W, NUB_OUT = 3.5, 2.9, 1.6, 0.65   # EVQ-P7M01P body X x Y, nub width, nub past the body edge
-SW_Y = S.PCB_W / 2 - S.BUTTON_INSET - SW_D / 2     # switch body centre |y|
-NUB_TIP = SW_Y + SW_D / 2 + NUB_OUT                # |y| of the nub tip
+TOUCH_Y = S.PCB_W / 2 - 0.3 - S.TOUCH_W / 2      # electrode centre |y|
+TOUCH_CF_CLEAR = 1.0  # no carbon within this of an electrode
+TOUCH_FACE = 0.6      # PETG window thickness over the electrode zone
+WIN_X = S.TOUCH_L / 2 + TOUCH_CF_CLEAR             # window half-length
+WIN_Z = (S.Z_PCB1 - TOUCH_CF_CLEAR - 0.1, S.Z_DISP1 + 1)   # open at the top: insert drops in, bezel caps it
+Y_TOP = S.DISP_W / 2 + GLASS_FIT                   # cavity narrows to the glass above Z_STEP (thick upper wall)
+Z_STEP = S.Z_DISP0 - 0.1   # parts within 1.0 mm of the long edges must be <= 1.1 tall (D4 1N5819WS is 1.11)
+SHAPES = {  # name -> (plan corner R, top edge, bottom edge, kind)
+    "pebble": (3.2, 2.5, 1.2, "fillet"),
+    "facet": (3.2, 1.8, 0.8, "chamfer"),
+}
+SHAPE = "pebble"
 DOCK_WALL, DOCK_DEPTH, DOCK_BAY_H = 2.5, 3.0, 4.5
 
-IN_R = S.CORNER_R - S.WALL
+IN_R = S.PCB_CORNER_R + FIT                       # cavity corners follow the PCB
 HL, HW = S.CAV_L / 2, S.CAV_W / 2
 OL, OW = S.CASE_L / 2, S.CASE_W / 2
 Z_FRAME0 = S.FLOOR + BACK_GASKET
-BTN_Z = S.Z_PCB1 + 0.7                             # nub centre height
 AA_X1 = S.DISP_X1 - S.DISP_AA_MARGIN_FAR
 AA_X0 = AA_X1 - S.DISP_AA_L
 AA_CX = (AA_X0 + AA_X1) / 2
-POGO_Y = [(i - 1.5) * S.POGO_PITCH for i in range(4)]
 X_BAR = OL + NATO_GAP + LUG_PIN_D / 2
 Z_BAR = Z_FRAME0 + EAR_R
 EAR_TIP = X_BAR + EAR_R
-ACT_Z = (S.Z_PCB1 + 0.3, S.Z_PCB1 + 1.1)    # switch actuator band
 PIN_TIP_FREE = S.Z_PCB0 + PIN_PRELOAD
 DOCK_ZB = PIN_TIP_FREE - PIN_L - 0.6         # dock bottom (pin tail ends 0.6 above the table)
 DOCK_L2 = EAR_TIP + 0.3 + DOCK_WALL
 DOCK_W2 = OW + 0.3 + DOCK_WALL
 assert S.PCB_CORNER_R <= IN_R - FIT + 1e-9, "PCB corners must sit inside the cavity corner radius"
-assert X_RF - RF_LAP > max(S.BUTTON_X) + BTN_WIN[0] / 2 + BTN_FLANGE, "RF lap joint runs into a button"
+assert X_RF - RF_LAP > max(S.TOUCH_X) + WIN_X, "RF lap joint runs into a touch window"
 
 
 # ---------------------------------------------------------------- primitives
@@ -122,7 +128,7 @@ def fpc():
     t, w = 0.12, S.FPC_W
     zt, zb = S.Z_DISP0 + t / 2, S.Z_PCB1 + 0.45            # centre lines of the two runs
     r, zc = (zt - zb) / 2, (zt + zb) / 2
-    xc = -HL + 0.2 + r + t / 2                              # 0.2 clear of the end wall
+    xc = S.DISP_X0 - S.FPC_BEND + 0.2 + r + t / 2           # bend within FPC_BEND of the glass edge
     a = S.DISP_X0 - xc
     natural_tip = xc + S.FPC_LEN - a - math.pi * r
     ffc_back = S.FFC_X + FFC_D / 2
@@ -136,18 +142,16 @@ def fpc():
                                  short=ffc_back - natural_tip)
 
 
-def switch(x, y):
-    """EVQ-P7M01P envelope: body + nub pointing out of the nearest long edge."""
-    sy = 1 if y > 0 else -1
-    body = box(x - SW_L / 2, x + SW_L / 2, y - SW_D / 2, y + SW_D / 2, S.Z_PCB1, S.Z_PCB1 + S.PART_H)
-    nub = box(x - NUB_W / 2, x + NUB_W / 2, y + sy * SW_D / 2, sy * NUB_TIP, *ACT_Z)
-    return body, nub
+def touch_pads():
+    """Capacitive touch electrodes (PCB top copper)."""
+    return union([box(x - S.TOUCH_L / 2, x + S.TOUCH_L / 2, sy * (TOUCH_Y - S.TOUCH_W / 2),
+                      sy * (TOUCH_Y + S.TOUCH_W / 2), S.Z_PCB1, S.Z_PCB1 + 0.035) for x in S.TOUCH_X for sy in (-1, 1)])
 
 
 def pads():
-    return union([cyl(S.POGO_X, y, S.Z_PCB0 - 0.03, S.Z_PCB0, POGO_PAD_D) for y in POGO_Y]
+    return union([cyl(x, y, S.Z_PCB0 - 0.03, S.Z_PCB0, POGO_PAD_D) for x, y in POGO_XY]
                  + [cyl(S.MOTOR_X + dx, 0, S.Z_PCB0 - 0.03, S.Z_PCB0, 1.5) for dx in (-S.MOTOR_PAD_DX, S.MOTOR_PAD_DX)]
-                 + [box(S.POGO_X - 1, S.POGO_X + 1, sy * (S.BATPAD_Y - 1), sy * (S.BATPAD_Y + 1), S.Z_PCB0 - 0.03,
+                 + [box(MAG_X - 1, MAG_X + 1, sy * (S.BATPAD_Y - 1), sy * (S.BATPAD_Y + 1), S.Z_PCB0 - 0.03,
                         S.Z_PCB0) for sy in (-1, 1)])
 
 
@@ -161,9 +165,6 @@ def pcb_placeholder():
                         box(0.0, 2.5, 1.0, 3.0, zt, zt + 1.0),        # inductor
                         box(0.2, 2.2, -3.2, -1.2, zt, zt + 0.75)]),   # LDO / charger
     }
-    sw = [switch(bx, sy * SW_Y) for bx in S.BUTTON_X for sy in (-1, 1)]
-    groups["switches"] = union([b for b, _ in sw])
-    groups["actuators"] = union([n for _, n in sw])
     board = slab(S.PCB_L, S.PCB_W, S.PCB_CORNER_R, S.Z_PCB0, S.Z_PCB1)
     comps = [(k, "placeholder", v) for k, v in groups.items()]
     return board, groups, comps
@@ -193,8 +194,6 @@ def envelope(fp, x, y):
     """Box for a footprint whose 3D model is missing from the STEP (dims parsed from the footprint name)."""
     import re
     name = fp["fp"] + " " + (re.search(r'\(model "([^"]+)"', fp["body"]) or [None, ""])[1]
-    if "EVQ-P7M01P" in name:
-        return switch(x, y)
     if "FH34SRJ" in name:
         l, w, h = FFC_L, FFC_D, FFC_H
     else:
@@ -254,13 +253,17 @@ def load_board():
         near = min(top, key=lambda f: math.dist(to_case(f), (bc.X, bc.Y)), default=None)
         if near and math.dist(to_case(near), (bc.X, bc.Y)) < 1.5:
             matched.add(near["ref"])
+            if near["ref"].startswith("TCH"):   # touch electrodes: copper only (their STEP model is a dummy block)
+                continue
             comps.append((near["ref"], near["value"], sh))
         else:
             comps.append((str(k.label), "", sh))
-    groups = dict(qfn=[], ffc=[], chips=[], switches=[], actuators=[], antenna=[])
+    groups = dict(qfn=[], ffc=[], chips=[], switches=[], antenna=[])
     n_env = 0
     for f in top:
         if f["ref"] in matched:
+            continue
+        if f["ref"].startswith("TCH"):
             continue
         if f["ref"].startswith("AE"):
             groups["antenna"].append(antenna(f, c.X, c.Y))
@@ -268,9 +271,6 @@ def load_board():
         b, nub = envelope(f, *to_case(f))
         n_env += 1
         comps.append((f["ref"], f["value"], b))
-        if nub is not None:
-            comps.append((f["ref"] + " nub", f["value"], nub))
-            groups["actuators"].append(nub)
     for ref, val, sh in comps:
         if ref.endswith(" nub"):
             continue
@@ -293,7 +293,7 @@ def battery():
 
 
 def motor():
-    """8 x 2.0 coin ERM on 0.2 foam tape; two contact springs (shown compressed) up to the PCB pads."""
+    """Coin ERM on 0.2 foam tape; two contact springs (shown compressed) up to the PCB pads."""
     z0 = S.FLOOR + MOTOR_TAPE
     body = cyl(S.MOTOR_X, 0, z0, z0 + S.MOTOR_T, S.MOTOR_D)
     springs = union([cyl(S.MOTOR_X + dx, 0, z0 + S.MOTOR_T, S.Z_PCB0 - 0.03, 0.9) for dx in (-S.MOTOR_PAD_DX, S.MOTOR_PAD_DX)])
@@ -301,7 +301,7 @@ def motor():
 
 
 def magnets(z0):
-    return [cyl(S.POGO_X, sy * MAG_Y, z0, z0 + MAG_T, MAG_D) for sy in (-1, 1)]
+    return [cyl(MAG_X, sy * MAG_Y, z0, z0 + MAG_T, MAG_D) for sy in (-1, 1)]
 
 
 def spring_bars():
@@ -328,10 +328,26 @@ def nato():
 
 
 # ---------------------------------------------------------------- case
+def skin(style=None):
+    """Outer skin that clips every case part: rounded plan + rounded/chamfered top and bottom edges."""
+    r_plan, r_top, r_bot, kind = SHAPES[style or SHAPE]
+    e = slab(S.CASE_L, S.CASE_W, r_plan, 0, S.CASE_T)
+    top, bot = e.edges().group_by(Axis.Z)[-1], e.edges().group_by(Axis.Z)[0]
+    if kind == "fillet":
+        e = fillet(top, r_top)
+        e = fillet(e.edges().group_by(Axis.Z)[0], r_bot)
+    else:
+        from build123d import chamfer
+        e = chamfer(top, r_top)
+        e = chamfer(e.edges().group_by(Axis.Z)[0], r_bot)
+    big = 100
+    return e + box(OL, big, -big, big, -big, big) + box(-big, -OL, -big, big, -big, big)   # lugs are not clipped
+
+
 def frame():
-    """Whole frame (split into CF + RF parts by split_rf)."""
+    """Whole frame, before the touch windows and the CF/RF split."""
     outer = slab(S.CASE_L, S.CASE_W, S.CORNER_R, Z_FRAME0, S.Z_DISP1)
-    for sx in (-1, 1):                                   # spring-bar lug ears
+    for sx in (-1, 1):                                   # NATO lug ears
         for sy in (-1, 1):
             y0, y1 = sy * (STRAP_W / 2 + 0.1), sy * OW   # ear = 1.15 mm
             outer += box(sx * (OL - S.CORNER_R), sx * X_BAR, y0, y1, Z_FRAME0, Z_BAR + EAR_R)
@@ -340,34 +356,31 @@ def frame():
 
     z0 = S.Z_PCB1 + S.GAP                                # glass ledges + glass locators, resting on the PCB
     blocks = box(S.DISP_X1 + GLASS_FIT, HL, -HW, HW, z0, S.Z_DISP1)    # antenna end: full width (copper only)
-    for sy in (-1, 1):                                                 # corner ledges under both glass ends
+    for sy in (-1, 1):
         blocks += box(-HL, S.DISP_X0 + S.LEDGE, sy * S.LEDGE_Y, sy * HW, z0, S.Z_DISP1)
         blocks += box(S.DISP_X1 - S.LEDGE, HL, sy * S.LEDGE_Y, sy * HW, z0, S.Z_DISP1)
+        blocks += box(-HL, HL, sy * Y_TOP, sy * HW, Z_STEP, S.Z_DISP1)   # thick upper wall (room for the top round)
     f += blocks & slab(S.CAV_L, S.CAV_W, IN_R, z0, S.Z_DISP1)
     gw = S.DISP_W / 2 + GLASS_FIT
     f -= box(S.DISP_X0 - GLASS_FIT, S.DISP_X1 + GLASS_FIT, -gw, gw, S.Z_DISP0, S.Z_DISP1 + 1)
 
     for sx in (-1, 1):
         f -= ycyl(sx * X_BAR, -OW - 1, OW + 1, Z_BAR, PIN_HOLE)
-
-    wl, wh = BTN_WIN
-    m = BTN_FLANGE
-    for bx in S.BUTTON_X:                                # window through the wall + recess for the TPU flange
-        for sy in (-1, 1):
-            f -= box(bx - wl / 2, bx + wl / 2, sy * (HW - 1), sy * (OW + 1), BTN_Z - wh / 2, BTN_Z + wh / 2)
-            f -= box(bx - wl / 2 - m, bx + wl / 2 + m, sy * (HW - 1), sy * (HW + BTN_RECESS),
-                     BTN_Z - wh / 2 - m, BTN_Z + wh / 2 + m)
     return f
 
 
-def button(bx, sy):
-    """TPU button: plug filling the wall window (flush outside) + flange in the inner recess; pocket for the nub."""
-    wl, wh = BTN_WIN
-    m = BTN_FLANGE
-    b = box(bx - wl / 2, bx + wl / 2, sy * (HW + BTN_RECESS), sy * OW, BTN_Z - wh / 2, BTN_Z + wh / 2)
-    b += box(bx - wl / 2 - m, bx + wl / 2 + m, sy * HW, sy * (HW + BTN_RECESS), BTN_Z - wh / 2 - m, BTN_Z + wh / 2 + m)
-    return b - box(bx - NUB_W / 2 - 0.15, bx + NUB_W / 2 + 0.15, sy * (HW - 1), sy * (NUB_TIP + 0.05),
-                   ACT_Z[0] - 0.15, ACT_Z[1] + 0.15)
+def window_boxes():
+    return [box(x - WIN_X, x + WIN_X, sy * Y_TOP, sy * (OW + 1), *WIN_Z) for x in S.TOUCH_X for sy in (-1, 1)]
+
+
+def touch_windows(f):
+    """Plain-PETG wall sections over the touch electrodes, thinned to TOUCH_FACE over the electrode."""
+    w = union([f & b for b in window_boxes()])
+    for x in S.TOUCH_X:
+        for sy in (-1, 1):
+            w -= box(x - S.TOUCH_L / 2 - 0.3, x + S.TOUCH_L / 2 + 0.3, sy * (HW - 1), sy * (OW - TOUCH_FACE),
+                     WIN_Z[0] + 0.4, Z_STEP)
+    return w
 
 
 def split_rf(part, lap):
@@ -382,21 +395,20 @@ def split_rf(part, lap):
 
 def back():
     b = slab(S.CASE_L, S.CASE_W, S.CORNER_R, 0, S.FLOOR)
-    b = fillet(b.edges().group_by(Axis.Z)[0], 0.4)
     top = S.Z_PCB0 - S.GAP
     blocks = slab(S.CAV_L - 2 * FIT, S.CAV_W - 2 * FIT, IN_R - FIT, S.FLOOR - 0.1, top)
-    x_pogo1 = X_POGO1
-    b += blocks & (box(-HL, S.BAT_X0 - 0.25, -HW, HW, 0, top) + box(S.BAT_X1 + 0.25, HL, -HW, HW, 0, top))
+    b += blocks & (box(-HL, X_MZ1, -HW, HW, 0, top) + box(S.BAT_X1 + 0.25, HL, -HW, HW, 0, top))
     b -= cyl(S.MOTOR_X, 0, S.FLOOR, top + 1, MOTOR_POCKET)               # motor pocket down to the floor
-    gy = POGO_Y[-1] + 1.15                               # pogo gasket pocket (gasket_pogo sits in it)
-    b -= box(-HL + 0.5, x_pogo1 - 0.4, -gy, gy, S.Z_PCB0 - 0.03 - POGO_GASKET, top + 1)
-    for y in POGO_Y:
-        b -= cyl(S.POGO_X, y, -1, top + 1, POGO_HOLE_D)
-        b -= Pos(S.POGO_X, y, -0.01) * Cone(POGO_HOLE_D / 2 + 0.35, POGO_HOLE_D / 2, 0.36,
-                                             align=(Align.CENTER, Align.CENTER, Align.MIN))
+    for sy in (-1, 1):                                                   # pogo gasket strips sit in these
+        b -= box(-HL + 0.5, X_MZ1 - 0.4, sy * (S.POGO_Y - 1.0), sy * (S.POGO_Y + 1.0),
+                 S.Z_PCB0 - 0.03 - POGO_GASKET, top + 1)
+    for x, y in POGO_XY:
+        b -= cyl(x, y, -1, top + 1, POGO_HOLE_D)
+        b -= Pos(x, y, -0.01) * Cone(POGO_HOLE_D / 2 + 0.35, POGO_HOLE_D / 2, 0.36,
+                                     align=(Align.CENTER, Align.CENTER, Align.MIN))
     for sy in (-1, 1):
-        b -= cyl(S.POGO_X, sy * MAG_Y, -1, MAG_T + 0.05, MAG_D + 0.1)          # blind from the skin side
-        b -= box(-HL - 1, S.BAT_X0, sy * (gy + 0.5), sy * (HW + 1), MAG_T + 0.45, top + 1)  # battery wires
+        b -= cyl(MAG_X, sy * MAG_Y, -1, MAG_T + 0.05, MAG_D + 0.1)          # blind from the skin side
+        b -= box(-HL - 1, S.BAT_X0, sy * (S.POGO_Y + 1.2), sy * (HW + 1), MAG_T + 0.45, top + 1)  # wires + pads
     return b
 
 
@@ -406,11 +418,12 @@ def gasket_back(t=BACK_GASKET):
 
 
 def gasket_pogo(t=POGO_GASKET):
-    gy = POGO_Y[-1] + 1.15
+    """Two TPU strips under the PCB, one per pair of pogo pads."""
     z1 = S.Z_PCB0 - 0.03                                 # under the 30 um pads
-    g = box(-HL + 0.55, X_POGO1 - 0.45, -gy + 0.05, gy - 0.05, z1 - t, z1)
-    for y in POGO_Y:
-        g -= cyl(S.POGO_X, y, z1 - t - 1, z1 + 1, POGO_SEAL_D)
+    g = union([box(-HL + 0.55, X_MZ1 - 0.45, sy * (S.POGO_Y - 0.95), sy * (S.POGO_Y + 0.95), z1 - t, z1)
+               for sy in (-1, 1)])
+    for x, y in POGO_XY:
+        g -= cyl(x, y, z1 - t - 1, z1 + 1, POGO_SEAL_D)
     return g
 
 
@@ -426,8 +439,20 @@ def gasket_bezel(t=S.BEZEL_GASKET):
 
 def bezel():
     b = slab(S.CASE_L, S.CASE_W, S.CORNER_R, S.Z_DISP1 + S.BEZEL_GASKET, S.CASE_T)
-    b = fillet(b.edges().group_by(Axis.Z)[-1], 0.3)
     return b - window(S.Z_DISP1 - 1, 3)
+
+
+def case_parts(style=None):
+    """All printed case parts, clipped by the outer envelope."""
+    e = skin(style)
+    f = frame() & e
+    tw = touch_windows(f)
+    f = f - union(window_boxes())
+    frame_cf, frame_rf = split_rf(f, lap=True)
+    back_cf, back_rf = split_rf(back() & e, lap=False)
+    return dict(frame_cf=frame_cf, frame_rf=frame_rf, touch_windows=tw, back_cf=back_cf, back_rf=back_rf,
+                bezel=bezel() & e, gasket_back=gasket_back() & e, gasket_bezel=gasket_bezel() & e,
+                gasket_pogo=gasket_pogo())
 
 
 # ---------------------------------------------------------------- dock (watch bottom = z 0)
@@ -441,11 +466,11 @@ def dock():
             pocket += box(sx * (OL - S.CORNER_R), sx * (EAR_TIP + 0.3), sy * (STRAP_W / 2 - 0.2), sy * (OW + 0.3), 0, 10)
     d -= pocket
     bay_top = DOCK_ZB + DOCK_BAY_H
-    for y in POGO_Y:
-        d -= cyl(S.POGO_X, y, bay_top - 0.5, 1, PIN_BORE)
+    for x, y in POGO_XY:
+        d -= cyl(x, y, bay_top - 0.5, 1, PIN_BORE)
     for sy in (-1, 1):
-        d -= cyl(S.POGO_X, sy * MAG_Y, -(MAG_T + 0.05), 1, MAG_D + 0.1)
-    d -= box(S.POGO_X - 2, 5.5, -5.5, 5.5, DOCK_ZB - 1, bay_top)                 # wiring bay, open below
+        d -= cyl(MAG_X, sy * MAG_Y, -(MAG_T + 0.05), 1, MAG_D + 0.1)
+    d -= box(S.MOTOR_X - 3, 5.5, -5.5, 5.5, DOCK_ZB - 1, bay_top)                # wiring bay, open below
     d -= box(-5.3, 5.3, DOCK_W2 - 12.3, DOCK_W2 + 1, DOCK_ZB - 1, bay_top)        # USB-C breakout, open at back
     return d
 
@@ -471,6 +496,10 @@ def vol(s):
 
 
 def interference(a, b):
+    ba, bb = a.bounding_box(), b.bounding_box()
+    if (ba.min.X > bb.max.X or bb.min.X > ba.max.X or ba.min.Y > bb.max.Y or bb.min.Y > ba.max.Y
+            or ba.min.Z > bb.max.Z or bb.min.Z > ba.max.Z):
+        return 0.0
     try:
         return vol(a & b)
     except Exception:
@@ -481,26 +510,23 @@ def build():
     board, groups, comps, note = load_board()
     tail, stiff, fit = fpc()
     bat, tabs = battery()
-    frame_cf, frame_rf = split_rf(frame(), lap=True)
-    back_cf, back_rf = split_rf(back(), lap=False)
-    m = dict(frame_cf=frame_cf, frame_rf=frame_rf, back_cf=back_cf, back_rf=back_rf, bezel=bezel(),
-             gasket_back=gasket_back(), gasket_bezel=gasket_bezel(), gasket_pogo=gasket_pogo(),
-             buttons=union([button(bx, sy) for bx in S.BUTTON_X for sy in (-1, 1)]),
-             display=display(), fpc=tail, stiffener=stiff,
+    m = case_parts()
+    m.update(display=display(), fpc=tail, stiffener=stiff,
              pcb=board, battery=bat, bat_tabs=tabs, case_magnets=union(magnets(0.0)),
              bars=spring_bars(), rf_pin=rf_pin(), strap=nato(), dock=dock(), dock_magnets=union(magnets(-MAG_T)))
     m.update(groups)
     m["pads"] = pads()
+    m["touch"] = touch_pads()
     m["motor"], m["motor_springs"] = motor()
-    m["pins_docked"] = union([pogo_pin(S.POGO_X, y, S.Z_PCB0 - 0.03) for y in POGO_Y])
-    m["pins_free"] = union([pogo_pin(S.POGO_X, y, PIN_TIP_FREE) for y in POGO_Y])
+    m["pins_docked"] = union([pogo_pin(x, y, S.Z_PCB0 - 0.03) for x, y in POGO_XY])
+    m["pins_free"] = union([pogo_pin(x, y, PIN_TIP_FREE) for x, y in POGO_XY])
     m["usb_pcb"], m["usb_c"] = usb_board()
     return m, fit, comps, note
 
 
-CASE = ["frame_cf", "frame_rf", "back_cf", "back_rf", "bezel", "gasket_back", "gasket_bezel", "gasket_pogo",
-        "buttons"]
-INTERNAL = ["display", "fpc", "stiffener", "pcb", "qfn", "ffc", "chips", "switches", "actuators", "antenna", "pads",
+CASE = ["frame_cf", "frame_rf", "touch_windows", "back_cf", "back_rf", "bezel", "gasket_back", "gasket_bezel",
+        "gasket_pogo"]
+INTERNAL = ["display", "fpc", "stiffener", "pcb", "qfn", "ffc", "chips", "switches", "touch", "antenna", "pads",
             "battery", "bat_tabs", "case_magnets", "motor", "motor_springs"]
 METAL = ["case_magnets", "bars"]
 
@@ -514,14 +540,23 @@ def checks(m, fit, comps):
         ok &= good
         print(f"  {'ok ' if good else 'BAD'} {name:<22} {got:7.2f}  (spec {want:.2f})")
     print("dimension checks")
-    bb = m["bezel"].bounding_box()
-    near("bezel length", bb.size.X, S.CASE_L)
-    near("bezel width", bb.size.Y, S.CASE_W)
-    near("back length", (m["back_cf"] + m["back_rf"]).bounding_box().size.X, S.CASE_L)
-    near("frame width", (m["frame_cf"] + m["frame_rf"]).bounding_box().size.Y, S.CASE_W)
-    zs = [m[k].bounding_box() for k in CASE]
-    near("total thickness", max(b.max.Z for b in zs) - min(b.min.Z for b in zs), S.CASE_T)
-    print(f"  lug-to-lug {2 * EAR_TIP:.2f} mm, button plug at the nub {OW - NUB_TIP - 0.05:.2f} mm thick")
+    body = union([m[k] for k in CASE]) & box(-OL, OL, -OW - 1, OW + 1, -1, S.CASE_T + 1)
+    bb = body.bounding_box()
+    near("body length", bb.size.X, S.CASE_L)
+    near("body width", bb.size.Y, S.CASE_W)
+    near("total thickness", bb.size.Z, S.CASE_T)
+    print(f"  shape '{SHAPE}' {SHAPES[SHAPE]}, lug-to-lug {2 * EAR_TIP:.2f} mm, touch window face {TOUCH_FACE} mm")
+    w, where = min_wall(union([m[k] for k in ("frame_cf", "frame_rf", "touch_windows")]))
+    good = w >= 0.8 - 1e-6
+    ok &= good
+    print(f"  {'ok ' if good else 'BAD'} thinnest frame wall {w:.2f} mm ({where})")
+    near_cf = max(interference(m[k], b) for k in ("frame_cf", "back_cf", "bezel")
+                  for b in [box(x - S.TOUCH_L / 2 - TOUCH_CF_CLEAR, x + S.TOUCH_L / 2 + TOUCH_CF_CLEAR,
+                                sy * (TOUCH_Y - S.TOUCH_W / 2 - TOUCH_CF_CLEAR), sy * (TOUCH_Y + S.TOUCH_W / 2 + TOUCH_CF_CLEAR),
+                                S.Z_PCB1 - TOUCH_CF_CLEAR, S.Z_PCB1 + TOUCH_CF_CLEAR) for x in S.TOUCH_X for sy in (-1, 1)])
+    ok &= near_cf < 1e-3
+    print(f"  {'ok ' if near_cf < 1e-3 else 'BAD'} no carbon within {TOUCH_CF_CLEAR} mm of the touch electrodes "
+          f"({near_cf:.4f} mm^3)")
     print(f"  FPC: tip {fit['insertion']:.2f} mm into the FFC body ({FFC_D} deep), "
           f"{'slack %.2f' % fit['slack'] if fit['slack'] > 0 else 'short of the back by %.2f' % fit['short']} mm")
     cf_x = max(m[k].bounding_box().max.X for k in ("frame_cf", "back_cf"))
@@ -572,13 +607,13 @@ def checks(m, fit, comps):
 PRINT = {  # part -> (material, rotation into print orientation, note)
     "frame_cf": ("petg-cf", (0, 0, 0), "upright, 0.4 hardened nozzle; ledges/windows bridge, no supports"),
     "frame_rf": ("petg", (0, 0, 0), "upright; RF window, no carbon. AMS lite: print with frame_cf as one object"),
+    "touch_windows": ("petg", (0, 0, 0), "4 wall inserts; AMS lite: print with frame_cf as one object, else glue"),
     "back_cf": ("petg-cf", (0, 0, 0), "skin side down, 0.4 hardened nozzle"),
     "back_rf": ("petg", (0, 0, 0), "skin side down; RF window. AMS lite: print with back_cf as one object"),
     "bezel": ("petg", (180, 0, 0), "visible face down, 0.2 nozzle; plain PETG (no carbon over the antenna)"),
     "gasket_back": ("tpu", (0, 0, 0), "flat, printed 0.40 (0.30 compressed), 0.1 layers"),
     "gasket_bezel": ("tpu", (0, 0, 0), "flat, printed 0.25 (0.20 compressed), 0.08 layers"),
     "gasket_pogo": ("tpu", (0, 0, 0), "flat, printed 0.60 (0.50 compressed)"),
-    "button": ("tpu", (90, 0, 0), "flange down; print 4"),
     "dock": ("petg", (0, 0, 0), "upright, open bays down; bay ceilings bridge"),
 }
 DENSITY = {"petg-cf": 1.29e-3, "petg": 1.27e-3, "tpu": 1.21e-3}
@@ -586,10 +621,10 @@ DENSITY = {"petg-cf": 1.29e-3, "petg": 1.27e-3, "tpu": 1.21e-3}
 
 def printable(m, k):
     """Part in print orientation, at its printed (uncompressed) thickness."""
-    if k == "button":
-        s = button(S.BUTTON_X[0], 1)
-    elif k in GASKET_PRINT:
+    if k in GASKET_PRINT:
         s = globals()[k](GASKET_PRINT[k])
+        if k != "gasket_pogo":
+            s = s & skin()
     else:
         s = m[k]
     s = Rot(*PRINT[k][1]) * s
@@ -616,25 +651,23 @@ def export(m):
         kids.append(v)
     OUT.mkdir(parents=True)
     export_step(Compound(children=kids, label="horae_rev_a"), str(OUT / "horae-assembly.step"))
+    import trimesh                       # 3MF via trimesh: OCCT's 3MF mesher rejects some filleted parts
+    stl = {}
     for k, (mat, _, _) in PRINT.items():
         (OUT / mat).mkdir(exist_ok=True)
-        s = printable(m, k)
-        export_stl(s, str(OUT / mat / f"{k}.stl"), tolerance=0.005, angular_tolerance=0.1)
-        mesher = Mesher()
-        mesher.add_shape(s, linear_deflection=0.005, angular_deflection=0.1)
-        mesher.write(str(OUT / mat / f"{k}.3mf"))
+        stl[k] = OUT / mat / f"{k}.stl"
+        export_stl(printable(m, k), str(stl[k]), tolerance=0.005, angular_tolerance=0.1)
+        trimesh.Scene({k: trimesh.load(stl[k])}).export(OUT / mat / f"{k}.3mf")
     (OUT / "multi-material").mkdir()
-    for name in ("frame", "back"):          # one 3MF, two objects: assign PETG-CF / PETG in Bambu Studio (AMS lite)
-        mesher = Mesher()
-        for k in (f"{name}_cf", f"{name}_rf"):
-            mesher.add_shape(printable(m, k), linear_deflection=0.005, angular_deflection=0.1)
-        mesher.write(str(OUT / "multi-material" / f"{name}-cf+petg.3mf"))
+    for name, ks in (("frame", ("frame_cf", "frame_rf", "touch_windows")), ("back", ("back_cf", "back_rf"))):
+        # one 3MF, several objects in place: assign PETG-CF / PETG per object in Bambu Studio (AMS lite)
+        trimesh.Scene({k: trimesh.load(stl[k]) for k in ks}).export(OUT / "multi-material" / f"{name}-cf+petg.3mf")
 
 
 # ---------------------------------------------------------------- renders
 COLORS = dict(
     frame_cf="#2e3238", back_cf="#3a3f47", frame_rf="#dcd6c4", back_rf="#cfc8b4", bezel="#1f2227",
-    gasket_back="#e4572e", gasket_bezel="#e4572e", gasket_pogo="#e4572e", buttons="#e4572e", rf_pin="#f2efe6", strap="#56603f", motor="#a7adb4", motor_springs="#d8b246", display="#d9d7cf", fpc="#c8861a", stiffener="#9c6610",
+    gasket_back="#e4572e", gasket_bezel="#e4572e", gasket_pogo="#e4572e", touch_windows="#cfc8b4", touch="#d9a92e", rf_pin="#f2efe6", strap="#56603f", motor="#a7adb4", motor_springs="#d8b246", display="#d9d7cf", fpc="#c8861a", stiffener="#9c6610",
     pcb="#1e5b3e", qfn="#2b2b2d", ffc="#e6dfca", chips="#3a3a3c", switches="#b9bec5", actuators="#1d1d1f",
     pads="#d9a92e", antenna="#c9a24a", battery="#c4c9cf", bat_tabs="#e3e6ea", case_magnets="#9ea4ab", dock_magnets="#9ea4ab",
     bars="#c9cdd3", dock="#e9e7e1", pins_docked="#d8b246", pins_free="#d8b246", usb_pcb="#23306a", usb_c="#c9cdd2",
@@ -695,7 +728,7 @@ def add(p, m, keys, offset=(0, 0, 0), screen=True, alpha=None):
         if k not in m:
             continue
         o = offset.get(k, (0, 0, 0)) if isinstance(offset, dict) else offset
-        metal = k in ("pads", "pins_docked", "pins_free", "bars", "case_magnets", "dock_magnets", "switches", "usb_c")
+        metal = k in ("pads", "touch", "pins_docked", "pins_free", "bars", "case_magnets", "dock_magnets", "usb_c")
         p.add_mesh(pvmesh(m[k]).translate(o, inplace=False), color=COLORS.get(k, "#888888"), smooth_shading=True,
                    opacity=(alpha or {}).get(k, 1.0),
                    specular=0.6 if metal else 0.18, specular_power=40 if metal else 18, diffuse=0.85, ambient=0.18)
@@ -768,10 +801,10 @@ def render_exploded(m):
     groups = [  # (label, keys, z offset, anchor z)
         ("Bezel, plain PETG, on a TPU gasket", ["bezel", "gasket_bezel"], 36, S.CASE_T),
         ("Display GDEM0097T61 + FPC tail", ["display", "fpc", "stiffener"], 27, S.Z_DISP1),
-        ("Frame: PETG-CF + PETG RF window,\n4 TPU buttons, 16 mm NATO lugs", ["frame_cf", "frame_rf", "buttons", "bars", "rf_pin"],
+        ("Frame: PETG-CF + PETG RF window,\n4 PETG touch windows, NATO lugs", ["frame_cf", "frame_rf", "touch_windows", "bars", "rf_pin"],
          18, S.Z_DISP1 - 1),
-        ("PCB 0.8 mm + parts", ["pcb", "qfn", "ffc", "chips", "switches", "actuators", "antenna", "pads"], 8, S.Z_PCB1),
-        (f"Battery {S.BAT_L:.1f} x {S.BAT_W:.0f} x {S.BAT_T}\n+ 8 x 2 coin vibration motor", ["battery", "bat_tabs", "motor", "motor_springs"],
+        ("PCB 0.8 mm + parts, touch pads", ["pcb", "qfn", "ffc", "chips", "touch", "antenna", "pads"], 8, S.Z_PCB1),
+        (f"Battery {S.BAT_L:.1f} x {S.BAT_W:.0f} x {S.BAT_T}\n+ {S.MOTOR_D:.0f} x {S.MOTOR_T:.0f} coin vibration motor", ["battery", "bat_tabs", "motor", "motor_springs"],
          0, S.Z_BAT1),
         ("Back: PETG-CF + PETG RF window,\nTPU gaskets, 2x2 magnets",
          ["back_cf", "back_rf", "case_magnets", "gasket_back", "gasket_pogo"], -9, S.FLOOR),
@@ -784,14 +817,14 @@ def render_exploded(m):
 def render_sealing(m):
     ghost = {k: 0.22 for k in ("frame_cf", "back_cf", "bezel", "pcb", "display")}
     off = dict(bezel=(0, 0, 30), gasket_bezel=(0, 0, 25), display=(0, 0, 19), frame_cf=(0, 0, 12), frame_rf=(0, 0, 12),
-               buttons=(0, 0, 12), pcb=(0, 0, 4), gasket_pogo=(0, 0, -2), gasket_back=(0, 0, -7), back_cf=(0, 0, -12),
+               touch_windows=(0, 0, 12), pcb=(0, 0, 4), touch=(0, 0, 4), gasket_pogo=(0, 0, -2), gasket_back=(0, 0, -7), back_cf=(0, 0, -12),
                back_rf=(0, 0, -12), case_magnets=(0, 0, -12))
-    gx = (S.POGO_X, POGO_Y[0] - 1, S.Z_PCB0 - 2.2)
+    gx = (S.MOTOR_X, -S.POGO_Y - 1, S.Z_PCB0 - 2.2)
     groups = [
         ("Bezel: plain PETG (whole part)", ["bezel"], (OL - 4, -OW, S.CASE_T + 30)),
         ("TPU bezel gasket 0.2 (glass + frame top)", ["gasket_bezel"], (OL - 2, -OW, S.Z_DISP1 + 25)),
         ("Frame RF window: plain PETG,\nZ-step lap joint to PETG-CF", ["frame_rf"], (OL - 1, -OW, S.Z_DISP1 + 12)),
-        ("4 TPU buttons sealing the wall windows", ["buttons"], (S.BUTTON_X[1], -OW, BTN_Z + 12)),
+        ("4 PETG touch windows (no carbon\nnear the electrodes, 0.6 face)", ["touch_windows"], (S.TOUCH_X[1], -OW, S.Z_PCB1 + 12)),
         ("TPU pogo seal under the PCB pads", ["gasket_pogo"], gx),
         ("TPU back gasket 0.3 (frame / back)", ["gasket_back"], (OL - 3, -OW + 0.4, S.FLOOR - 7)),
         ("Back RF window: plain PETG", ["back_rf"], (OL - 1.5, -OW, S.FLOOR - 12)),
@@ -817,6 +850,41 @@ def render_dock(m):
     del pv
 
 
+def min_wall(shape):
+    """Thinnest outer wall along rays at mid long side and through both +Y cavity corners -> (mm, where)."""
+    from matplotlib.path import Path as MPath
+    rays = [("long side x=0", (0.0, 0.0), (0.0, 1.0)),
+            ("+X corner", (HL - IN_R, HW - IN_R), (math.sqrt(.5), math.sqrt(.5))),
+            ("-X corner", (-HL + IN_R, HW - IN_R), (-math.sqrt(.5), math.sqrt(.5)))]
+    best = (99.0, "")
+    for name, (ox, oy), (dx, dy) in rays:
+        plane = Plane(origin=(ox, oy, 0), x_dir=(dx, dy, 0), z_dir=(dy, -dx, 0))
+        cut = shape & (plane * Rectangle(400, 400))
+        paths = []
+        for f in cut.faces():
+            for wire in [f.outer_wire(), *f.inner_wires()]:
+                pts = [(q.X - ox) * dx + (q.Y - oy) * dy for q in (wire.position_at(t) for t in np.linspace(0, 1, 400))]
+                zs = [q.Z for q in (wire.position_at(t) for t in np.linspace(0, 1, 400))]
+                paths.append(MPath(np.column_stack([pts, zs])))
+        s_vals = np.arange(0, 14, 0.01)
+        for z in np.arange(Z_FRAME0 + 0.1, S.Z_DISP1 - 0.05, 0.1):
+            pts = np.column_stack([s_vals, np.full_like(s_vals, z)])
+            inside = np.zeros(len(s_vals), bool)
+            for pth in paths:
+                inside ^= pth.contains_points(pts)        # even-odd: holes cancel
+            idx = np.nonzero(inside)[0]
+            if len(idx) == 0:
+                continue
+            run_end = idx[-1]
+            run_start = run_end
+            while run_start > 0 and inside[run_start - 1]:
+                run_start -= 1
+            t = (run_end - run_start + 1) * 0.01
+            if t < best[0]:
+                best = (t, f"{name}, z={z:.2f}")
+    return best
+
+
 def section_polys(shape, y):
     """Cut shape with the plane y=const -> list of (outer, [holes]) polylines in (x, z)."""
     plane = Plane(origin=(0, y, 0), z_dir=(0, 1, 0))
@@ -837,8 +905,8 @@ def render_section(m):
     from matplotlib.patches import PathPatch
     from matplotlib.path import Path as MPath
 
-    y = POGO_Y[2]
-    keys = CASE + INTERNAL + ["bars", "rf_pin", "strap"]
+    y, y2 = 0.0, S.POGO_Y
+    keys = CASE + INTERNAL + ["bars", "rf_pin", "strap", "motor", "motor_springs"]
     hatch = {"frame_cf", "frame_rf", "back_cf", "back_rf", "bezel"}
     fig = plt.figure(figsize=(16, 10), dpi=100, facecolor="#f4f5f7")
     ax1 = fig.add_axes([0.03, 0.55, 0.94, 0.38])
@@ -848,8 +916,9 @@ def render_section(m):
     def area(a):
         return 0.5 * np.sum(a[:-1, 0] * a[1:, 1] - a[1:, 0] * a[:-1, 1])
     polys = {k: section_polys(m[k], y) for k in keys if k in m}
-    for ax in (ax1, ax2):
-        for k, ps in polys.items():
+    polys2 = {k: section_polys(m[k], y2) for k in keys if k in m}
+    for ax, pp in ((ax1, polys), (ax2, polys2)):
+        for k, ps in pp.items():
             for outer, holes in ps:
                 rings = [outer if area(outer) > 0 else outer[::-1]] + [h if area(h) < 0 else h[::-1] for h in holes]
                 verts = np.concatenate(rings)
@@ -861,7 +930,7 @@ def render_section(m):
         ax.axis("off")
     ax1.set_xlim(-OL - 4.5, OL + 17.5)
     ax1.set_ylim(-3.6, S.CASE_T + 1.6)
-    ax1.set_title(f"Section at y = {y:+.2f} mm (through a pogo pin hole), looking from -Y", fontsize=15, loc="left")
+    ax1.set_title(f"Section at y = {y:+.2f} mm (through the motor), looking from -Y", fontsize=15, loc="left")
 
     # stack dimensions on the right of the full section
     layers = [("floor", 0, S.FLOOR), ("battery + swell", S.Z_BAT0, S.Z_BAT1), ("PCB", S.Z_PCB0, S.Z_PCB1),
@@ -890,17 +959,20 @@ def render_section(m):
     ax1.text(-X_BAR, Z_BAR - 1.3, "steel pin", ha="center", va="top", fontsize=9, color="#555")
     ax1.text(X_BAR, Z_BAR - 1.3, "nylon pin", ha="center", va="top", fontsize=9, color="#555")
     ax1.text(0, -0.75, "NATO strap", ha="center", va="center", fontsize=9, color="#f0f0e8")
+    ax1.annotate("coin motor + springs", (S.MOTOR_X, 1.8), (S.MOTOR_X + 4, -1.6), fontsize=9, color="#333",
+                 arrowprops=dict(arrowstyle="-", lw=0.6, color="#333"))
 
-    ax2.set_xlim(-OL - 0.8, -5.5)
+    ax2.set_xlim(-OL - 2.5, -5.5)
     ax2.set_ylim(-1.6, S.CASE_T + 1.6)
-    ax2.set_title("Detail, -X end", fontsize=13, loc="left")
-    notes = [((-17.0, 5.15), (-19.6, 7.9), "FPC U-bend"), ((-12, 4.7), (-12.5, 7.9), "FFC connector"),
-             ((S.POGO_X, 1.5), (-13.6, 1.3), "pogo hole 1.3, pad above"),
-             ((-4.5, 2.0), (-7.0, 3.0), "battery"), ((S.MOTOR_X, 1.5), (-12.6, 0.15), "coin motor"), ((-18.6, 3), (-19.6, -0.8), "frame wall"),
-             ((-16.0, 0.3), (-15.0, -0.8), "back plate"), ((-15.5, 7.0), (-16.0, 7.9), "bezel"),
-             ((-18.7, Z_FRAME0 - 0.15), (-21.2, 1.6), "TPU gasket"),
-             ((S.POGO_X + 0.9, S.Z_PCB0 - 0.3), (-13.6, 2.3), "TPU pogo seal"),
-             ((-12.0, S.Z_DISP1 + 0.1), (-10.5, 8.5), "TPU bezel gasket")]
+    ax2.set_title(f"Detail, -X end at y = {y2:+.1f} (through two pogo pins)", fontsize=13, loc="left")
+    px = [x for x, yy in POGO_XY if yy > 0]
+    notes = [((S.DISP_X0 - 0.6, 5.0), (-21.0, 7.9), "FPC U-bend"), ((S.FFC_X - 1.0, S.Z_PCB1 + 0.5), (-12.0, 7.9), "FFC connector"),
+             ((px[0], 1.5), (-11.2, 1.0), "pogo holes 1.3, pads above"), ((px[1], 1.5), (-11.2, 1.0), ""),
+             ((-8.0, 2.0), (-8.5, 3.0), "battery"), ((-20.1, 3), (-21.6, -0.8), "frame wall"),
+             ((-17.0, 0.3), (-15.5, -1.0), "back plate"), ((-17.5, S.CASE_T - 0.2), (-18.5, 8.4), "bezel"),
+             ((-20.0, Z_FRAME0 - 0.15), (-22.6, 1.6), "TPU gasket"),
+             ((px[1] + 0.8, S.Z_PCB0 - 0.25), (-11.2, 2.2), "TPU pogo seal"),
+             ((-13.0, S.Z_DISP1 + 0.1), (-10.5, 8.6), "TPU bezel gasket")]
     for xy, txt, s in notes:
         ax2.annotate(s, xy, txt, fontsize=10, arrowprops=dict(arrowstyle="-", lw=0.7, color="#333"))
 
@@ -961,7 +1033,7 @@ def render_scale(m):
     dim(-EAR_TIP - 2.5, -OW, -EAR_TIP - 2.5, OW, f"{S.CASE_W:.1f}", -1.3, vertical=True)
     dim(cx - cl / 2, -cw / 2 - 2.5, cx + cl / 2, -cw / 2 - 2.5, f"{cl:.2f}", -1.2, color="#1a73e8")
     dim(cx + cl / 2 + 2.5, -cw / 2, cx + cl / 2 + 2.5, cw / 2, f"{cw:.2f}", 1.3, vertical=True, color="#1a73e8")
-    ax.text(0, OW + 3.5, f"Horae rev A   {S.CASE_L:.1f} x {S.CASE_W:.1f} x {S.CASE_T:.1f} mm", ha="center",
+    ax.text(0, OW + 3.5, f"Horae rev A   {S.CASE_L:.1f} x {S.CASE_W:.1f} x {S.CASE_T:.2f} mm", ha="center",
             fontsize=15, weight="bold", color="#222")
     ax.text(cx, cw / 2 + 2.0, "Fitbit Charge 6   36.73 x 23.09 x 11.2 mm", ha="center", fontsize=15,
             weight="bold", color="#1a73e8")
@@ -986,8 +1058,8 @@ def render_board(m, comps, note):
     hw, hh = 25.0, 12.5
     p = plotter(1600, 800)
     p.set_background("#f4f5f7")
-    add(p, m, ["frame_cf", "frame_rf", "back_cf", "back_rf", "buttons", "bars", "rf_pin", "pcb", "qfn", "ffc", "chips",
-               "switches", "actuators", "antenna"], alpha={"frame_cf": 0.55, "frame_rf": 0.55})
+    add(p, m, ["frame_cf", "frame_rf", "touch_windows", "back_cf", "back_rf", "bars", "rf_pin", "pcb", "qfn", "ffc",
+               "chips", "touch", "antenna"], alpha={"frame_cf": 0.55, "frame_rf": 0.55, "touch_windows": 0.55})
     p.enable_parallel_projection()
     p.camera_position = [(0, 0, 100), (0, 0, 0), (0, 1, 0)]
     p.camera.parallel_scale = hh
@@ -1013,6 +1085,8 @@ def render_board(m, comps, note):
         ty = (hh + 0.8 + (n % 3) * 1.5) * (1 if up else -1)
         ax.annotate(f"{ref} {val}", (c.X, c.Y), (c.X, ty), ha="center", va="center", fontsize=10,
                     arrowprops=dict(arrowstyle="-", lw=0.6, color="#444"))
+    ax.annotate("TCH1-4 touch electrodes\n(PETG wall windows)", (S.TOUCH_X[1], -TOUCH_Y), (S.TOUCH_X[1] + 4, -hh - 2.5),
+                ha="left", va="center", fontsize=10, arrowprops=dict(arrowstyle="-", lw=0.6, color="#444"))
     if "antenna" in m:
         ac = m["antenna"].bounding_box().center()
         ax.annotate("AE1 PCB antenna (copper)", (ac.X, ac.Y), (hw + 2.5, 0), ha="left", va="center", fontsize=10,
@@ -1030,6 +1104,29 @@ def render_board(m, comps, note):
     plt.close(fig)
 
 
+def render_shape_options(m):
+    """Two outer-shape candidates side by side (3/4 view + end-on profile)."""
+    keys = ["frame_cf", "frame_rf", "touch_windows", "back_cf", "back_rf", "bezel", "gasket_back", "gasket_bezel"]
+    rest = {k: m[k] for k in ("display", "bars", "rf_pin")}
+    opts = [("A  pebble (default): R3.2 plan, R2.5 top round, R1.2 bottom round", {k: m[k] for k in keys}),
+            ("B  facet: R3.2 plan, 1.8 top chamfer, 0.8 bottom chamfer", case_parts("facet"))]
+    p = plotter(1600, 1100, shape=(2, 2))
+    for col, (title, parts) in enumerate(opts):
+        mm = {**parts, **rest}
+        p.subplot(0, col)
+        add(p, mm, keys + list(rest))
+        p.add_text(title, font_size=12, color="#333333", position="upper_left")
+        cam(p, (-48, -78, 58), (0, 0, 2.0), 1.45)
+        p.subplot(1, col)
+        add(p, mm, keys + list(rest), screen=False)
+        p.enable_parallel_projection()
+        p.camera_position = [(80, 0, S.CASE_T / 2), (0, 0, S.CASE_T / 2), (0, 0, 1)]
+        p.camera.parallel_scale = 7.5
+        p.add_text("end-on profile (from +X)", font_size=11, color="#555555", position="upper_left")
+    p.screenshot(str(MEDIA / "cad-shape-options.png"))
+    p.close()
+
+
 def main():
     m, fit, comps, note = build()
     print(f"PCB: {note}")
@@ -1042,6 +1139,7 @@ def main():
         for f in (render_assembled, render_exploded, render_sealing, render_section, render_scale, render_dock):
             f(m)
         render_board(m, comps, note)
+        render_shape_options(m)
         print(f"renders -> {MEDIA.relative_to(ROOT)}/cad-*.png")
     if not ok:
         sys.exit("checks FAILED")

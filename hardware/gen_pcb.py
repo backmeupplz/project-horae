@@ -46,6 +46,7 @@ TARGET = {  # loose targets for the legalizer, grouped near the IC they serve
     "C24": (-7.3, -3.0), "C25": (-7.3, -2.0), "C26": (-7.3, -1.0), "C27": (-7.3, 0.0), "C28": (-7.3, 1.0), "C29": (-7.3, 2.0), "C30": (-7.3, 3.0),
     "Q1": (-4.6, -2.6), "L4": (-4.6, 0.8), "R11": (-5.6, -4.6), "R12": (-3.6, -4.6), "D1": (-2.4, -2.4), "D2": (-2.4, -0.6),
     "D3": (-2.4, 1.2), "C22": (-5.0, 3.4),
+    "C31": (-14.8, 6.4),
     "Q2": (-3.0, -6.0), "R13": (-3.0, -4.8), "D4": (-1.0, -6.2),
 }
 
@@ -179,6 +180,7 @@ def main():
     c11a, c12a = pad_xy(fps["C11"], "1"), pad_xy(fps["C12"], "1")
     put(fps["Y1"], 10.0, 6.3, 0)                 # crystal in the corner between the +X touch pad and the RF feed
     put(fps["U6"], 0.5, 1.4, 0)                  # accelerometer pinned next to the RTC so its LGA ground pads reach the pour
+    put(fps["MIC1"], S.MIC_X, S.MIC_Y, 90)       # top-port mic in the -X corner past the glass (case: sealed duct + vent above)
     def track(net, pts, w=W):
         for a, b in zip(pts, pts[1:]):
             t = pcbnew.PCB_TRACK(board); t.SetStart(V(*a)); t.SetEnd(V(*b)); t.SetWidth(MM(w))
@@ -190,7 +192,7 @@ def main():
     # RF ground vias + fence are added after routing (route.py), with collision checks
     touch_keep = [(x - S.TOUCH_L / 2 - 0.6, y - S.TOUCH_W / 2 - 0.6, x + S.TOUCH_L / 2 + 0.6, y + S.TOUCH_W / 2 + 0.6)
                   for x, y, _ in (PIN[t] for t in ("TCH1", "TCH2", "TCH3", "TCH4"))]   # parts stay 0.6 mm off the electrodes
-    placed = [box(fps[r]) for r in ("U1", "J1", "C11", "L3", "C12", "Y1", "U6")] + touch_keep
+    placed = [box(fps[r]) for r in ("U1", "J1", "C11", "L3", "C12", "Y1", "U6", "MIC1")] + touch_keep
     placed.append((rx, ry - 0.35, fx + 0.35, ry + 0.35)); placed.append((fx - 0.35, ry, fx + 0.35, fy))   # keep parts off the feed
     ae_box = box(ae)
 

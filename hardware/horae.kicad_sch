@@ -3014,6 +3014,140 @@
               (font
                 (size 1.27 1.27))))))
       (embedded_fonts no))
+    (symbol "horae:LMD2718T261-OA1"
+      (in_bom yes)
+      (on_board yes)
+      (property "Reference" "U"
+        (id 0)
+        (at 0 7.62 0)
+        (effects
+          (font
+            (size 1.27 1.27))))
+      (property "Value" "LMD2718T261-OA1"
+        (id 1)
+        (at 0 -7.62 0)
+        (effects
+          (font
+            (size 1.27 1.27))))
+      (property "Footprint" "horae:MIC-SMD_6P-L2.8-W1.9-P0.98-TL"
+        (id 2)
+        (at 0 -10.16 0)
+        (effects
+          (font
+            (size 1.27 1.27)) hide))
+      (property "Datasheet" "https://www.lcsc.com/datasheet/C5373237.pdf"
+        (id 3)
+        (at 0 -12.70 0)
+        (effects
+          (font
+            (size 1.27 1.27)) hide))
+      (property "Manufacturer" "LinkMems(聆麦声学)"
+        (id 4)
+        (at 0 -15.24 0)
+        (effects
+          (font
+            (size 1.27 1.27)) hide))
+      (property "MPN" "LMD2718T261-OA1"
+        (id 5)
+        (at 0 -17.78 0)
+        (effects
+          (font
+            (size 1.27 1.27)) hide))
+      (property "LCSC Part" "C5373237"
+        (id 6)
+        (at 0 -20.32 0)
+        (effects
+          (font
+            (size 1.27 1.27)) hide))
+      (property "ki_keywords" "MEMS Microphones"
+        (id 8)
+        (at 0 -22.86 0)
+        (effects
+          (font
+            (size 1.27 1.27)) hide))
+      (symbol "LMD2718T261-OA1_0_1"
+        (rectangle
+          (start -7.62 5.08)
+          (end 7.62 -5.08)
+          (stroke
+            (width 0)
+            (type default))
+          (fill
+            (type background)))
+        (circle
+          (center -6.35 3.81)
+          (radius 0.38)
+          (stroke
+            (width 0)
+            (type default))
+          (fill
+            (type none)))
+        (pin passive line
+          (at -10.16 2.54 0)
+          (length 2.54)
+          (name "GND"
+            (effects
+              (font
+                (size 1.27 1.27))))
+          (number "1"
+            (effects
+              (font
+                (size 1.27 1.27)))))
+        (pin passive line
+          (at -10.16 -0.00 0)
+          (length 2.54)
+          (name "L/R"
+            (effects
+              (font
+                (size 1.27 1.27))))
+          (number "2"
+            (effects
+              (font
+                (size 1.27 1.27)))))
+        (pin passive line
+          (at -10.16 -2.54 0)
+          (length 2.54)
+          (name "GND"
+            (effects
+              (font
+                (size 1.27 1.27))))
+          (number "3"
+            (effects
+              (font
+                (size 1.27 1.27)))))
+        (pin passive line
+          (at 10.16 2.54 180)
+          (length 2.54)
+          (name "VDD"
+            (effects
+              (font
+                (size 1.27 1.27))))
+          (number "4"
+            (effects
+              (font
+                (size 1.27 1.27)))))
+        (pin passive line
+          (at 10.16 -0.00 180)
+          (length 2.54)
+          (name "DATA"
+            (effects
+              (font
+                (size 1.27 1.27))))
+          (number "5"
+            (effects
+              (font
+                (size 1.27 1.27)))))
+        (pin passive line
+          (at 10.16 -2.54 180)
+          (length 2.54)
+          (name "CLK"
+            (effects
+              (font
+                (size 1.27 1.27))))
+          (number "6"
+            (effects
+              (font
+                (size 1.27 1.27)))))))
     (symbol "Connector:TestPoint"
       (pin_numbers
         (hide yes))
@@ -3522,9 +3656,14 @@
   (no_connect
     (at 78.74 63.5)
     (uuid "6e7d82e1-afc8-5190-8462-edcdd08074a6"))
-  (no_connect
-    (at 78.74 86.36)
-    (uuid "61e41c96-a5ad-5136-8f0c-6ef5c1b7a921"))
+  (label "MIC_DATA"
+    (at 78.74 86.36 0)
+    (fields_autoplaced yes)
+    (effects
+      (font
+        (size 1 1))
+      (justify left bottom))
+    (uuid "d4a479b9-d48b-596b-9e0b-5440d978976d"))
   (no_connect
     (at 78.74 99.06)
     (uuid "445f9010-cbf8-5d13-bbc6-39011d40a6c7"))
@@ -3791,12 +3930,22 @@
   (no_connect
     (at 78.74 78.74)
     (uuid "cc42409a-0022-5c7f-8ed4-cc555a67769e"))
-  (no_connect
-    (at 78.74 81.28)
-    (uuid "eae91a37-ac1c-5860-b16c-1a8b978e3b66"))
-  (no_connect
-    (at 78.74 83.82)
-    (uuid "2717dd42-1dcf-5313-a4ee-ce44fcb35ff9"))
+  (label "MIC_VDD"
+    (at 78.74 81.28 0)
+    (fields_autoplaced yes)
+    (effects
+      (font
+        (size 1 1))
+      (justify left bottom))
+    (uuid "04a754da-d57e-5c5c-a958-bf8e99d3e78c"))
+  (label "MIC_CLK"
+    (at 78.74 83.82 0)
+    (fields_autoplaced yes)
+    (effects
+      (font
+        (size 1 1))
+      (justify left bottom))
+    (uuid "217134a4-6d52-5c2b-adcd-16bf349fea02"))
   (label "+3V3"
     (at 60.96 38.1 90)
     (fields_autoplaced yes)
@@ -7793,8 +7942,182 @@
         (path "/4fccf677-6962-57c4-a0c9-e21a28375695"
           (reference "C30")
           (unit 1)))))
+  (label "GND"
+    (at 421.64 276.86 180)
+    (fields_autoplaced yes)
+    (effects
+      (font
+        (size 1 1))
+      (justify right bottom))
+    (uuid "857db7e3-c9d8-56a3-bb1e-5d7bfaeaf1fd"))
+  (label "GND"
+    (at 421.64 279.4 180)
+    (fields_autoplaced yes)
+    (effects
+      (font
+        (size 1 1))
+      (justify right bottom))
+    (uuid "579b709b-ad95-53d5-87ee-4f21378f3e26"))
+  (label "GND"
+    (at 421.64 281.94 180)
+    (fields_autoplaced yes)
+    (effects
+      (font
+        (size 1 1))
+      (justify right bottom))
+    (uuid "b5f04ba1-3cac-5f0a-8f4e-1213bfa892aa"))
+  (label "MIC_VDD"
+    (at 441.96 276.86 0)
+    (fields_autoplaced yes)
+    (effects
+      (font
+        (size 1 1))
+      (justify left bottom))
+    (uuid "59917766-d1d1-5394-b2b1-503e7d05da28"))
+  (label "MIC_DATA"
+    (at 441.96 279.4 0)
+    (fields_autoplaced yes)
+    (effects
+      (font
+        (size 1 1))
+      (justify left bottom))
+    (uuid "34e893b6-8c0b-530a-9445-921c24e47212"))
+  (label "MIC_CLK"
+    (at 441.96 281.94 0)
+    (fields_autoplaced yes)
+    (effects
+      (font
+        (size 1 1))
+      (justify left bottom))
+    (uuid "4015c593-d29e-5f5b-8b82-5a15f0bf7422"))
+  (symbol
+    (lib_id "horae:LMD2718T261-OA1")
+    (at 431.80 279.40 0)
+    (unit 1)
+    (exclude_from_sim no)
+    (in_bom yes)
+    (on_board yes)
+    (dnp no)
+    (uuid "78d1d5f8-17b1-5179-ab09-38ac05fef0f5")
+    (property "Reference" "MIC1"
+      (at 421.64 272.82 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (justify left)))
+    (property "Value" "LMD2718T261"
+      (at 421.64 286.98 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (justify left)))
+    (property "Footprint" "horae:MIC-SMD_6P-L2.8-W1.9-P0.98-TL"
+      (at 431.80 279.40 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (justify left)
+        (hide yes)))
+    (property "Datasheet" ""
+      (at 431.80 279.40 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (justify left)
+        (hide yes)))
+    (property "LCSC" "C5373237"
+      (at 431.80 279.40 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (justify left)
+        (hide yes)))
+    (pin "1"
+      (uuid "09bbafdd-0c4a-5928-a03d-62e80f334a86"))
+    (pin "2"
+      (uuid "b573b947-c781-566e-89b4-9959c874a8a6"))
+    (pin "3"
+      (uuid "85b83240-3e67-58b9-839e-104a6d2567df"))
+    (pin "4"
+      (uuid "e552a219-4d64-5181-aaf9-4cc741c80194"))
+    (pin "5"
+      (uuid "573f0167-1e3b-5769-a798-0cb656f5c754"))
+    (pin "6"
+      (uuid "99b6f667-6ed2-582b-af1c-a2e982603371"))
+    (instances
+      (project "horae"
+        (path "/4fccf677-6962-57c4-a0c9-e21a28375695"
+          (reference "MIC1")
+          (unit 1)))))
+  (label "MIC_VDD"
+    (at 464.82 273.05 90)
+    (fields_autoplaced yes)
+    (effects
+      (font
+        (size 1 1))
+      (justify left bottom))
+    (uuid "54db9d9f-468d-5d93-bef1-424e013c332e"))
+  (label "GND"
+    (at 464.82 280.67 270)
+    (fields_autoplaced yes)
+    (effects
+      (font
+        (size 1 1))
+      (justify right bottom))
+    (uuid "e4b33064-7fa7-5320-a333-d999f6d52f6f"))
+  (symbol
+    (lib_id "Device:C")
+    (at 464.82 276.86 0)
+    (unit 1)
+    (exclude_from_sim no)
+    (in_bom yes)
+    (on_board yes)
+    (dnp no)
+    (uuid "3cec37af-e57e-5ace-8a69-7824ba5bea75")
+    (property "Reference" "C31"
+      (at 462.79 271.55 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (justify left)))
+    (property "Value" "100nF"
+      (at 462.79 283.17 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (justify left)))
+    (property "Footprint" "Capacitor_SMD:C_0201_0603Metric"
+      (at 464.82 276.86 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (justify left)
+        (hide yes)))
+    (property "Datasheet" ""
+      (at 464.82 276.86 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (justify left)
+        (hide yes)))
+    (property "LCSC" "C66938"
+      (at 464.82 276.86 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (justify left)
+        (hide yes)))
+    (pin "1"
+      (uuid "d9aa5342-c375-5298-8cdb-67728e0dc6f1"))
+    (pin "2"
+      (uuid "fd7242d4-1e26-5ab6-bfbd-b530929efb84"))
+    (instances
+      (project "horae"
+        (path "/4fccf677-6962-57c4-a0c9-e21a28375695"
+          (reference "C31")
+          (unit 1)))))
   (label "TOUCH_UP"
-    (at 421.64 276.86 270)
+    (at 485.14 276.86 270)
     (fields_autoplaced yes)
     (effects
       (font
@@ -7803,7 +8126,7 @@
     (uuid "7c603d86-0e93-5ecf-8e54-e288ac276de8"))
   (symbol
     (lib_id "Connector:TestPoint")
-    (at 421.64 276.86 0)
+    (at 485.14 276.86 0)
     (unit 1)
     (exclude_from_sim no)
     (in_bom yes)
@@ -7811,26 +8134,26 @@
     (dnp no)
     (uuid "83c98bec-752d-560f-af16-e0ed61cd9e0e")
     (property "Reference" "TCH1"
-      (at 421.64 272.06 0)
+      (at 485.14 272.06 0)
       (effects
         (font
           (size 1.27 1.27))
         (justify left)))
     (property "Value" "TOUCH_UP"
-      (at 421.64 279.36 0)
+      (at 485.14 279.36 0)
       (effects
         (font
           (size 1.27 1.27))
         (justify left)))
     (property "Footprint" "horae:TouchPad_4.0x1.6mm"
-      (at 421.64 276.86 0)
+      (at 485.14 276.86 0)
       (effects
         (font
           (size 1.27 1.27))
         (justify left)
         (hide yes)))
     (property "Datasheet" ""
-      (at 421.64 276.86 0)
+      (at 485.14 276.86 0)
       (effects
         (font
           (size 1.27 1.27))
@@ -7844,7 +8167,7 @@
           (reference "TCH1")
           (unit 1)))))
   (label "TOUCH_DOWN"
-    (at 444.5 276.86 270)
+    (at 510.54 276.86 270)
     (fields_autoplaced yes)
     (effects
       (font
@@ -7853,7 +8176,7 @@
     (uuid "d3e4777e-e239-5f26-9a07-2510bfd6a9f0"))
   (symbol
     (lib_id "Connector:TestPoint")
-    (at 444.50 276.86 0)
+    (at 510.54 276.86 0)
     (unit 1)
     (exclude_from_sim no)
     (in_bom yes)
@@ -7861,26 +8184,26 @@
     (dnp no)
     (uuid "b7478121-549a-563e-9e8f-4f7159cb4e81")
     (property "Reference" "TCH2"
-      (at 444.50 272.06 0)
+      (at 510.54 272.06 0)
       (effects
         (font
           (size 1.27 1.27))
         (justify left)))
     (property "Value" "TOUCH_DOWN"
-      (at 444.50 279.36 0)
+      (at 510.54 279.36 0)
       (effects
         (font
           (size 1.27 1.27))
         (justify left)))
     (property "Footprint" "horae:TouchPad_4.0x1.6mm"
-      (at 444.50 276.86 0)
+      (at 510.54 276.86 0)
       (effects
         (font
           (size 1.27 1.27))
         (justify left)
         (hide yes)))
     (property "Datasheet" ""
-      (at 444.50 276.86 0)
+      (at 510.54 276.86 0)
       (effects
         (font
           (size 1.27 1.27))
@@ -7894,7 +8217,7 @@
           (reference "TCH2")
           (unit 1)))))
   (label "TOUCH_MENU"
-    (at 469.9 276.86 270)
+    (at 535.94 276.86 270)
     (fields_autoplaced yes)
     (effects
       (font
@@ -7903,7 +8226,7 @@
     (uuid "7a129def-4ce4-5d38-8636-92e4ba5df59f"))
   (symbol
     (lib_id "Connector:TestPoint")
-    (at 469.90 276.86 0)
+    (at 535.94 276.86 0)
     (unit 1)
     (exclude_from_sim no)
     (in_bom yes)
@@ -7911,26 +8234,26 @@
     (dnp no)
     (uuid "4f4a40fc-0112-5721-a5b9-36a21d0cc65e")
     (property "Reference" "TCH3"
-      (at 469.90 272.06 0)
+      (at 535.94 272.06 0)
       (effects
         (font
           (size 1.27 1.27))
         (justify left)))
     (property "Value" "TOUCH_MENU"
-      (at 469.90 279.36 0)
+      (at 535.94 279.36 0)
       (effects
         (font
           (size 1.27 1.27))
         (justify left)))
     (property "Footprint" "horae:TouchPad_4.0x1.6mm"
-      (at 469.90 276.86 0)
+      (at 535.94 276.86 0)
       (effects
         (font
           (size 1.27 1.27))
         (justify left)
         (hide yes)))
     (property "Datasheet" ""
-      (at 469.90 276.86 0)
+      (at 535.94 276.86 0)
       (effects
         (font
           (size 1.27 1.27))
@@ -7944,7 +8267,7 @@
           (reference "TCH3")
           (unit 1)))))
   (label "TOUCH_BACK"
-    (at 497.84 276.86 270)
+    (at 561.34 276.86 270)
     (fields_autoplaced yes)
     (effects
       (font
@@ -7953,7 +8276,7 @@
     (uuid "f0033c96-f922-5d2f-9ece-ea0daa1f485b"))
   (symbol
     (lib_id "Connector:TestPoint")
-    (at 497.84 276.86 0)
+    (at 561.34 276.86 0)
     (unit 1)
     (exclude_from_sim no)
     (in_bom yes)
@@ -7961,26 +8284,26 @@
     (dnp no)
     (uuid "a25539be-fd37-500f-9fdc-a9caa091bdce")
     (property "Reference" "TCH4"
-      (at 497.84 272.06 0)
+      (at 561.34 272.06 0)
       (effects
         (font
           (size 1.27 1.27))
         (justify left)))
     (property "Value" "TOUCH_BACK"
-      (at 497.84 279.36 0)
+      (at 561.34 279.36 0)
       (effects
         (font
           (size 1.27 1.27))
         (justify left)))
     (property "Footprint" "horae:TouchPad_4.0x1.6mm"
-      (at 497.84 276.86 0)
+      (at 561.34 276.86 0)
       (effects
         (font
           (size 1.27 1.27))
         (justify left)
         (hide yes)))
     (property "Datasheet" ""
-      (at 497.84 276.86 0)
+      (at 561.34 276.86 0)
       (effects
         (font
           (size 1.27 1.27))
@@ -7994,7 +8317,7 @@
           (reference "TCH4")
           (unit 1)))))
   (label "MOT_N"
-    (at 525.78 273.05 90)
+    (at 424.18 295.91 90)
     (fields_autoplaced yes)
     (effects
       (font
@@ -8002,7 +8325,7 @@
       (justify left bottom))
     (uuid "41d0321b-5ad2-581b-acb3-c6f59dcf02f1"))
   (label "VIB"
-    (at 518.16 278.13 180)
+    (at 416.56 300.99 180)
     (fields_autoplaced yes)
     (effects
       (font
@@ -8010,7 +8333,7 @@
       (justify right bottom))
     (uuid "a3f4cdca-b83d-5cbf-b5d6-0215a2dc3ce1"))
   (label "GND"
-    (at 525.78 285.75 270)
+    (at 424.18 308.61 270)
     (fields_autoplaced yes)
     (effects
       (font
@@ -8019,7 +8342,7 @@
     (uuid "77323d7b-af18-5dbe-9175-26d6af9943f3"))
   (symbol
     (lib_id "horae:CJ3134K_C62503")
-    (at 523.24 279.40 0)
+    (at 421.64 302.26 0)
     (unit 1)
     (exclude_from_sim no)
     (in_bom yes)
@@ -8027,33 +8350,33 @@
     (dnp no)
     (uuid "831ff4ad-4772-5762-88ba-266f65f60561")
     (property "Reference" "Q2"
-      (at 518.16 271.55 0)
+      (at 416.56 294.41 0)
       (effects
         (font
           (size 1.27 1.27))
         (justify left)))
     (property "Value" "CJ3134K"
-      (at 518.16 288.25 0)
+      (at 416.56 311.11 0)
       (effects
         (font
           (size 1.27 1.27))
         (justify left)))
     (property "Footprint" "horae:SOT-723_L1.2-W0.8-P0.40-LS1.2-BR"
-      (at 523.24 279.40 0)
+      (at 421.64 302.26 0)
       (effects
         (font
           (size 1.27 1.27))
         (justify left)
         (hide yes)))
     (property "Datasheet" ""
-      (at 523.24 279.40 0)
+      (at 421.64 302.26 0)
       (effects
         (font
           (size 1.27 1.27))
         (justify left)
         (hide yes)))
     (property "LCSC" "C62503"
-      (at 523.24 279.40 0)
+      (at 421.64 302.26 0)
       (effects
         (font
           (size 1.27 1.27))
@@ -8071,7 +8394,7 @@
           (reference "Q2")
           (unit 1)))))
   (label "VIB"
-    (at 543.56 273.05 90)
+    (at 444.5 295.91 90)
     (fields_autoplaced yes)
     (effects
       (font
@@ -8079,7 +8402,7 @@
       (justify left bottom))
     (uuid "aca2b9e7-a217-5812-b308-edef1e7c7f0c"))
   (label "GND"
-    (at 543.56 280.67 270)
+    (at 444.5 303.53 270)
     (fields_autoplaced yes)
     (effects
       (font
@@ -8088,7 +8411,7 @@
     (uuid "fec0fa58-30fd-597e-bda2-61c81c790bf9"))
   (symbol
     (lib_id "Device:R")
-    (at 543.56 276.86 0)
+    (at 444.50 299.72 0)
     (unit 1)
     (exclude_from_sim no)
     (in_bom yes)
@@ -8096,33 +8419,33 @@
     (dnp no)
     (uuid "143eb275-21d2-568c-9df0-508e08bb1d62")
     (property "Reference" "R13"
-      (at 542.54 271.55 0)
+      (at 443.48 294.41 0)
       (effects
         (font
           (size 1.27 1.27))
         (justify left)))
     (property "Value" "1M"
-      (at 542.54 283.17 0)
+      (at 443.48 306.03 0)
       (effects
         (font
           (size 1.27 1.27))
         (justify left)))
     (property "Footprint" "Resistor_SMD:R_0201_0603Metric"
-      (at 543.56 276.86 0)
+      (at 444.50 299.72 0)
       (effects
         (font
           (size 1.27 1.27))
         (justify left)
         (hide yes)))
     (property "Datasheet" ""
-      (at 543.56 276.86 0)
+      (at 444.50 299.72 0)
       (effects
         (font
           (size 1.27 1.27))
         (justify left)
         (hide yes)))
     (property "LCSC" "C295786"
-      (at 543.56 276.86 0)
+      (at 444.50 299.72 0)
       (effects
         (font
           (size 1.27 1.27))
@@ -8138,7 +8461,7 @@
           (reference "R13")
           (unit 1)))))
   (label "VBAT"
-    (at 557.53 274.32 180)
+    (at 458.47 297.18 180)
     (fields_autoplaced yes)
     (effects
       (font
@@ -8146,7 +8469,7 @@
       (justify right bottom))
     (uuid "b74eddee-84f2-5923-94b6-644f6d6f9126"))
   (label "MOT_N"
-    (at 565.15 274.32 0)
+    (at 466.09 297.18 0)
     (fields_autoplaced yes)
     (effects
       (font
@@ -8155,7 +8478,7 @@
     (uuid "227f324a-ca8d-5564-bdaf-750604e3f1bd"))
   (symbol
     (lib_id "Device:D_Schottky")
-    (at 561.34 274.32 0)
+    (at 462.28 297.18 0)
     (unit 1)
     (exclude_from_sim no)
     (in_bom yes)
@@ -8163,33 +8486,33 @@
     (dnp no)
     (uuid "221147e9-1087-521d-bb31-6f718b958a64")
     (property "Reference" "D4"
-      (at 557.53 271.55 0)
+      (at 458.47 294.41 0)
       (effects
         (font
           (size 1.27 1.27))
         (justify left)))
     (property "Value" "B5819WS"
-      (at 557.53 278.09 0)
+      (at 458.47 300.95 0)
       (effects
         (font
           (size 1.27 1.27))
         (justify left)))
     (property "Footprint" "Diode_SMD:D_SOD-323"
-      (at 561.34 274.32 0)
+      (at 462.28 297.18 0)
       (effects
         (font
           (size 1.27 1.27))
         (justify left)
         (hide yes)))
     (property "Datasheet" ""
-      (at 561.34 274.32 0)
+      (at 462.28 297.18 0)
       (effects
         (font
           (size 1.27 1.27))
         (justify left)
         (hide yes)))
     (property "LCSC" "C64886"
-      (at 561.34 274.32 0)
+      (at 462.28 297.18 0)
       (effects
         (font
           (size 1.27 1.27))
