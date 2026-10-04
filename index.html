@@ -144,18 +144,32 @@ footer { border-top: 1px solid var(--line); padding: 24px 0 48px; font-size: 13p
   <li class="entry">
     <time class="mono" datetime="2026-10-03">2026-10-03 · Day 0</time>
     <h2>Rev A, designed end to end <span class="tag">design</span></h2>
-    <p>Board, case and antenna, all generated from code and all checks passing. Nothing is ordered yet; this is the design review.</p>
+    <p>Board, case and antenna, all generated from code, with every check passing. Nothing is ordered yet; this is the design review, and it has already been through several rounds.</p>
     <ul>
-      <li><b>Board:</b> 37.3 × 16.5 mm, 4 layers, 54 parts placed by JLC. ESP32-S3, BMA400, RV-3032, display booster and side switches. ERC and DRC clean, routed with Freerouting, RF feed hand-routed as a 50 Ω coplanar line.</li>
-      <li><b>Antenna:</b> an openEMS simulation showed Watchy's antenna would resonate at ~2.0 GHz inside our case and barely radiate. Trimmed by 6.64 mm and re-matched; it's predicted at −8 to −16 dB across the 2.4 GHz band, in the case and on the wrist.</li>
-      <li><b>Case:</b> 39.3 × 18.5 × 7.4 mm (Charge 6: 36.7 × 23.1 × 11.2). Carbon-fiber PETG body, plain-PETG window over the antenna, TPU gaskets and button plugs for splash resistance, magnetic pogo dock.</li>
-      <li><b>Cost:</b> about CAD 250–270 landed for two assembled boards; the BMA400 alone is $15.</li>
+      <li><b>Board:</b> 38.5 × 16.5 mm, 4 layers, 54 parts placed by JLC.
+        <ul>
+          <li>Chips: ESP32-S3, an ST LIS2DUX12 accelerometer (step counting at 2.7 µA), an RV-3032 RTC and the e-paper booster.</li>
+          <li>Four capacitive touch pads instead of switches, a 6 mm coin motor on spring contacts, and a top-port PDM mic that draws 0 µA when off.</li>
+          <li>ERC and DRC clean. The RF feed is hand-routed as a 50 Ω coplanar line.</li>
+        </ul>
+      </li>
+      <li><b>Antenna:</b> an openEMS simulation showed Watchy's antenna would resonate at ~2.0 GHz inside our case and barely radiate. Trimmed by 6.64 mm and re-matched, it's predicted at −8 to −16 dB across the 2.4 GHz band. A re-run with the final case shape and the steel spring bar is still to do.</li>
+      <li><b>Case:</b> 40.5 × 18.5 × 7.15 mm (Charge 6: 36.7 × 23.1 × 11.2).
+        <ul>
+          <li>"Pebble" shape: carbon-fiber PETG body, with a plain-PETG window over the antenna and solid windows over the touch pads.</li>
+          <li>Splash resistance from TPU gaskets, plus a vented mic duct.</li>
+          <li>Standard 16 mm spring-bar straps and a magnetic pogo dock. The battery is the full 25 × 16 × 2.5 mm.</li>
+        </ul>
+      </li>
+      <li><b>Cost:</b> about USD 120–130 for two assembled boards before shipping and tax. Parts are $14.61 per board after swapping the $15 BMA400 for the $4 LIS2DUX12.</li>
     </ul>
     <div class="photos">
-      <a href="media/2026-10-03/cad-assembled.png"><img src="media/2026-10-03/cad-assembled.png" alt="Rendered rev A watch: 39.3 × 18.5 × 7.4 mm case with the e-paper bar" loading="lazy"></a>
+      <a href="media/2026-10-03/cad-assembled.png"><img src="media/2026-10-03/cad-assembled.png" alt="Rendered rev A watch: 40.5 × 18.5 × 7.15 mm pebble case on 16 mm straps" loading="lazy"></a>
+      <a href="media/2026-10-03/cad-shape-options.png"><img src="media/2026-10-03/cad-shape-options.png" alt="Two case shapes: rounded pebble (chosen) and faceted" loading="lazy"></a>
+      <a href="media/2026-10-03/cad-mic.png"><img src="media/2026-10-03/cad-mic.png" alt="Mic duct: sealed bore from the PDM mic port through a hydrophobic vent to the case top" loading="lazy"></a>
       <a href="media/2026-10-03/cad-exploded.png"><img src="media/2026-10-03/cad-exploded.png" alt="Exploded view: bezel, display, frame, board, battery, back" loading="lazy"></a>
-      <a href="media/2026-10-03/cad-section.png"><img src="media/2026-10-03/cad-section.png" alt="Cross-section with the 7.4 mm stack-up dimensioned" loading="lazy"></a>
-      <a href="media/2026-10-03/cad-sealing.png"><img src="media/2026-10-03/cad-sealing.png" alt="Splash sealing: TPU gaskets, TPU button plugs, plain-PETG RF window at the antenna end" loading="lazy"></a>
+      <a href="media/2026-10-03/cad-section.png"><img src="media/2026-10-03/cad-section.png" alt="Cross-section with the 7.15 mm stack-up dimensioned" loading="lazy"></a>
+      <a href="media/2026-10-03/cad-sealing.png"><img src="media/2026-10-03/cad-sealing.png" alt="Splash sealing: TPU gaskets, solid touch windows, plain-PETG RF window at the antenna end" loading="lazy"></a>
       <a href="media/2026-10-03/cad-scale.png"><img src="media/2026-10-03/cad-scale.png" alt="Top view next to a Fitbit Charge 6 outline" loading="lazy"></a>
       <a href="media/2026-10-03/cad-dock.png"><img src="media/2026-10-03/cad-dock.png" alt="Magnetic pogo charging dock" loading="lazy"></a>
       <a href="media/2026-10-03/pcb-3d.png"><img src="media/2026-10-03/pcb-3d.png" alt="Rev A board, 3D render: ESP32-S3, antenna, display connector, side switches" loading="lazy"></a>
