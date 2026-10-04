@@ -74,6 +74,11 @@ at most one notification/second, HTTP timeout 15 seconds, bounded response size,
 no credential-bearing redirects. Retries start at 30 seconds, double to a
 one-hour ceiling, and honor the larger of Telegram's Retry-After header/date
 and JSON parameters.retry_after as a minimum delay **after the attempt ends**.
+Telegram Retry-After also extends a shared SQLite cooldown for the configured
+bot/chat: no notification is claimed during it, including other pending or new
+signups. The cooldown is committed with the attempt result, survives restarts,
+and waiting consumes no attempts or leases. Ordinary exponential backoff remains
+per job; a shorter Retry-After never shortens an existing shared cooldown.
 Eight attempts maximum, including crashed attempts; exhausted jobs stay in the
 DB with failed_at for protected operator inspection. No automatic reset loop.
 Missing bot variables consume **no** attempts.
@@ -141,7 +146,8 @@ From the repository root:
 
 CI runs these on PRs and pushes to main. Tests use temporary DBs, local HTTP and
 mocked Telegram only. They cover concurrent duplicates, transactional rollback,
-restart/lease recovery, finite retries/Retry-After, missing config, input/CORS,
+restart/lease recovery, finite retries/Retry-After, two-signup shared cooldown
+(including database reopen and unchanged attempts/leases), missing config, input/CORS,
 rate limiting and frontend loading/success/error/retry/timeout feedback. No real
 bot call is part of tests. Node tests use a DOM stub, not a visual browser test.
 

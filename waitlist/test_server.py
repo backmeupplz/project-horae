@@ -119,6 +119,36 @@ class StoreTests(StoreFixture):
             server.deliver_one(self.store, "fake", "fake", send)
         self.assertEqual(self.row()["next_attempt"], 295)
 
+    def check_shared_retry_after(self, reopen):
+        self.store.signup("first@example.com")
+        self.store.signup("second@example.com")
+        send = Mock(side_effect=server.DeliveryError(180))
+        with patch("server.time.time", side_effect=[100, 115]):
+            self.assertTrue(server.deliver_one(self.store, "fake", "fake", send))
+        if reopen:
+            self.store = server.Store(self.path)
+        with self.store.connect() as db:
+            before = db.execute("SELECT * FROM outbox ORDER BY signup_id").fetchall()
+        for now in [116, 280, 294.999]:
+            self.assertFalse(server.deliver_one(self.store, "fake", "fake", send, now=now))
+        self.assertEqual(send.call_count, 1)
+        with self.store.connect() as db:
+            self.assertEqual(db.execute("SELECT * FROM outbox ORDER BY signup_id").fetchall(), before)
+            self.assertEqual(db.execute("SELECT attempts FROM outbox ORDER BY signup_id").fetchall(), [(1,), (0,)])
+        send.side_effect = None
+        self.assertTrue(server.deliver_one(self.store, "fake", "fake", send, now=295))
+        self.assertTrue(server.deliver_one(self.store, "fake", "fake", send, now=296))
+        self.assertEqual([call.args[2] for call in send.call_args_list],
+                         ["first@example.com", "first@example.com", "second@example.com"])
+        with self.store.connect() as db:
+            self.assertEqual(db.execute("SELECT attempts, delivered_at IS NOT NULL FROM outbox ORDER BY signup_id").fetchall(), [(2, 1), (1, 1)])
+
+    def test_retry_after_blocks_all_pending_signups(self):
+        self.check_shared_retry_after(reopen=False)
+
+    def test_retry_after_blocks_all_pending_signups_after_restart(self):
+        self.check_shared_retry_after(reopen=True)
+
     def test_retry_and_signup_failures_do_not_leak_logs(self):
         self.store.signup("private@example.com")
         send = Mock(side_effect=RuntimeError("SECRET-TOKEN private@example.com"))

@@ -64,6 +64,11 @@ class Store:
                     delivered_at TEXT,
                     failed_at TEXT
                 );
+                CREATE TABLE IF NOT EXISTS telegram_cooldown (
+                    id INTEGER PRIMARY KEY CHECK (id = 1),
+                    until REAL NOT NULL DEFAULT 0
+                );
+                INSERT OR IGNORE INTO telegram_cooldown(id) VALUES (1);
             """)
 
     @contextmanager
@@ -92,6 +97,8 @@ class Store:
     def claim(self, now):
         with self.connect() as db:
             db.execute("BEGIN IMMEDIATE")
+            if db.execute("SELECT until FROM telegram_cooldown WHERE id=1").fetchone()[0] > now:
+                return None
             # A crash after the final claim still ends in a terminal state.
             db.execute("UPDATE outbox SET failed_at=? WHERE attempts>=? AND lease_until<=? AND delivered_at IS NULL AND failed_at IS NULL", (datetime.fromtimestamp(now, timezone.utc).isoformat(), MAX_ATTEMPTS, now))
             row = db.execute("SELECT o.signup_id, s.email, s.created_at, o.attempts FROM outbox o JOIN signups s ON s.id=o.signup_id WHERE o.delivered_at IS NULL AND o.failed_at IS NULL AND o.attempts<? AND o.next_attempt<=? AND o.lease_until<=? ORDER BY o.signup_id LIMIT 1", (MAX_ATTEMPTS, now, now)).fetchone()
@@ -109,6 +116,9 @@ class Store:
         delay = max(min(3600, 30 * 2 ** (attempt - 1)), retry_after)
         with self.connect() as db:
             db.execute("UPDATE outbox SET delivered_at=?, failed_at=?, next_attempt=?, lease_until=0, lease_token=NULL WHERE signup_id=? AND lease_token=?", (stamp if success else None, stamp if not success and attempt >= MAX_ATTEMPTS else None, now + delay, signup_id, token))
+            if not success and retry_after > 0:
+                # A Telegram limit applies to every job, even if this lease expired.
+                db.execute("UPDATE telegram_cooldown SET until=MAX(until, ?) WHERE id=1", (now + retry_after,))
 
 
 class DeliveryError(Exception):
