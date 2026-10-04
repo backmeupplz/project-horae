@@ -115,7 +115,8 @@ class StoreTests(StoreFixture):
     def test_retry_after_is_measured_after_network_call(self):
         self.store.signup("saved@example.com")
         send = Mock(side_effect=server.DeliveryError(180))
-        with patch("server.time.time", side_effect=[100, 115]):
+        # Do not replace the shared time module also used by Python 3.12 logging.
+        with patch("server.time", Mock(time=Mock(side_effect=[100, 115]))):
             server.deliver_one(self.store, "fake", "fake", send)
         self.assertEqual(self.row()["next_attempt"], 295)
 
@@ -123,7 +124,8 @@ class StoreTests(StoreFixture):
         self.store.signup("first@example.com")
         self.store.signup("second@example.com")
         send = Mock(side_effect=server.DeliveryError(180))
-        with patch("server.time.time", side_effect=[100, 115]):
+        # Keep logging's clock independent of the two application timestamps.
+        with patch("server.time", Mock(time=Mock(side_effect=[100, 115]))):
             self.assertTrue(server.deliver_one(self.store, "fake", "fake", send))
         if reopen:
             self.store = server.Store(self.path)
