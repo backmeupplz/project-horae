@@ -68,6 +68,16 @@ header p { margin: 0 0 12px; max-width: 34em; }
 .cards b { display: block; font-weight: 600; margin-bottom: 2px; }
 .cards span { font-size: 14px; color: var(--muted); }
 footer { border-top: 1px solid var(--line); padding: 24px 0 48px; font-size: 13px; color: var(--muted); }
+/* lightbox: native <dialog>, arrows/swipe within one photo group */
+#lb { border: 0; padding: 0; background: transparent; max-width: 100vw; max-height: 100vh; width: 100vw; height: 100vh; }
+#lb::backdrop { background: rgba(0,0,0,.95); }
+#lb figure { margin: 0; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 16px; box-sizing: border-box; }
+#lb img { max-width: 100%; max-height: calc(100vh - 96px); object-fit: contain; border-radius: 6px; }
+#lb figcaption { color: #e6e4dc; font-size: 14px; text-align: center; max-width: 60em; }
+#lb button { position: fixed; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,.12); color: #fff; border: 0; border-radius: 99px; width: 44px; height: 44px; font-size: 22px; cursor: pointer; }
+#lb button:hover { background: rgba(255,255,255,.25); }
+#lb .prev { left: 12px; } #lb .next { right: 12px; }
+#lb .close { top: 28px; right: 12px; transform: none; }
 </style>
 </head>
 <body>
@@ -179,5 +189,31 @@ footer { border-top: 1px solid var(--line); padding: 24px 0 48px; font-size: 13p
 
 <footer class="mono">Project Horae · <a href="https://github.com/backmeupplz/project-horae">source</a> · The Horae were the Greek goddesses of the hours.</footer>
 </div>
+<dialog id="lb" aria-label="Photo viewer">
+  <figure><img alt=""><figcaption></figcaption></figure>
+  <button class="prev" aria-label="Previous photo">&#8249;</button>
+  <button class="next" aria-label="Next photo">&#8250;</button>
+  <button class="close" aria-label="Close">&#215;</button>
+</dialog>
+<script>
+(() => {
+  const lb = document.getElementById("lb"), img = lb.querySelector("img"), cap = lb.querySelector("figcaption");
+  let group = [], i = 0;
+  const show = k => { i = (k + group.length) % group.length; const a = group[i], t = a.querySelector("img");
+    img.src = a.href; img.alt = t.alt; cap.textContent = t.alt; };
+  document.querySelectorAll(".photos a").forEach(a => a.addEventListener("click", e => {
+    e.preventDefault(); group = [...a.closest(".photos").querySelectorAll("a")]; show(group.indexOf(a)); lb.showModal(); }));
+  lb.querySelector(".prev").onclick = () => show(i - 1);
+  lb.querySelector(".next").onclick = () => show(i + 1);
+  lb.querySelector(".close").onclick = () => lb.close();
+  lb.addEventListener("click", e => { if (e.target === lb || e.target.tagName === "FIGURE") lb.close(); });
+  document.addEventListener("keydown", e => { if (!lb.open) return;
+    if (e.key === "ArrowLeft") show(i - 1); if (e.key === "ArrowRight") show(i + 1); });
+  let x0 = null;
+  lb.addEventListener("touchstart", e => x0 = e.touches[0].clientX, { passive: true });
+  lb.addEventListener("touchend", e => { if (x0 === null) return; const dx = e.changedTouches[0].clientX - x0;
+    if (Math.abs(dx) > 40) show(i + (dx < 0 ? 1 : -1)); x0 = null; });
+})();
+</script>
 </body>
 </html>
