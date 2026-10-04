@@ -34,7 +34,11 @@ It needs Docker (it runs KiCad 10 from the official `kicad/kicad:10.0` image thr
   - Charging and USB data come in through 4 pogo pads on the bottom (VBUS, D−, D+, GND), with a USBLC6 for ESD.
   - TP4054 charger at 50 mA, RT9080 LDO (2 µA quiescent).
   - Battery voltage is read through a 10 MΩ / 10 MΩ divider (0.2 µA).
-- **Sensors:** RV-3032-C7 RTC (INT wakes the ESP32) and BMA400 accelerometer (4 µA while step counting). I²C uses the ESP32's internal pull-ups.
+- **Sensors:**
+  - RV-3032-C7 RTC: INT wakes the ESP32.
+  - **ST LIS2DUX12** accelerometer: pedometer runs at 25 Hz in its 2.7 µA ultra-low-power mode; also tap, wake-up, 6D orientation and a machine-learning core. It replaced the BMA400 (4 µA, $14.91), saving ~$10.90 per board.
+  - I²C uses the ESP32's internal pull-ups.
+- **Haptics:** 8 × 2.0 mm coin ERM in the battery layer, driven by a CJ3134K low-side switch with a B5819WS flyback diode. A spring-contact motor needs no soldering: it presses onto 1.5 mm pads on the board's bottom.
 - **Display:** GDEM0097T61 into a Hirose FH34SRJ-18S, with the booster circuit from the Good Display datasheet.
 - **Buttons:** 4 Panasonic EVQ-P7M01P side switches on Watchy's button GPIOs (0, 6, 7, 8).
 - **GPIO plan:** the display, RTC INT and buttons are on RTC-capable GPIOs (0–21), so later firmware can use the ULP core or a wake stub for minute updates.
@@ -57,7 +61,8 @@ It needs Docker (it runs KiCad 10 from the official `kicad/kicad:10.0` image thr
 4. **Vias:** standard 0.4/0.2 mm, so no small-hole fee. Routing clearance is 0.11 mm and JLC's minimum is 0.09 mm.
 5. **Crystal load caps:** 24 pF C0G, matching the crystal's 15 pF load spec plus ~3 pF of board stray. Trim ±2 pF after measuring the clock offset.
 6. **RV-3032 VBACKUP and EVI are tied to GND** (backup unused). Confirm against the datasheet.
-7. **No vibration motor in rev A.** There's no room in the 7 mm stack. GPIO17 is reserved.
+7. **Haptics vs battery.** The coin motor takes 8.6 mm of the battery layer, so the cell is now 18.4 × 16 × 2.5 mm, about 27% less volume than the earlier 27 × 15 × 2.5 mm.
+   - Also verify the LIS2DUX12 RES pin (tied to GND) against the datasheet.
 8. **No load-sharing power path.** While docked, the TP4054 charges the battery while the ESP32 runs from it.
 9. **JLC CPL rotations:** LCSC-imported footprints sometimes need rotation offsets. Check JLC's placement preview.
 10. **Battery** is a placeholder envelope (27 × 15 × 2.5 mm with PCM). Pick the real cell.
@@ -67,15 +72,15 @@ It needs Docker (it runs KiCad 10 from the official `kicad/kicad:10.0` image thr
 |---|---|---|
 | Bare PCB: 4-layer, 0.8 mm, ENIG, standard 0.4/0.2 vias, impedance stack-up | ~$10–20 | ~$10–20 |
 | Assembly setup + stencil | $9.50 | $9.50 |
-| Loading fees: 23 extended lines × $3 | $69 | $69 |
-| Parts at $25.44 per board (BMA400 is $14.91 of that) | $51 | $127 |
+| Loading fees: 24 extended lines × $3 | $72 | $72 |
+| Parts at $14.61 per board (biggest: LIS2DUX12 $4.03, RV-3032 $3.44, ESP32-S3 $3.33) | $29 | $73 |
 | Solder joints | ~$1 | ~$2 |
-| **Subtotal (USD)** | **≈ $140–150** | **≈ $220–230** |
+| **Subtotal (USD)** | **≈ $120–130** | **≈ $165–175** |
 | Shipping: DHL Express ~$25, or Global Standard ~$10 (1–2 weeks) | $10–25 | $10–25 |
 | GST+PST 12% + brokerage (CAD) | ~$30–40 | ~$40–50 |
 
 **Where the money goes:**
-- **BMA400:** $15 at both JLC and LCSC; it's scarce. That's ~60% of per-board parts cost.
+- **Accelerometer:** the BMA400 was $15 at both JLC and LCSC (scarce). It's replaced by the LIS2DUX12 at $4.03, which is equal or better on every spec we use.
 - **Loading fees:** $45 of the $69 is for 15 lines of tiny passives that cost under a cent each.
 - JLC has essentially no basic or preferred 0201 parts. Swapping them for same-spec basic 0402 parts would need more board area than this board has.
 

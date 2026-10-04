@@ -48,6 +48,7 @@ ESP_PINS = {
     "20": "+3V3",         # VDD3P3_RTC
     "21": "EPD_DC",       # GPIO15
     "22": "EPD_CS",       # GPIO16
+    "23": "VIB",          # GPIO17  haptic motor
         "24": "ACC_INT2",     # GPIO18
     "25": "ESP_DM", "26": "ESP_DP",
         "29": "VDD_SPI", "46": "+3V3", "49": "TXD0", "50": "RXD0",
@@ -99,9 +100,9 @@ PARTS = [
     ("U5", "horae:RV-3032-C732.768KHZ-2.5PPM-TA-QC", "RV-3032-C7", "horae:OSC-SMD_8P-L3.2-W1.5-P0.90-BL", "C5127802",
      {"1": "GND", "2": "I2C_SDA", "3": "RTC_INT", "4": "GND", "5": "GND", "6": "+3V3", "8": "I2C_SCL"}, "sensors"),
     C("C19", "100nF", C100N, "+3V3", "GND", "sensors"),
-    ("U6", "horae:BMA400", "BMA400", "horae:LGA-12_L2.0-W2.0-P0.50-BL", "C437655",
-     {"1": "GND", "2": "I2C_SDA", "3": "+3V3", "5": "ACC_INT1", "6": "ACC_INT2", "7": "+3V3",
-      "8": "GND", "9": "GND", "10": "+3V3", "12": "I2C_SCL"}, "sensors"),   # SDO=GND -> 0x14, CSB=VDDIO -> I2C
+    ("U6", "horae:LIS2DUX12TR", "LIS2DUX12", "horae:LGA-12_L2.0-W2.0-P0.50-TL_LIS2DUX12TR", "C17548754",
+     {"1": "I2C_SCL", "2": "+3V3", "3": "GND", "4": "I2C_SDA", "6": "GND", "7": "GND", "8": "GND", "9": "+3V3",
+      "10": "+3V3", "11": "ACC_INT2", "12": "ACC_INT1"}, "sensors"),   # CS=VDDIO -> I2C, SA0=GND -> 0x18; RES to GND (verify)
     C("C20", "100nF", C100N, "+3V3", "GND", "sensors"),
     # I2C uses the ESP32 internal pull-ups (~45k): ~0.6 us rise at 100 kHz on this short bus
 
@@ -133,12 +134,16 @@ PARTS = [
     ("SW2", "horae:EVQ-P7M01P", "DOWN", "horae:SW-SMD_L3.5-W2.9_EVQ-P7M01P", "C7275646", {"1": "BTN_DOWN", "2": "GND"}, "ui"),
     ("SW3", "horae:EVQ-P7M01P", "MENU", "horae:SW-SMD_L3.5-W2.9_EVQ-P7M01P", "C7275646", {"1": "BTN_MENU", "2": "GND"}, "ui"),
     ("SW4", "horae:EVQ-P7M01P", "BACK", "horae:SW-SMD_L3.5-W2.9_EVQ-P7M01P", "C7275646", {"1": "BTN_BACK", "2": "GND"}, "ui"),
-    # haptics deferred to rev B: no room for a coin motor in the 7 mm stack (VIB on GPIO17 is reserved)
+    ("Q2", "horae:CJ3134K_C62503", "CJ3134K", "horae:SOT-723_L1.2-W0.8-P0.40-LS1.2-BR", "C62503",
+     {"1": "VIB", "2": "GND", "3": "MOT_N"}, "ui"),            # coin ERM low-side switch (~80 mA)
+    R("R13", "1M", R1M, "VIB", "GND", "ui"),                     # gate pull-down: motor off while the ESP32 boots
+    ("D4", "Device:D_Schottky", "B5819WS", "Diode_SMD:D_SOD-323", "C64886", {"1": "VBAT", "2": "MOT_N"}, "ui"),   # flyback
 
     # --- pads (bottom side; no parts) ---
     TP("TP1", "VBUS", PAD10, "pads"), TP("TP2", "USB_DM", PAD10, "pads"),
     TP("TP3", "USB_DP", PAD10, "pads"), TP("TP4", "GND", PAD10, "pads"),
     TP("TP5", "VBAT", PAD20, "pads"), TP("TP6", "GND", PAD20, "pads"),          # battery wires
+    TP("TP7", "VBAT", PAD15, "pads"), TP("TP8", "MOT_N", PAD15, "pads"),        # coin motor: spring contacts or wires
     TP("TP9", "TXD0", PAD10, "pads"), TP("TP10", "RXD0", PAD10, "pads"),
     TP("TP11", "EN", PAD10, "pads"), TP("TP12", "BTN_UP", PAD10, "pads"), TP("TP13", "+3V3", PAD10, "pads"),
 ]
