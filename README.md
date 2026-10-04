@@ -13,4 +13,4 @@ Build log: **[projecthorae.com](https://projecthorae.com)**
 - [Build plan, rev A](research/build-plan.md): custom board straight away, order → solder → firmware → case → wear
 
 ## Adding a timeline entry
-Copy an `<li class="entry">` block in `index.html` and put its photos in `media/YYYY-MM-DD/`. Move `id="latest"` to the new entry.
+The timeline is newest first. Add a new `<li class="entry">` block at the top of the `<ol class="timeline">` in `index.html`, and put its photos in `media/YYYY-MM-DD/`.

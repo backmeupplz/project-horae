@@ -5,8 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Project Horae</title>
 <meta name="description" content="Building a thinner, band-shaped, open-source e-paper watch in public. A miniaturized successor to Watchy.">
-<meta property="og:title" content="Project Horae">
-<meta property="og:description" content="A thinner, band-shaped, open-source e-paper watch, built in public from day one.">
+<link rel="canonical" href="https://projecthorae.com/">
+<meta name="theme-color" content="#121212">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Project Horae">
+<meta property="og:url" content="https://projecthorae.com/">
+<meta property="og:title" content="Project Horae: a thinner, band-shaped e-paper watch">
+<meta property="og:description" content="A miniaturized, open-source successor to Watchy, built in public from day one. Follow the build log.">
+<meta property="og:image" content="https://projecthorae.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Project Horae: a slim band-shaped e-paper watch showing 10:42">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Project Horae: a thinner, band-shaped e-paper watch">
+<meta name="twitter:description" content="A miniaturized, open-source successor to Watchy, built in public from day one.">
+<meta name="twitter:image" content="https://projecthorae.com/og.png">
+<meta name="twitter:image:alt" content="Project Horae: a slim band-shaped e-paper watch showing 10:42">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 32'><rect x='1' y='1' width='14' height='30' rx='5' fill='%23111'/><rect x='3' y='5' width='10' height='22' rx='2' fill='%23e8e6df'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -67,7 +81,6 @@ footer { border-top: 1px solid var(--line); padding: 24px 0 48px; font-size: 13p
     <p>This page is the build log. It starts on day one and every milestone gets a photo or a screenshot.</p>
     <div class="links mono">
       <a href="https://github.com/backmeupplz/project-horae">GitHub</a>
-      <a href="#latest">Latest entry ↓</a>
     </div>
   </div>
   <!-- the target: a narrow e-paper band -->
@@ -86,13 +99,17 @@ footer { border-top: 1px solid var(--line); padding: 24px 0 48px; font-size: 13p
 
   <li class="entry">
     <time class="mono" datetime="2026-10-03">2026-10-03 · Day 0</time>
-    <h2>Unboxing the Watchy</h2>
-    <p>The starting point: an original <a href="https://watchy.sqfmi.com/">Watchy</a> by SQFMI. ESP32, a 1.54" 200×200 square e-paper panel, four buttons, a LiPo, fully open hardware and firmware. Project Horae keeps the idea and changes the shape: thinner, narrower, and a better fit on a wrist.</p>
-    <p>Inside: the 1.54" e-paper panel, the PCB, a 200 mAh LiPo, the case parts and a strap. That's everything Horae has to shrink.</p>
-    <div class="photos trio">
-      <a href="media/2026-10-03/box.jpg"><img src="media/2026-10-03/box.jpg" alt="Watchy retail box: e-paper watch, fully open source, Arduino compatible" loading="lazy"></a>
-      <a href="media/2026-10-03/inner-box.jpg"><img src="media/2026-10-03/inner-box.jpg" alt="Yellow Watchy inner box" loading="lazy"></a>
-      <a href="media/2026-10-03/open.jpg"><img src="media/2026-10-03/open.jpg" alt="Open box: e-paper display, PCB, 200 mAh battery, case parts and strap in foam, with assembly instructions" loading="lazy"></a>
+    <h2>Plan: straight to a custom board <span class="tag">plan</span></h2>
+    <ul>
+      <li><b>No dev-board stage.</b> Rev A is a custom 4-layer, 0.8 mm board, fully assembled by JLCPCB. We plug in the display, solder the battery, and print the case.</li>
+      <li><b>ESP32-S3, Wi-Fi kept.</b> The same chip as Watchy, so we reuse its proven antenna and RF layout and its firmware.</li>
+      <li><b>Battery-first parts.</b> BMA400 accelerometer (4 µA while counting steps, vs ~25 µA for the BMA4xx family), RV-3032 RTC, 2 µA LDO, Wi-Fi once a day.</li>
+      <li><b>Target:</b> ~36 × 17.5 × 7 mm, against the Fitbit Charge 6's 36.7 × 23.1 × 11.2 mm.</li>
+      <li><b>Charging:</b> gold pogo pads on the back and a magnetic dock printed on the A1 mini. No USB socket.</li>
+      <li><b>Tools:</b> build123d for CAD, KiCad 10 for electronics.</li>
+    </ul>
+    <div class="cards">
+      <a href="https://github.com/backmeupplz/project-horae/blob/main/research/build-plan.md"><b>Build plan, rev A</b><span>Parts, stack-up, power budget, JLC cost</span></a>
     </div>
   </li>
 
@@ -102,30 +119,16 @@ footer { border-top: 1px solid var(--line); padding: 24px 0 48px; font-size: 13p
     <p>Before designing anything, we surveyed what's available. The first-pass picks:</p>
     <ul>
       <li><b>Display:</b> a 0.97" 184×88 bar-shaped e-paper (Good Display GDEM0097T61). It's 30×14×1 mm and uses an SSD1680, close kin to Watchy's controller. The runner-up is Sharp's 1.08" 160×68 memory LCD, which is the most Fitbit-like but hard to source.</li>
-      <li><b>Battery:</b> a stock 2.4–3 mm, 100–130 mAh LiPo pouch. Sodium-ion is a no for now: the smallest cells sold are 18650s.</li>
-      <li><b>Electronics:</b> fork Watchy's KiCad files into KiCad 10 and script everything with <code>kicad-cli</code>. Boards come from JLCPCB, 4-layer at 0.6–0.8 mm, assembled, shipped by DHL to Vancouver.</li>
-      <li><b>CAD:</b> build123d (Python, STEP in and out) for the case. The KiCad board drops straight in for fit checks. Slicing and printing on the Bambu A1 mini run from the command line.</li>
-    </ul>
-    <p>The open question is the chip: keep the ESP32-S3 and Watchy's firmware, or switch to an nRF52/nRF54 for roughly 5× the battery life.</p>
-    <div class="cards">
-      <a href="https://github.com/backmeupplz/project-horae/blob/main/research/displays.md"><b>Displays</b><span>Bar-shaped e-paper vs memory LCD</span></a>
-      <a href="https://github.com/backmeupplz/project-horae/blob/main/research/batteries.md"><b>Batteries</b><span>Thin LiPo, sodium-ion, power budget</span></a>
-      <a href="https://github.com/backmeupplz/project-horae/blob/main/research/electronics.md"><b>Electronics</b><span>EDA tools, fabs, ICs, import costs</span></a>
-      <a href="https://github.com/backmeupplz/project-horae/blob/main/research/cad-tools.md"><b>CAD &amp; printing</b><span>Code-CAD and headless A1 mini printing</span></a>
-    </div>
-  </li>
 
-  <li class="entry" id="latest">
+  <li class="entry">
     <time class="mono" datetime="2026-10-03">2026-10-03 · Day 0</time>
-    <h2>First decisions <span class="tag">plan</span></h2>
-    <ul>
-      <li><b>CAD:</b> build123d. <b>Electronics:</b> KiCad.</li>
-      <li><b>Prototype before miniaturizing.</b> v0 is a hand-soldered carrier PCB for an off-the-shelf XIAO module, inside a printed case. No breadboard. Factory assembly only once everything works.</li>
-      <li><b>Chip shoot-out:</b> XIAO ESP32-S3 vs XIAO nRF52840 share a pinout, so the same wiring tests both. A power profiler settles which one we use.</li>
-      <li><b>Charging:</b> USB-C on the prototype. Magnetic pogo pins on the final watch, because a USB-C socket alone is ~3.2 mm tall.</li>
-    </ul>
-    <div class="cards">
-      <a href="https://github.com/backmeupplz/project-horae/blob/main/research/prototyping.md"><b>Prototype v0 plan</b><span>Parts list, steps, charging</span></a>
+    <h2>Unboxing the Watchy</h2>
+    <p>The starting point: an original <a href="https://watchy.sqfmi.com/">Watchy</a> by SQFMI. ESP32, a 1.54" 200×200 square e-paper panel, four buttons, a LiPo, fully open hardware and firmware. Project Horae keeps the idea and changes the shape: thinner, narrower, and a better fit on a wrist.</p>
+    <p>Inside: the 1.54" e-paper panel, the PCB, a 200 mAh LiPo, the case parts and a strap. That's everything Horae has to shrink.</p>
+    <div class="photos trio">
+      <a href="media/2026-10-03/box.jpg"><img src="media/2026-10-03/box.jpg" alt="Watchy retail box: e-paper watch, fully open source, Arduino compatible" loading="lazy"></a>
+      <a href="media/2026-10-03/inner-box.jpg"><img src="media/2026-10-03/inner-box.jpg" alt="Yellow Watchy inner box" loading="lazy"></a>
+      <a href="media/2026-10-03/open.jpg"><img src="media/2026-10-03/open.jpg" alt="Open box: e-paper display, PCB, 200 mAh battery, case parts and strap in foam, with assembly instructions" loading="lazy"></a>
     </div>
   </li>
 
