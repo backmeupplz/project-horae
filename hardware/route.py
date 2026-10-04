@@ -48,6 +48,9 @@ pcbnew.ZONE_FILLER(board).Fill(board.Zones())
 
 def place_via_near(x0, y0, offsets):
     for dx, dy in offsets:
+        if any((pcbnew.ToMM(w.GetPosition().x) - OX - x0 - dx) ** 2 + (pcbnew.ToMM(w.GetPosition().y) - OY - y0 - dy) ** 2 < 0.6 ** 2
+               for w in board.GetTracks() if w.GetClass() == "PCB_VIA"):
+            continue
         v = pcbnew.PCB_VIA(board); v.SetPosition(pcbnew.VECTOR2I(MM(OX + x0 + dx), MM(OY + y0 + dy)))
         v.SetWidth(MM(0.4)); v.SetDrill(MM(0.2)); v.SetNet(gnd)
         if all(not (o.IsOnLayer(l) and v.GetEffectiveShape(l).Collide(o.GetEffectiveShape(l), MM(0.1))) for l in lay_all for o in others):
@@ -87,6 +90,9 @@ for i in range(1, nx):
             ok = False
         if ok and (x < X0 + 0.6 or y < Y0 + 0.6 or y > Y1 - 0.6):
             ok = False
+        if ok and any((pcbnew.ToMM(w.GetPosition().x) - OX - x) ** 2 + (pcbnew.ToMM(w.GetPosition().y) - OY - y) ** 2 < 0.6 ** 2
+                      for w in board.GetTracks() if w.GetClass() == "PCB_VIA"):
+            ok = False   # JLC: 0.2 mm hole-to-hole
         rc = S.PCB_CORNER_R
         for cx, cy in ((X0 + rc, Y0 + rc), (X0 + rc, Y1 - rc)):   # rounded corners at -X (+X is antenna keep-out)
             if ok and abs(x - cx) <= rc and abs(y - cy) <= rc and (x - cx) * (cx - X0 - rc) >= 0 and ((x - cx) ** 2 + (y - cy) ** 2) ** 0.5 > rc - 0.6 \
@@ -99,6 +105,9 @@ pcbnew.ZONE_FILLER(board).Fill(board.Zones())
 print("grid stitching done")
 # any top/bottom GND island still without a via gets one at the first free spot inside it
 def fits(x, y):
+    if any((pcbnew.ToMM(w.GetPosition().x) - OX - x) ** 2 + (pcbnew.ToMM(w.GetPosition().y) - OY - y) ** 2 < 0.6 ** 2
+           for w in board.GetTracks() if w.GetClass() == "PCB_VIA"):
+        return None
     v = pcbnew.PCB_VIA(board); v.SetPosition(pcbnew.VECTOR2I(MM(OX + x), MM(OY + y)))
     v.SetWidth(MM(0.4)); v.SetDrill(MM(0.2)); v.SetNet(gnd)
     for lay in lay_all:

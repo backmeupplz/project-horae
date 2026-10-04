@@ -30,7 +30,8 @@ POGO_Y = [(i - 1.5) * S.POGO_PITCH for i in range(4)]
 BOTTOM = {  # bottom-side pads
     "TP1": (S.POGO_X, POGO_Y[0]), "TP2": (S.POGO_X, POGO_Y[1]), "TP3": (S.POGO_X, POGO_Y[2]), "TP4": (S.POGO_X, POGO_Y[3]),
     "TP5": (S.POGO_X + 0.2, -S.BATPAD_Y), "TP6": (S.POGO_X + 0.2, S.BATPAD_Y),
-    "TP9": (-12.0, -2.5), "TP10": (-9.8, -2.5), "TP11": (-7.6, -2.5), "TP12": (-3.4, -2.5), "TP13": (-1.2, -2.5),
+    "TP7": (S.MOTOR_X - S.MOTOR_PAD_DX, 0.0), "TP8": (S.MOTOR_X + S.MOTOR_PAD_DX, 0.0),   # under the motor: spring fingers or wires
+    "TP9": (-4.4, -3.5), "TP10": (-2.2, -3.5), "TP11": (0.0, -3.5), "TP12": (2.2, -3.5), "TP13": (4.4, -3.5),   # over the battery pouch, clear of the motor can
 }
 TARGET = {  # loose targets for the legalizer, grouped near the IC they serve
     "C1": (10.6, 5.4), "C2": (10.6, 6.6), "L1": (7.6, 4.6),
@@ -40,10 +41,11 @@ TARGET = {  # loose targets for the legalizer, grouped near the IC they serve
     "U2": (-13.6, -6.4), "R2": (-11.8, -6.6), "C13": (-11.8, -5.6), "C15": (-1.0, 6.4),
     "U3": (-1.5, 4.6), "C16": (-3.2, 6.4), "C17": (-5.5, 4.8), "R3": (-3.6, 4.4), "R4": (-3.6, 3.4), "C18": (-3.6, 2.4),
     "U4": (-13.6, 6.4), "R7": (-11.8, 6.6), "R8": (-11.8, 5.6),
-    "U5": (0.5, -2.2), "C19": (0.5, -3.6), "U6": (0.5, 1.4), "C20": (-0.9, 0.4),
+    "U5": (0.5, -2.2), "C19": (0.5, -3.6), "C20": (-0.9, 0.4),
     "C24": (-7.3, -3.0), "C25": (-7.3, -2.0), "C26": (-7.3, -1.0), "C27": (-7.3, 0.0), "C28": (-7.3, 1.0), "C29": (-7.3, 2.0), "C30": (-7.3, 3.0),
     "Q1": (-4.6, -2.6), "L4": (-4.6, 0.8), "R11": (-5.6, -4.6), "R12": (-3.6, -4.6), "D1": (-2.4, -2.4), "D2": (-2.4, -0.6),
     "D3": (-2.4, 1.2), "C22": (-5.0, 3.4),
+    "Q2": (-3.0, -6.0), "R13": (-3.0, -4.8), "D4": (-1.0, -6.2),
 }
 
 
@@ -173,6 +175,7 @@ def main():
     pin_pad("C12", "1", l3b[0] + 0.42, ry, "-y")
     c11a, c12a = pad_xy(fps["C11"], "1"), pad_xy(fps["C12"], "1")
     put(fps["Y1"], 10.0, 6.3, 0)                 # crystal in the corner between SW2 and the RF feed
+    put(fps["U6"], 0.5, 1.4, 0)                  # accelerometer pinned next to the RTC so its LGA ground pads reach the pour
     def track(net, pts, w=W):
         for a, b in zip(pts, pts[1:]):
             t = pcbnew.PCB_TRACK(board); t.SetStart(V(*a)); t.SetEnd(V(*b)); t.SetWidth(MM(w))
@@ -180,7 +183,7 @@ def main():
     track("RF_CHIP", [(rx, ry), c11a, l3a])           # segments break at every pad so the router sees them connected
     track("RF_ANT", [l3b, c12a, (fx, ry), (fx, fy)])
     # RF ground vias + fence are added after routing (route.py), with collision checks
-    placed = [box(fps[r]) for r in ("U1", "J1", "SW1", "SW2", "SW3", "SW4", "C11", "L3", "C12", "Y1")]
+    placed = [box(fps[r]) for r in ("U1", "J1", "SW1", "SW2", "SW3", "SW4", "C11", "L3", "C12", "Y1", "U6")]
     placed.append((rx, ry - 0.35, fx + 0.35, ry + 0.35)); placed.append((fx - 0.35, ry, fx + 0.35, fy))   # keep parts off the feed
     ae_box = box(ae)
 
@@ -210,6 +213,45 @@ def main():
         if not done:
             put(fp, tx, ty, 0); b = box(fp)
             print(f"COULD NOT PLACE {ref} (left at target, overlapping)")
+
+    # GND escape vias: every top-side SMD GND pad gets its own via to the In1 plane before routing
+    gnd_net = nets["GND"]
+    obst = [p for f in fps.values() for p in f.Pads() if p.GetNetCode() != gnd_net.GetNetCode()]
+    holes = [p for f in fps.values() for p in f.Pads() if p.GetAttribute() == pcbnew.PAD_ATTRIB_NPTH]
+    new_vias = []
+    def ok_via(v):
+        for lay in (pcbnew.F_Cu, pcbnew.B_Cu):
+            vs = v.GetEffectiveShape(lay)
+            if any(o.IsOnLayer(lay) and vs.Collide(o.GetEffectiveShape(lay), MM(0.12)) for o in obst):
+                return False
+        if any(v.GetEffectiveShape(pcbnew.F_Cu).Collide(h.GetEffectiveShape(pcbnew.F_Cu), MM(0.3)) for h in holes):
+            return False
+        return all(abs(pcbnew.ToMM(v.GetPosition().x - w.GetPosition().x)) > 0.6 or abs(pcbnew.ToMM(v.GetPosition().y - w.GetPosition().y)) > 0.6 for w in new_vias)
+    n_esc = 0
+    for ref, f in fps.items():
+        if f.IsFlipped() or ref in ("AE1", "U1"):        # U1's exposed pad already has thermal vias
+            continue
+        for p in f.Pads():
+            if p.GetNetCode() != gnd_net.GetNetCode() or p.GetAttribute() != pcbnew.PAD_ATTRIB_SMD:
+                continue
+            px, py = pad_xy(f, p.GetNumber()) if False else (pcbnew.ToMM(p.GetPosition().x) - OX, pcbnew.ToMM(p.GetPosition().y) - OY)
+            half = max(pcbnew.ToMM(p.GetSize().x), pcbnew.ToMM(p.GetSize().y)) / 2
+            done_ = False
+            for d in (half + 0.35, half + 0.55, half + 0.8):
+                for ang in range(0, 360, 45):
+                    x, y = px + d * math.cos(math.radians(ang)), py + d * math.sin(math.radians(ang))
+                    if not (X0 + 0.5 < x < min(X1, ANT_KEEP_X) - 0.4 and Y0 + 0.5 < y < Y1 - 0.5):
+                        continue
+                    v = pcbnew.PCB_VIA(board); v.SetPosition(V(x, y)); v.SetWidth(MM(0.4)); v.SetDrill(MM(0.2)); v.SetNet(gnd_net)
+                    t = pcbnew.PCB_TRACK(board); t.SetStart(V(px, py)); t.SetEnd(V(x, y)); t.SetWidth(MM(0.2))
+                    t.SetLayer(pcbnew.F_Cu); t.SetNet(gnd_net)
+                    if ok_via(v) and not any(o.IsOnLayer(pcbnew.F_Cu) and t.GetEffectiveShape(pcbnew.F_Cu).Collide(o.GetEffectiveShape(pcbnew.F_Cu), MM(0.12)) for o in obst):
+                        v.SetLocked(True); t.SetLocked(True); board.Add(v); board.Add(t); new_vias.append(v); n_esc += 1; done_ = True
+                        break
+                if done_: break
+            if not done_:
+                print(f"no escape via for {ref}.{p.GetNumber()}")
+    print(f"GND escape vias: {n_esc}")
 
     # zones: GND on all four layers, keep-out over the antenna
     def rect_zone(layer, net, x0, y0, x1, y1, prio=0):
