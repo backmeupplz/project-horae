@@ -1,0 +1,7 @@
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+*.csv
+.env
+.env.*
