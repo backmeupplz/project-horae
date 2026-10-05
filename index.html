@@ -142,6 +142,54 @@ footer { border-top: 1px solid var(--line); padding: 24px 0 48px; font-size: 13p
 <ol class="timeline">
 
   <li class="entry">
+    <time class="mono" datetime="2026-10-04">2026-10-04 · Day 1</time>
+    <h2>Rev A, slimmer: smaller than a Charge 3 <span class="tag">design</span></h2>
+    <p>A full review and an "optimize everything" pass, borrowing ideas from Pebble 2, Watchy v3 and Yatchy. The watch is now <b>35.6 × 18.0 × 7.05 mm</b>: smaller than a Fitbit Charge 3 (38 × 18.3 × 11.8) in every direction, and 40% thinner. Day 0 was 40.5 × 18.5 × 7.15; an interim pass capped at the Charge 6 length was 36.7 × 20.0 × 7.45.</p>
+    <ul>
+      <li><b>Board:</b> 33.8 × 16.2 × 0.6 mm, 4 layers, routed and DRC-clean with 0 warnings. The tallest part is now 1.0 mm, down from 1.2.
+        <ul>
+          <li>The RTC chip is gone: a 32 kHz crystal runs the ESP32's own clock, as on Watchy v3 and Yatchy, saving $3.44.</li>
+          <li>The charger is now a TI BQ25101 (75 nA drain, 28 V-tolerant input) and the regulator a TI TPS62840 buck (60 nA quiescent), replacing a 2 µA LDO.</li>
+          <li>The e-paper booster now uses Solomon's reference values in 1.0 × 0.6 mm packages.</li>
+          <li>The display and I²C lines are on low-power GPIOs, so the ULP core can redraw the minutes without waking the main CPU (Yatchy's trick).</li>
+        </ul>
+      </li>
+      <li><b>Case:</b> the strap lugs were rendering detached from the body; they are now one piece with the side walls. Standard 16 mm spring-bar straps, 43.1 mm lug to lug. Still single-filament PETG with TPU gaskets, plus an optional 6.55 mm version for a 2.5 mm cell.</li>
+      <li><b>Corrections from the review:</b>
+        <ul>
+          <li>JLC's cheap "Economic" assembly can't place 0201 parts, so this board needs Standard assembly. Two assembled boards come to about USD 165–180 before shipping and tax, not 120–130.</li>
+          <li>Real batteries for this pocket hold 40–55 mAh, not ~100. That's still about 5–7 weeks with good firmware.</li>
+          <li>No 6 mm vibration motor with spring contacts exists, so the battery and motor take 4 solder joints.</li>
+        </ul>
+      </li>
+      <li><b>Antenna:</b> re-simulated in openEMS with the new 0.6 mm board, the slim case, both steel spring bars and the strap. Watchy's trimmed antenna stays as is; a new match (0.3 pF / 1.2 nH) gives −9 to −15 dB across the 2.4 GHz band in the case and −9 to −14 dB on the wrist. The simulation also caught a script bug: the ground pours on three layers had stopped 7.5 mm short of the antenna. Fixed.</li>
+    </ul>
+    <div class="photos">
+      <a href="media/2026-10-04/cad-assembled.png"><img src="media/2026-10-04/cad-assembled.png" alt="Rendered slim rev A: 35.6 × 18.0 × 7.05 mm pebble case on 16 mm straps, lugs joined to the case" loading="lazy"></a>
+      <a href="media/2026-10-04/cad-scale.png"><img src="media/2026-10-04/cad-scale.png" alt="To scale against a Fitbit Charge 3 and the previous pass, in plan and side view" loading="lazy"></a>
+      <a href="media/2026-10-04/cad-section.png"><img src="media/2026-10-04/cad-section.png" alt="Cross-section with the 7.05 mm stack-up dimensioned" loading="lazy"></a>
+      <a href="media/2026-10-04/cad-exploded.png"><img src="media/2026-10-04/cad-exploded.png" alt="Exploded view: bezel, gasket, display, frame with spring-bar ears, board, battery and motor, back" loading="lazy"></a>
+      <a href="media/2026-10-04/cad-board-in-case.png"><img src="media/2026-10-04/cad-board-in-case.png" alt="Board in the case" loading="lazy"></a>
+      <a href="media/2026-10-04/cad-mic.png"><img src="media/2026-10-04/cad-mic.png" alt="Mic duct and vent" loading="lazy"></a>
+      <a href="media/2026-10-04/cad-sealing.png"><img src="media/2026-10-04/cad-sealing.png" alt="Splash sealing: TPU gaskets and thinned touch windows" loading="lazy"></a>
+      <a href="media/2026-10-04/cad-dock.png"><img src="media/2026-10-04/cad-dock.png" alt="Pogo charging dock with the pins labelled by the pads they meet" loading="lazy"></a>
+      <a href="media/2026-10-04/pcb-3d.png"><img src="media/2026-10-04/pcb-3d.png" alt="Slim board, 3D render: ESP32-S3, antenna, display connector, booster, buck and charger" loading="lazy"></a>
+      <a href="media/2026-10-04/pcb-top.png"><img src="media/2026-10-04/pcb-top.png" alt="Board top, 33.8 × 16.2 mm" loading="lazy"></a>
+      <a href="media/2026-10-04/pcb-bottom.png"><img src="media/2026-10-04/pcb-bottom.png" alt="Board bottom: pogo, battery (+/−), motor and test pads" loading="lazy"></a>
+      <a href="media/2026-10-04/pcb-copper.png"><img src="media/2026-10-04/pcb-copper.png" alt="All four copper layers: top, ground plane, inner signals, bottom" loading="lazy"></a>
+      <a href="media/2026-10-04/pcb-rf.png"><img src="media/2026-10-04/pcb-rf.png" alt="RF corner: 50-ohm feed, matching network and the meander antenna" loading="lazy"></a>
+      <a href="media/2026-10-04/rf-s11.png"><img src="media/2026-10-04/rf-s11.png" alt="openEMS: antenna S11 on the slim board, in the case and on the wrist, old match vs new match" loading="lazy"></a>
+      <a href="media/2026-10-04/rf-smith.png"><img src="media/2026-10-04/rf-smith.png" alt="Smith chart of the antenna impedance and the new match" loading="lazy"></a>
+      <a href="media/2026-10-04/schematic.png"><img src="media/2026-10-04/schematic.png" alt="Generated schematic" loading="lazy"></a>
+    </div>
+    <div class="cards">
+      <a href="https://github.com/backmeupplz/project-horae/blob/main/hardware/README.md"><b>Hardware README</b><span>Design, GPIO plan, review checklist, cost</span></a>
+      <a href="https://github.com/backmeupplz/project-horae/tree/main/hardware/rf"><b>Antenna simulation</b><span>openEMS model, results, tuning kit</span></a>
+      <a href="https://github.com/backmeupplz/project-horae/tree/main/cad"><b>Case CAD</b><span>build123d source, STL/3MF per material</span></a>
+    </div>
+  </li>
+
+  <li class="entry">
     <time class="mono" datetime="2026-10-03">2026-10-03 · Day 0</time>
     <h2>Rev A, designed end to end <span class="tag">design</span></h2>
     <p>Board, case and antenna, all generated from code, with every check passing. Nothing is ordered yet; this is the design review, and it has already been through several rounds.</p>
