@@ -21,33 +21,34 @@ LEDGES = [(X0 - 1, Y0 - 1, S.DISP_X0 + S.LEDGE, -S.LEDGE_Y), (X0 - 1, S.LEDGE_Y,
 
 # Targets (KiCad coords, mm from board centre, y down). Pinned parts are placed exactly.
 PIN = {
-    "U1": (6.0, 0.0, None),            # rotation chosen to face pin 1 at the antenna feed
+    "U1": (4.8, 0.0, None),            # rotation chosen to face pin 1 at the antenna feed; leaves room for the RF chain
     "J1": (S.FFC_X, 0.0, None),
     # capacitive touch electrodes along the long edges (TCH1 UP, TCH2 DOWN at +X; TCH3 MENU, TCH4 BACK at -X)
     "TCH1": (S.TOUCH_X[1], Y0 + S.TOUCH_W / 2 + 0.3, 0), "TCH2": (S.TOUCH_X[1], Y1 - S.TOUCH_W / 2 - 0.3, 0),
     "TCH3": (S.TOUCH_X[0], Y0 + S.TOUCH_W / 2 + 0.3, 0), "TCH4": (S.TOUCH_X[0], Y1 - S.TOUCH_W / 2 - 0.3, 0),
 }
-BOTTOM = {  # bottom-side pads
-    **{tp: S.POGO_PADS[k][:2] for k, tp in enumerate(("TP1", "TP2", "TP3", "TP4"))},   # VBUS, D-, D+, GND
-    "TP5": (S.BATPAD_X, -S.BATPAD_Y), "TP6": (S.BATPAD_X, S.BATPAD_Y),
+BOTTOM = {  # bottom-side pads (no parts): dock pogo pads, battery wire pads, motor springs, test pads
+    **{tp: next(p[:2] for p in S.POGO_PADS if p[2] == net) for tp, net in (("TP1", "VBUS"), ("TP2", "USB_DM"), ("TP3", "USB_DP"), ("TP4", "GND"))},
+    "TP5": (S.BATPAD_X, S.BATPAD_Y), "TP6": (S.BATPAD_X, -S.BATPAD_Y),   # VBAT next to the charger, GND next to the ESD
     "TP7": (S.MOTOR_X - S.MOTOR_PAD_DX, 0.0), "TP8": (S.MOTOR_X + S.MOTOR_PAD_DX, 0.0),   # under the motor: spring fingers or wires
-    "TP14": (S.BAT_X0 - 0.75, 5.8), "TP15": (S.BAT_X0 - 0.75, -5.8), "TP16": (S.BAT_X0 - 0.75, 7.3),   # next to the battery end, where a flex tail can reach
     "TP9": (-4.4, -3.5), "TP10": (-2.2, -3.5), "TP11": (0.0, -3.5), "TP12": (2.2, -3.5), "TP13": (4.4, -3.5),   # over the battery pouch, clear of the motor can
 }
-TARGET = {  # loose targets for the legalizer, grouped near the IC they serve
-    "C1": (10.6, 5.4), "C2": (10.6, 6.6), "L1": (7.6, 4.6),
-    "C3": (11.2, 1.0), "L2": (11.2, -1.0), "C5": (11.2, -2.2), "C6": (11.2, -3.3), "C7": (8.6, -6.6),
-    "C8": (6.0, -5.2), "C9": (4.5, -5.2), "R1": (2.4, 1.5), "C10": (2.4, 2.6),
-    
-    "U2": (-13.6, -6.4), "R2": (-11.8, -6.6), "C13": (-11.8, -5.6), "C15": (-1.0, 6.4),
-    "U3": (-1.5, 4.6), "C16": (-3.2, 6.4), "C17": (-5.5, 4.8), "R3": (-3.6, 4.4), "R4": (-3.6, 3.4), "C18": (-3.6, 2.4),
-    "U4": (-13.6, 6.4), "R7": (-11.8, 6.6), "R8": (-11.8, 5.6),
-    "U5": (0.5, -2.2), "C19": (0.5, -3.6), "C20": (-0.9, 0.4),
-    "C24": (-7.3, -3.0), "C25": (-7.3, -2.0), "C26": (-7.3, -1.0), "C27": (-7.3, 0.0), "C28": (-7.3, 1.0), "C29": (-7.3, 2.0), "C30": (-7.3, 3.0),
-    "Q1": (-4.6, -2.6), "L4": (-4.6, 0.8), "R11": (-5.6, -4.6), "R12": (-3.6, -4.6), "D1": (-2.4, -2.4), "D2": (-2.4, -0.6),
-    "D3": (-2.4, 1.2), "C22": (-5.0, 3.4),
-    "C31": (-14.8, 6.4),
-    "Q2": (-3.0, -6.0), "R13": (-3.0, -4.8), "D4": (-1.0, -6.2),
+TARGET = {  # loose targets for the legalizer, grouped near the IC they serve (U1 pins 1-14 face +X, 15-28 face -Y, 43-56 face +Y)
+    # ESP32 support: 40 MHz crystal caps south-east, VDD3P3 LC + EN RC east, VDD_SPI west, 32 kHz crystal + accelerometer north-east
+    "C1": (9.9, 5.2), "C2": (9.9, 6.3), "L1": (6.4, 4.4),
+    "C3": (9.4, 1.5), "L2": (9.4, 0.7), "C5": (9.4, -1.9), "C6": (7.8, 4.4), "C7": (2.4, -4.4),
+    "C8": (0.2, -2.8), "C9": (0.2, -2.0), "R1": (9.4, -0.2), "C10": (9.4, -1.0),
+    "U6": (7.2, -5.6), "C20": (6.0, -4.5),
+    "Y2": (9.8, -5.0), "C32": (9.0, -6.9), "C33": (10.4, -6.9),
+    "R3": (2.0, 4.6), "R4": (3.0, 4.6), "C18": (4.0, 4.6),   # battery divider (DC; the long ADC trace is fine with C18 at the divider)
+    # dock ESD + charger in the -Y corner (VBUS / D- pogo pads below), motor switch beside J1's -Y end (buck: hand-placed, +Y corner)
+    "U4": (-12.2, -6.7), "U2": (-14.0, -6.2), "R2": (-14.2, -7.4), "R5": (-13.2, -7.4), "C13": (-10.9, -6.0),
+    "Q2": (-9.2, -6.4), "R13": (-8.4, -7.4), "D4": (-9.2, -7.5),
+    # display: rail caps right of J1, booster core next to J1's GDR/RESE end (-Y), pump diodes between the booster and U1
+    "C24": (-5.9, -3.0), "C25": (-5.9, -2.0), "C26": (-5.9, -1.0), "C27": (-5.9, 0.0), "C28": (-5.9, 1.0), "C29": (-5.9, 2.0), "C30": (-5.9, 3.0),
+    "Q1": (-4.2, -3.6), "R11": (-5.4, -4.7), "R12": (-3.0, -4.6), "L4": (-3.4, -0.6),
+    "D3": (-1.3, -1.6), "C22": (-1.3, 0.0), "D1": (-1.3, 1.5), "D2": (-1.3, 2.6),
+    "C31": (0.3, 6.6),
 }
 
 
@@ -117,7 +118,10 @@ def main():
             n = pins.get(pad.GetNumber())
             if n:
                 pad.SetNet(nets[n])
-        fp.Reference().SetVisible(False); fp.Value().SetVisible(False)   # no silk refs on a 15 mm board
+        fp.Reference().SetVisible(False); fp.Value().SetVisible(False)   # no silk refs on a 16 mm board
+        for it in fp.GraphicalItems():                                   # no silk at all (unreadable at this size; JLC needs none):
+            if it.GetLayer() in (pcbnew.F_SilkS, pcbnew.B_SilkS):        # keep the marks on the fab layer for reference
+                it.SetLayer(pcbnew.F_Fab if it.GetLayer() == pcbnew.F_SilkS else pcbnew.B_Fab)
         board.Add(fp)
         fps[ref] = fp
 
@@ -129,7 +133,13 @@ def main():
 
     # antenna: long axis across the board at the +X end, feed/ground pads facing the board (-X)
     ae = fps["AE1"]
-    put(ae, X1 - 5.70, -9.845, -90)   # pinned: the position the antenna was simulated and trimmed at (hardware/rf)
+    put(ae, X1 - 5.20, -9.845, -90)   # pinned 0.3 mm from the +X edge
+    cu = [gr.GetBoundingBox() for gr in ae.GraphicalItems() if gr.GetLayer() == pcbnew.F_Cu] + [p.GetBoundingBox() for p in ae.Pads()]
+    cy0 = (min(pcbnew.ToMM(b.GetTop()) for b in cu) + max(pcbnew.ToMM(b.GetBottom()) for b in cu)) / 2 - OY
+    put(ae, X1 - 5.20, -9.845 - cy0, -90)   # centre the (trimmed, asymmetric) copper across the board
+    cu_x1 = max([pcbnew.ToMM(gr.GetBoundingBox().GetRight()) for gr in ae.GraphicalItems() if gr.GetLayer() == pcbnew.F_Cu] +
+                [pcbnew.ToMM(p.GetBoundingBox().GetRight()) for p in ae.Pads()]) - OX
+    put(ae, X1 - 5.20 + (X1 - 0.35 - cu_x1), -9.845 - cy0, -90)   # meander tip 0.35 mm from the +X edge
     ant_cu_x = min([pcbnew.ToMM(gr.GetBoundingBox().GetLeft()) for gr in ae.GraphicalItems() if gr.GetLayer() == pcbnew.F_Cu] +
                    [pcbnew.ToMM(p.GetBoundingBox().GetLeft()) for p in ae.Pads()]) - OX
     best = (None, -90)
@@ -160,6 +170,11 @@ def main():
         put(fps[ref], *PIN[ref])
     for ref, (x, y) in BOTTOM.items():
         put(fps[ref], x, y, 0, flip=True)
+    for txt, ref in (("+", "TP5"), ("-", "TP6")):     # battery polarity next to the wire pads (the only silk on the board)
+        bx_, by_ = BOTTOM[ref]
+        t = pcbnew.PCB_TEXT(board); t.SetText(txt); t.SetLayer(pcbnew.B_SilkS); t.SetMirrored(True)
+        t.SetTextSize(pcbnew.VECTOR2I(MM(1.2), MM(1.2))); t.SetTextThickness(MM(0.2))
+        t.SetPosition(V(bx_ + 1.9, by_)); board.Add(t)
     # RF chain in a straight line from LNA_IN: C11 shunt, L3 series, C12 shunt, then the feed (pinned by pad)
     def pin_pad(ref, num, x, y, direction):
         fp = fps[ref]
@@ -167,36 +182,46 @@ def main():
             put(fp, 0, 0, rot)
             a = pad_xy(fp, num); b = pad_xy(fp, "2" if num == "1" else "1")
             v = (round(b[0] - a[0], 2), round(b[1] - a[1], 2))
-            if (direction == "+x" and v[0] > 0.2) or (direction == "+y" and v[1] > 0.2) or (direction == "-y" and v[1] < -0.2):
+            if (direction == "+x" and v[0] > 0.2) or (direction == "-x" and v[0] < -0.2) or (direction == "+y" and v[1] > 0.2) or (direction == "-y" and v[1] < -0.2):
                 put(fp, x - a[0], y - a[1], rot); return
         raise SystemExit(f"cannot orient {ref}")
     rx, ry = pad_xy(u1, "1")                      # LNA_IN pad centre
     fx, fy = feed
     W = 0.2                                       # 50-ohm GCPW on F.Cu over the In1 plane: 0.20 mm, 0.15 mm gap
-    pin_pad("C11", "1", rx + 1.05, ry, "-y")          # shunt caps point away from the feed run
+    pin_pad("C11", "1", rx + 1.05, ry, "+y")          # shunt caps point south: free board there for their ground vias
     pin_pad("L3", "1", rx + 1.55, ry, "+x")
     l3a, l3b = pad_xy(fps["L3"], "1"), pad_xy(fps["L3"], "2")
-    pin_pad("C12", "1", l3b[0] + 0.42, ry, "-y")
+    pin_pad("C12", "1", l3b[0] + 0.42, ry, "-y")   # (not fitted) points north, clear of the feed pad
     c11a, c12a = pad_xy(fps["C11"], "1"), pad_xy(fps["C12"], "1")
-    put(fps["Y1"], 10.0, 6.3, 0)                 # crystal in the corner between the +X touch pad and the RF feed
-    put(fps["U6"], 0.5, 1.4, 0)                  # accelerometer pinned next to the RTC so its LGA ground pads reach the pour
-    put(fps["MIC1"], S.MIC_X, S.MIC_Y, 90)       # top-port mic in the -X corner past the glass (case: sealed duct + vent above)
+    put(fps["Y1"], 8.1, 5.9, 90)                 # crystal below the ESP32, between the +X touch pad and the RF feed
+    # buck cell, hand-placed in the +Y strip south of J1, TI-style: the VOS/SW/VSET column faces west (inductor straight out of SW,
+    # VSET resistor up, VOS runs under the inductor to its output end), the GND/VIN/EN column faces east into the input cap
+    bx, by = -10.0, 6.6
+    put(fps["U3"], bx, by, 90)
+    pin_pad("C15", "1", bx + 1.06, by - 0.28, "+y")   # VBAT pad beside VIN/EN, GND pad beside A1
+    pin_pad("L5", "1", bx - 1.15, by, "-x")           # SW pad straight west of B2, +3V3 end further west
+    pin_pad("C17", "1", bx - 3.6, by - 0.48, "+y")    # output cap past L5's +3V3 end
+    pin_pad("R6", "1", bx - 0.75, by - 1.1, "-x")     # VSET resistor north-west of C2
+    put(fps["MIC1"], S.MIC_X, S.MIC_Y, 180)      # 180: KiCad 3D-model Y is flipped vs the footprint, port must face the edge; top-port mic at the long edge; port in the strip the glass does not cover (case: duct + vent)
     def track(net, pts, w=W):
         for a, b in zip(pts, pts[1:]):
             t = pcbnew.PCB_TRACK(board); t.SetStart(V(*a)); t.SetEnd(V(*b)); t.SetWidth(MM(w))
             t.SetLayer(pcbnew.F_Cu); t.SetNet(nets[net]); t.SetLocked(True); board.Add(t)
     ae2 = pad_xy(ae, "2")                         # IFA short to ground: make sure the pour reaches it
-    track("GND", [ae2, (ae2[0] - 0.6, ae2[1])], w=0.3)
+    track("GND", [ae2, (ae2[0] - 0.75, ae2[1])], w=0.3)
+    sv = pcbnew.PCB_VIA(board); sv.SetPosition(V(ae2[0] - 0.75, ae2[1])); sv.SetWidth(MM(0.4)); sv.SetDrill(MM(0.2))
+    sv.SetNet(nets["GND"]); sv.SetLocked(True); board.Add(sv)          # IFA short goes straight to the plane
     track("RF_CHIP", [(rx, ry), c11a, l3a])           # segments break at every pad so the router sees them connected
     track("RF_ANT", [l3b, c12a, (fx, ry), (fx, fy)])
     # RF ground vias + fence are added after routing (route.py), with collision checks
-    touch_keep = [(x - S.TOUCH_L / 2 - 0.6, y - S.TOUCH_W / 2 - 0.6, x + S.TOUCH_L / 2 + 0.6, y + S.TOUCH_W / 2 + 0.6)
-                  for x, y, _ in (PIN[t] for t in ("TCH1", "TCH2", "TCH3", "TCH4"))]   # parts stay 0.6 mm off the electrodes
-    placed = [box(fps[r]) for r in ("U1", "J1", "C11", "L3", "C12", "Y1", "U6", "MIC1")] + touch_keep
+    touch_keep = [(x - S.TOUCH_L / 2 - 0.4, y - S.TOUCH_W / 2 - 0.4, x + S.TOUCH_L / 2 + 0.4, y + S.TOUCH_W / 2 + 0.4)
+                  for x, y, _ in (PIN[t] for t in ("TCH1", "TCH2", "TCH3", "TCH4"))]   # parts stay 0.4 mm off the electrodes
+    placed = [box(fps[r]) for r in ("U1", "J1", "C11", "L3", "C12", "Y1", "MIC1", "U3", "C15", "L5", "C17", "R6")] + touch_keep
     placed.append((rx, ry - 0.35, fx + 0.35, ry + 0.35)); placed.append((fx - 0.35, ry, fx + 0.35, fy))   # keep parts off the feed
+    placed.append((ae2[0] - 1.1, ae2[1] - 0.4, ae2[0], ae2[1] + 0.4))   # and off the antenna short stub + via
     ae_box = box(ae)
 
-    keep = [(min(S.ANT_X0 - 0.2, ant_cu_x - 1.0), Y0 - 1, X1 + 1, Y1 + 1), FPC_LANE] + LEDGES   # parts >= 1 mm from antenna copper
+    keep = [(min(S.ANT_X0 - 0.2, ant_cu_x - 0.3), Y0 - 1, X1 + 1, Y1 + 1), FPC_LANE] + LEDGES   # parts stop at the GND pour edge (feed/short pads)
     small = lambda b: (b[2] - b[0]) * (b[3] - b[1]) < 4
     def legal(b):  # courtyards may touch, not overlap
         return (b[0] >= X0 + EDGE and b[2] <= X1 - EDGE and b[1] >= Y0 + EDGE and b[3] <= Y1 - EDGE

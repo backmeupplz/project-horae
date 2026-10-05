@@ -34,7 +34,7 @@ board = pcbnew.LoadBoard("horae.kicad_pcb")
 if not pcbnew.ImportSpecctraSES(board, "out/horae-fixed.ses"):
     raise SystemExit("SES import failed")
 gnd = board.FindNet("GND")
-ANT_KEEP_X = [pcbnew.ToMM(z.Outline().BBox().GetLeft()) - OX for z in board.Zones() if z.GetIsRuleArea()][0]
+ANT_KEEP_X = [pcbnew.ToMM(z.Outline().BBox().GetLeft()) - OX for z in board.Zones() if z.GetZoneName() == "antenna keep-out"][0]   # (not the touch no-pour areas)
 for lay in (pcbnew.F_Cu, pcbnew.In2_Cu, pcbnew.B_Cu):
     z = pcbnew.ZONE(board); z.SetLayer(lay); z.SetNet(gnd)
     o = z.Outline(); o.NewOutline()
@@ -55,8 +55,11 @@ def place_via_near(x0, y0, offsets):
             continue
         v = pcbnew.PCB_VIA(board); v.SetPosition(pcbnew.VECTOR2I(MM(OX + x0 + dx), MM(OY + y0 + dy)))
         v.SetWidth(MM(0.4)); v.SetDrill(MM(0.2)); v.SetNet(gnd)
-        if all(not (o.IsOnLayer(l) and v.GetEffectiveShape(l).Collide(o.GetEffectiveShape(l), MM(0.1))) for l in lay_all for o in others):
-            board.Add(v); return True
+        t = pcbnew.PCB_TRACK(board); t.SetStart(pcbnew.VECTOR2I(MM(OX + x0), MM(OY + y0))); t.SetEnd(v.GetPosition())
+        t.SetWidth(MM(0.2)); t.SetLayer(pcbnew.F_Cu); t.SetNet(gnd)   # own stub: the pour may not fill between pad and via
+        if all(not (o.IsOnLayer(l) and v.GetEffectiveShape(l).Collide(o.GetEffectiveShape(l), MM(0.1))) for l in lay_all for o in others) \
+                and not any(o.IsOnLayer(pcbnew.F_Cu) and t.GetEffectiveShape(pcbnew.F_Cu).Collide(o.GetEffectiveShape(pcbnew.F_Cu), MM(0.1)) for o in others):
+            board.Add(v); board.Add(t); return True
     return False
 
 # GND stitching: a via wherever one fits clear of other nets on every layer, so no pour island floats

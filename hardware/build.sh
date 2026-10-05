@@ -10,10 +10,13 @@ mkdir -p out
 ./kicad kicad-cli sch erc --format json --severity-all -o out/erc.json horae.kicad_sch >/dev/null
 ./kicad kicad-cli sch export pdf -o out/horae-schematic.pdf horae.kicad_sch >/dev/null
 ./kicad python3 gen_pcb.py
-for strategy in prioritized random sequential; do   # retry until only GND (handled by pours) is left unrouted
-  "$JAVA" -Djava.awt.headless=true -jar "$FR" -de out/horae.dsn -do out/horae.ses -mp 80 -is $strategy --gui.enabled=false > out/freerouting.log 2>&1
-  grep -E "^\s+Net '" out/freerouting.log | grep -qv "Net 'GND'" || break
-  echo "router ($strategy) left signal nets unrouted; retrying"
+best=999
+for run in prioritized random random sequential random; do   # keep the session with the fewest unrouted signal (non-GND) nets
+  "$JAVA" -Djava.awt.headless=true -jar "$FR" -de out/horae.dsn -do out/try.ses -mp 80 -is $run --gui.enabled=false > out/try.log 2>&1
+  n=$(grep -E "^\s+Net '" out/try.log | grep -vc "Net 'GND'" || true)   # grep -c exits 1 on a perfect route
+  echo "router ($run): $n signal nets unrouted"
+  if [ "$n" -lt "$best" ]; then best=$n; cp out/try.ses out/horae.ses; cp out/try.log out/freerouting.log; fi
+  [ "$best" -eq 0 ] && break
 done
 grep -E "Optimization stage completed" out/freerouting.log | sed -E 's/.*(final score)/router \1/' | cut -c1-70
 ./kicad python3 route.py
