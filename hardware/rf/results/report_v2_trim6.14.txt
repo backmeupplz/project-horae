@@ -1,0 +1,30 @@
+# Antenna_v2_trim6.14 at pad 1 (vs In1), 50 ohm reference; rad. eff. = P_rad / P_accepted at 2.40 / 2.44 / 2.48 GHz
+
+env: X=0 rising at [2.515] GHz; S11 min -11.7 dB at 2.473; Z [2.40: 41.9-32.4j, 2.44: 35.4-19.4j, 2.48: 30.7-8.6j]; rad. eff. 0.81 / 0.82 / 0.83
+wrist: X=0 rising at [2.432] GHz; S11 min -11.0 dB at 2.370; Z [2.40: 28.0-7.4j, 2.44: 24.0+1.3j, 2.48: 21.0+8.9j]; rad. eff. 0.06 / 0.06 / 0.06
+env_v2_trim6.14_bar1.15: X=0 rising at [2.498] GHz; S11 min -12.5 dB at 2.455; Z [2.40: 40.6-26.1j, 2.44: 34.7-14.2j, 2.48: 30.3-4.2j]; rad. eff. 0.81 / 0.83 / 0.84
+env_v2_trim6.14_nobar: X=0 rising at [2.55] GHz; S11 min -9.1 dB at 2.500; Z [2.40: 40.2-48.0j, 2.44: 33.1-31.5j, 2.48: 28.1-18.4j]; rad. eff. 0.77 / 0.78 / 0.79
+
+## minimax over ['env', 'wrist']: top 8 (worst in-band transducer loss dB, worst S11 dB, C11 pF / L3 nH / C12 pF)
+   0.69    -9.0  0.5 / 1 / 0
+   0.69    -9.2  0.6 / 1.2 / 0
+   0.70    -8.8  0.4 / 0.8 / 0
+   0.73    -8.6  0.3 / 0.6 / 0
+   0.75    -9.2  0.8 / 1.5 / 0
+   0.77    -9.1  0.5 / 1.5 / 0.3
+   0.78    -8.5  0.7 / 1.2 / 0
+   0.78    -9.5  0.8 / 1.8 / 0.3
+  recommended -> env: band S11 -9.0 .. -15.4 dB; -10 dB band 2.415-2.578; worst in-band transducer loss 0.69 dB; total eff. (rad x transducer) 0.69 / 0.75 / 0.79
+  recommended -> wrist: band S11 -9.4 .. -13.8 dB; -10 dB band 2.328-2.470; worst in-band transducer loss 0.69 dB; total eff. (rad x transducer) 0.05 / 0.05 / 0.05
+  rev A as built 0.9/0.6/DNP -> env: band S11 -5.6 .. -11.2 dB; -10 dB band 2.470-2.640; worst in-band transducer loss 1.46 dB; total eff. (rad x transducer) 0.58 / 0.67 / 0.75
+  rev A as built 0.9/0.6/DNP -> wrist: band S11 -11.4 .. -18.4 dB; -10 dB band 2.385-2.542; worst in-band transducer loss 0.41 dB; total eff. (rad x transducer) 0.05 / 0.05 / 0.05
+
+robustness of the recommended values (band worst S11 dB): antenna resonance -3% / +3%; parts at tolerance (C +-0.1 pF, L +-max(5%, 0.1 nH)); model variants
+  env: shift -11.6 / -5.2; part corners worst -8.0
+  wrist: shift -5.8 / -10.3; part corners worst -8.3
+  env_v2_trim6.14_bar1.15: band S11 -10.6 .. -16.8 dB; worst transducer loss 0.50 dB; rad. eff. 0.81 / 0.83 / 0.84
+  env_v2_trim6.14_nobar: band S11 -6.0 .. -10.6 dB; worst transducer loss 1.36 dB; rad. eff. 0.77 / 0.78 / 0.79
+
+C11 0.5 pF {'lcsc': 'C85920', 'lib': 'expand', 'stock': 64930, 'desc': '0.5pF 50V C0G 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS'}
+L3  1 nH {'lcsc': 'C98039', 'lib': 'expand', 'stock': 77052, 'desc': '100mΩ 14@500MHz 17GHz 1nH 750mA Thick Film Inductor 0201 Inductors (SMD) ROHS'}
+C12 0 pF {'lcsc': 'DNP'}

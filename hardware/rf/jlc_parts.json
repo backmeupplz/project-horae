@@ -44,19 +44,19 @@
    {
     "lcsc": "C85920",
     "lib": "expand",
-    "stock": 64980,
+    "stock": 64930,
     "desc": "0.5pF 50V C0G 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
+   },
+   {
+    "lcsc": "C325442",
+    "lib": "expand",
+    "stock": 29515,
+    "desc": "0.5pF 50V NP0 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
    },
    {
     "lcsc": "C85922",
     "lib": "expand",
     "stock": 25322,
-    "desc": "0.5pF 50V C0G 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
-   },
-   {
-    "lcsc": "C18164565",
-    "lib": "expand",
-    "stock": 23362,
     "desc": "0.5pF 50V C0G 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
    }
   ],
@@ -84,7 +84,7 @@
    {
     "lcsc": "C161449",
     "lib": "expand",
-    "stock": 14485,
+    "stock": 14482,
     "desc": "0.7pF 50V C0G 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
    },
    {
@@ -96,7 +96,7 @@
    {
     "lcsc": "C5182416",
     "lib": "expand",
-    "stock": 13780,
+    "stock": 13660,
     "desc": "0.7pF 25V NP0 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
    }
   ],
@@ -144,13 +144,13 @@
    {
     "lcsc": "C18164552",
     "lib": "expand",
-    "stock": 36872,
+    "stock": 36850,
     "desc": "1pF 50V C0G 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
    },
    {
     "lcsc": "C85894",
     "lib": "expand",
-    "stock": 36683,
+    "stock": 36645,
     "desc": "1pF 50V C0G 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
    },
    {
@@ -182,16 +182,16 @@
   ],
   "1.2": [
    {
-    "lcsc": "C85895",
-    "lib": "expand",
-    "stock": 88988,
-    "desc": "1.2pF 50V C0G 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
-   },
-   {
     "lcsc": "C326704",
     "lib": "expand",
-    "stock": 81983,
+    "stock": 81803,
     "desc": "1.2pF 50V NP0 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
+   },
+   {
+    "lcsc": "C85895",
+    "lib": "expand",
+    "stock": 68704,
+    "desc": "1.2pF 50V C0G 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
    },
    {
     "lcsc": "C285029",
@@ -224,13 +224,13 @@
    {
     "lcsc": "C88913",
     "lib": "expand",
-    "stock": 81492,
+    "stock": 81747,
     "desc": "1.5pF 50V C0G 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
    },
    {
     "lcsc": "C161414",
     "lib": "expand",
-    "stock": 57019,
+    "stock": 56519,
     "desc": "1.5pF 50V C0G 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
    },
    {
@@ -284,13 +284,13 @@
    {
     "lcsc": "C161419",
     "lib": "expand",
-    "stock": 296319,
+    "stock": 296289,
     "desc": "2pF 50V C0G 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
    },
    {
     "lcsc": "C668326",
     "lib": "expand",
-    "stock": 33985,
+    "stock": 33965,
     "desc": "25V 2pF C0G 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
    },
    {
@@ -302,9 +302,15 @@
   ],
   "2.2": [
    {
+    "lcsc": "C39375",
+    "lib": "expand",
+    "stock": 32749,
+    "desc": "2.2pF 50V C0G 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
+   },
+   {
     "lcsc": "C85901",
     "lib": "expand",
-    "stock": 32587,
+    "stock": 32737,
     "desc": "2.2pF 50V C0G 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
    },
    {
@@ -312,12 +318,6 @@
     "lib": "expand",
     "stock": 21918,
     "desc": "2.2pF 50V C0G 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
-   },
-   {
-    "lcsc": "C710732",
-    "lib": "expand",
-    "stock": 18393,
-    "desc": "2.2pF 25V C0G 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
    }
   ],
   "2.4": [
@@ -350,13 +350,13 @@
    {
     "lcsc": "C509406",
     "lib": "expand",
-    "stock": 15033,
+    "stock": 15053,
     "desc": "2.7pF 50V C0G 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
    },
    {
     "lcsc": "C85903",
     "lib": "expand",
-    "stock": 14978,
+    "stock": 14958,
     "desc": "2.7pF 50V C0G 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
    }
   ],
@@ -364,7 +364,7 @@
    {
     "lcsc": "C237430",
     "lib": "expand",
-    "stock": 97520,
+    "stock": 97478,
     "desc": "3pF 50V C0G 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
    },
    {
@@ -384,7 +384,7 @@
    {
     "lcsc": "C161425",
     "lib": "expand",
-    "stock": 49518,
+    "stock": 49498,
     "desc": "3.3pF 50V C0G 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
    },
    {
@@ -404,7 +404,7 @@
    {
     "lcsc": "C161426",
     "lib": "expand",
-    "stock": 27773,
+    "stock": 27753,
     "desc": "3.6pF 50V C0G 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
    },
    {
@@ -424,7 +424,7 @@
    {
     "lcsc": "C76926",
     "lib": "expand",
-    "stock": 27100,
+    "stock": 27080,
     "desc": "3.9pF 50V C0G 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
    },
    {
@@ -436,7 +436,7 @@
    {
     "lcsc": "C22374845",
     "lib": "expand",
-    "stock": 17364,
+    "stock": 17264,
     "desc": "3.9pF 50V C0G 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
    }
   ],
@@ -464,13 +464,13 @@
    {
     "lcsc": "C161428",
     "lib": "expand",
-    "stock": 30603,
+    "stock": 30471,
     "desc": "4.7pF 50V C0G 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
    },
    {
     "lcsc": "C255351",
     "lib": "expand",
-    "stock": 23032,
+    "stock": 22502,
     "desc": "4.7pF 50V C0G \u00b15% 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
    },
    {
@@ -502,6 +502,12 @@
   ],
   "5.6": [
    {
+    "lcsc": "C277492",
+    "lib": "expand",
+    "stock": 15046,
+    "desc": "5.6pF 50V NP0 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
+   },
+   {
     "lcsc": "C267345",
     "lib": "expand",
     "stock": 14610,
@@ -511,12 +517,6 @@
     "lcsc": "C311872",
     "lib": "expand",
     "stock": 13490,
-    "desc": "5.6pF 50V NP0 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
-   },
-   {
-    "lcsc": "C2894175",
-    "lib": "expand",
-    "stock": 12668,
     "desc": "5.6pF 50V NP0 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
    }
   ],
@@ -544,7 +544,7 @@
    {
     "lcsc": "C85916",
     "lib": "expand",
-    "stock": 31473,
+    "stock": 31243,
     "desc": "50V 6.8pF C0G 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
    },
    {
@@ -556,7 +556,7 @@
    {
     "lcsc": "C2194498",
     "lib": "expand",
-    "stock": 14760,
+    "stock": 14660,
     "desc": "25V 6.8pF NP0 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
    }
   ],
@@ -584,7 +584,7 @@
    {
     "lcsc": "C22374848",
     "lib": "expand",
-    "stock": 72439,
+    "stock": 72419,
     "desc": "50V 8.2pF C0G 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
    },
    {
@@ -604,19 +604,19 @@
    {
     "lcsc": "C5142552",
     "lib": "expand",
-    "stock": 815474,
+    "stock": 815420,
     "desc": "10pF 50V C0G \u00b15% 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
    },
    {
     "lcsc": "C272871",
     "lib": "expand",
-    "stock": 576283,
+    "stock": 576183,
     "desc": "10pF 50V NP0 \u00b15% 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
    },
    {
     "lcsc": "C76921",
     "lib": "expand",
-    "stock": 350177,
+    "stock": 359869,
     "desc": "10pF 50V C0G \u00b15% 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS"
    }
   ]
@@ -672,7 +672,7 @@
    {
     "lcsc": "C279744",
     "lib": "expand",
-    "stock": 33793,
+    "stock": 33782,
     "desc": "13@500MHz 17GHz 1nH 750mA 80m\u03a9 Multilayer inductor 0201 Inductors (SMD) ROHS"
    },
    {
@@ -686,7 +686,7 @@
    {
     "lcsc": "C77113",
     "lib": "expand",
-    "stock": 220923,
+    "stock": 220833,
     "desc": "1.2nH 100m\u03a9 14@500MHz 17GHz 750mA Thick Film Inductor 0201 Inductors (SMD) ROHS"
    },
    {
@@ -746,13 +746,13 @@
    {
     "lcsc": "C86125",
     "lib": "expand",
-    "stock": 206407,
+    "stock": 206481,
     "desc": "12.5GHz 14@500MHz 150m\u03a9 2nH 600mA Thick Film Inductor 0201 Inductors (SMD) ROHS"
    },
    {
     "lcsc": "C275181",
     "lib": "expand",
-    "stock": 28834,
+    "stock": 28634,
     "desc": "100m\u03a9 14@500MHz 2nH 600mA 8.5GHz High-frequency inductor 0201 Inductors (SMD) ROHS"
    },
    {
@@ -766,13 +766,13 @@
    {
     "lcsc": "C98041",
     "lib": "expand",
-    "stock": 187851,
+    "stock": 187703,
     "desc": "11GHz 14@500MHz 150m\u03a9 2.2nH 600mA Thick Film Inductor 0201 Inductors (SMD) ROHS"
    },
    {
     "lcsc": "C1329438",
     "lib": "expand",
-    "stock": 59902,
+    "stock": 59868,
     "desc": "120m\u03a9 2.2nH 20@500MHz 600mA 9GHz Thick Film Inductor 0201 Inductors (SMD) ROHS"
    },
    {
@@ -786,7 +786,7 @@
    {
     "lcsc": "C98042",
     "lib": "expand",
-    "stock": 116847,
+    "stock": 116807,
     "desc": "10GHz 14@500MHz 2.4nH 200m\u03a9 500mA Thick Film Inductor 0201 Inductors (SMD) ROHS"
    },
    {
@@ -806,7 +806,7 @@
    {
     "lcsc": "C279775",
     "lib": "expand",
-    "stock": 81870,
+    "stock": 81850,
     "desc": "10GHz 13@500MHz 2.7nH 200m\u03a9 500mA Multilayer inductor 0201 Inductors (SMD) ROHS"
    },
    {
@@ -818,7 +818,7 @@
    {
     "lcsc": "C98043",
     "lib": "expand",
-    "stock": 39265,
+    "stock": 38915,
     "desc": "10GHz 14@500MHz 2.7nH 200m\u03a9 500mA Thick Film Inductor 0201 Inductors (SMD) ROHS"
    }
   ],
@@ -827,27 +827,27 @@
    {
     "lcsc": "C98045",
     "lib": "expand",
-    "stock": 322412,
+    "stock": 322372,
     "desc": "14@500MHz 250m\u03a9 3.3nH 450mA 8GHz Thick Film Inductor 0201 Inductors (SMD) ROHS"
+   },
+   {
+    "lcsc": "C370157",
+    "lib": "expand",
+    "stock": 32346,
+    "desc": "13@500MHz 250m\u03a9 3.3nH 450mA 8.1GHz Multilayer inductor 0201 Inductors (SMD) ROHS"
    },
    {
     "lcsc": "C211319",
     "lib": "expand",
     "stock": 15000,
     "desc": "14@500MHz 270mA 3.3nH 300m\u03a9 7.5GHz Multilayer inductor 0201 Inductors (SMD) ROHS"
-   },
-   {
-    "lcsc": "C2991168",
-    "lib": "expand",
-    "stock": 14958,
-    "desc": "3.3nH 0201 Inductors (SMD) ROHS"
    }
   ],
   "3.6": [
    {
     "lcsc": "C162616",
     "lib": "expand",
-    "stock": 25561,
+    "stock": 25471,
     "desc": "14@500MHz 3.6nH 300m\u03a9 400mA 6GHz Thick Film Inductor 0201 Inductors (SMD) ROHS"
    },
    {
@@ -891,15 +891,15 @@
     "desc": "170m\u03a9 20@500MHz 4.3nH 500mA 7GHz \u00b13% 0201 Inductors (SMD) ROHS"
    },
    {
+    "lcsc": "C6807758",
+    "lib": "expand",
+    "stock": 19908,
+    "desc": "13@500MHz 350mA 4.3nH 400m\u03a9 6.8GHz \u00b13% 0201 Inductors (SMD) ROHS"
+   },
+   {
     "lcsc": "C279727",
     "lib": "expand",
     "stock": 14856,
-    "desc": "13@500MHz 350mA 4.3nH 400m\u03a9 6.8GHz Multilayer inductor 0201 Inductors (SMD) ROHS"
-   },
-   {
-    "lcsc": "C370165",
-    "lib": "expand",
-    "stock": 14680,
     "desc": "13@500MHz 350mA 4.3nH 400m\u03a9 6.8GHz Multilayer inductor 0201 Inductors (SMD) ROHS"
    }
   ],
@@ -907,7 +907,7 @@
    {
     "lcsc": "C86126",
     "lib": "expand",
-    "stock": 149018,
+    "stock": 148596,
     "desc": "14@500MHz 350mA 4.4GHz 4.7nH 400m\u03a9 \u00b13% 0201 Inductors (SMD) ROHS"
    },
    {
@@ -987,7 +987,7 @@
    {
     "lcsc": "C162628",
     "lib": "expand",
-    "stock": 42949,
+    "stock": 42379,
     "desc": "14@500MHz 3.9GHz 300mA 6.8nH 600m\u03a9 \u00b13% 0201 Inductors (SMD) ROHS"
    },
    {
@@ -1047,7 +1047,7 @@
    {
     "lcsc": "C2044892",
     "lib": "expand",
-    "stock": 29233,
+    "stock": 29301,
     "desc": "16@500MHz 250mA 3.8GHz 620m\u03a9 9.1nH \u00b13% 0201 Inductors (SMD) ROHS"
    },
    {
@@ -1067,13 +1067,13 @@
    {
     "lcsc": "C279799",
     "lib": "expand",
-    "stock": 33424,
+    "stock": 33404,
     "desc": "10nH 13@500MHz 250mA 3.8GHz 700m\u03a9 \u00b15% 0201 Inductors (SMD) ROHS"
    },
    {
     "lcsc": "C162594",
     "lib": "expand",
-    "stock": 31176,
+    "stock": 30966,
     "desc": "10nH 14@500MHz 250mA 3.2GHz 700m\u03a9 Thick Film Inductor \u00b13% 0201 Inductors (SMD) ROHS"
    },
    {
@@ -1087,7 +1087,7 @@
    {
     "lcsc": "C162597",
     "lib": "expand",
-    "stock": 51842,
+    "stock": 51822,
     "desc": "12@500MHz 12nH 2.9GHz 250mA 700m\u03a9 \u00b13% 0201 Inductors (SMD) ROHS"
    },
    {

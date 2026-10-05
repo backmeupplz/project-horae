@@ -1,0 +1,77 @@
+# Antenna_v2_trim6.64 at pad 1 (vs In1), 50 ohm reference; rad. eff. = P_rad / P_accepted at 2.40 / 2.44 / 2.48 GHz
+
+bare: X=0 rising at [2.982] GHz; S11 min -38.3 dB at 2.980; Z [2.40: 122.9+329.6j, 2.44: 219.4+373.1j, 2.48: 392.5+354.8j]; rad. eff. 0.81 / 0.84 / 0.87
+env: X=0 rising at [2.548] GHz; S11 min -11.9 dB at 2.505; Z [2.40: 48.4-43.6j, 2.44: 40.3-28.8j, 2.48: 34.5-16.7j]; rad. eff. 0.80 / 0.81 / 0.83
+wrist: X=0 rising at [2.465] GHz; S11 min -11.1 dB at 2.402; Z [2.40: 32.3-15.3j, 2.44: 27.4-5.7j, 2.48: 23.7+2.6j]; rad. eff. 0.06 / 0.06 / 0.06
+env_v2_trim6.64_air4: X=0 rising at [2.548] GHz; S11 min -11.9 dB at 2.505; Z [2.40: 48.4-43.7j, 2.44: 40.3-28.8j, 2.48: 34.5-16.7j]; rad. eff. 0.80 / 0.81 / 0.82
+env_v2_trim6.64_bar1.15: X=0 rising at [2.53] GHz; S11 min -12.7 dB at 2.487; Z [2.40: 46.8-36.5j, 2.44: 39.4-23.0j, 2.48: 34.1-11.9j]; rad. eff. 0.81 / 0.82 / 0.84
+env_v2_trim6.64_nobar: X=0 rising at [2.582] GHz; S11 min -9.2 dB at 2.533; Z [2.40: 47.0-61.8j, 2.44: 37.9-42.6j, 2.48: 31.7-27.6j]; rad. eff. 0.77 / 0.78 / 0.79
+env_v2_trim6.64_pour: X=0 rising at [2.55] GHz; S11 min -11.5 dB at 2.502; Z [2.40: 48.6-45.1j, 2.44: 39.9-29.7j, 2.48: 33.9-17.3j]; rad. eff. 0.80 / 0.81 / 0.82
+env_v2_trim6.64_res0.07: X=0 rising at [2.545] GHz; S11 min -11.7 dB at 2.500; Z [2.40: 47.2-42.4j, 2.44: 39.3-27.8j, 2.48: 33.6-15.9j]; rad. eff. 0.80 / 0.81 / 0.82
+
+## minimax over ['env', 'wrist']: top 8 (worst in-band transducer loss dB, worst S11 dB, C11 pF / L3 nH / C12 pF)
+   0.74    -9.1  0.3 / 1.2 / 0
+   0.74    -8.9  0.5 / 1.5 / 0
+   0.76    -9.4  0.6 / 1.8 / 0
+   0.76    -8.5  0.3 / 1 / 0
+   0.78    -8.5  0.4 / 1.2 / 0
+   0.78    -9.2  0.4 / 1.5 / 0
+   0.79    -8.9  0.8 / 2 / 0
+   0.79    -8.2  0 / 0.6 / 0
+  recommended -> bare: band S11 -0.8 .. -1.2 dB; -10 dB band 2.833-3.083; worst in-band transducer loss 7.80 dB; total eff. (rad x transducer) 0.13 / 0.16 / 0.20
+  recommended -> env: band S11 -9.2 .. -14.7 dB; -10 dB band 2.413-2.570; worst in-band transducer loss 0.67 dB; total eff. (rad x transducer) 0.69 / 0.74 / 0.77
+  recommended -> wrist: band S11 -9.1 .. -13.7 dB; -10 dB band 2.322-2.465; worst in-band transducer loss 0.74 dB; total eff. (rad x transducer) 0.05 / 0.05 / 0.05
+  rev A as built 0.9/0.6/DNP -> bare: band S11 -0.6 .. -0.7 dB; -10 dB band None; worst in-band transducer loss 9.50 dB; total eff. (rad x transducer) 0.09 / 0.11 / 0.13
+  rev A as built 0.9/0.6/DNP -> env: band S11 -4.5 .. -8.4 dB; -10 dB band 2.500-2.675; worst in-band transducer loss 1.96 dB; total eff. (rad x transducer) 0.51 / 0.60 / 0.70
+  rev A as built 0.9/0.6/DNP -> wrist: band S11 -8.8 .. -17.8 dB; -10 dB band 2.417-2.578; worst in-band transducer loss 0.70 dB; total eff. (rad x transducer) 0.05 / 0.05 / 0.05
+
+robustness of the recommended values (band worst S11 dB): antenna resonance -3% / +3%; parts at tolerance (C +-0.1 pF, L +-max(5%, 0.1 nH)); model variants
+  env: shift -10.9 / -5.3; part corners worst -8.1
+  wrist: shift -5.8 / -10.6; part corners worst -8.1
+  env_v2_trim6.64_air4: band S11 -9.2 .. -14.7 dB; worst transducer loss 0.67 dB; rad. eff. 0.80 / 0.81 / 0.82
+  env_v2_trim6.64_bar1.15: band S11 -10.8 .. -15.8 dB; worst transducer loss 0.49 dB; rad. eff. 0.81 / 0.82 / 0.84
+  env_v2_trim6.64_nobar: band S11 -6.2 .. -10.4 dB; worst transducer loss 1.32 dB; rad. eff. 0.77 / 0.78 / 0.79
+  env_v2_trim6.64_pour: band S11 -8.6 .. -14.0 dB; worst transducer loss 0.76 dB; rad. eff. 0.80 / 0.81 / 0.82
+  env_v2_trim6.64_res0.07: band S11 -9.4 .. -14.4 dB; worst transducer loss 0.65 dB; rad. eff. 0.80 / 0.81 / 0.82
+
+C11 0.3 pF {'lcsc': 'C76927', 'lib': 'expand', 'stock': 75365, 'desc': '0.3pF 50V C0G 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS'}
+L3  1.2 nH {'lcsc': 'C77113', 'lib': 'expand', 'stock': 220833, 'desc': '1.2nH 100mΩ 14@500MHz 17GHz 750mA Thick Film Inductor 0201 Inductors (SMD) ROHS'}
+C12 0 pF {'lcsc': 'DNP'}
+
+## Notes (RF re-run 2026-10-04/05 for the 0.6 mm 33.8 x 16.2 board in the 35.6 x 18.0 x 7.05 case; *_v2_* files)
+Recommendation: keep the lib footprint (trim 6.64, no copper change) and re-match the rev A chain:
+  C11 0.3 pF C76927 (Murata GRM0335C1HR30BA01D, +-0.1 pF) | L3 1.2 nH C77113 (Murata LQP03TN1N2B02D, +-0.1 nH) | C12 DNP
+  The rev A values (0.9 pF / 0.6 nH) are now mistuned in the case: env -4.5 .. -8.4 dB in band (see above).
+  Trim 6.14 (+0.5 mm: the 0.5 x 0.5 corner square over the open end, the most the board corner allows at the 0.3 mm
+  edge clearance the +Y corner already has) was simulated: equivalent (minimax 0.69 vs 0.74 dB; robust minimax with
+  +-3 % resonance shift 1.50 vs 1.57 dB; report_v2_trim6.14.txt), so not worth a footprint change. If the bench shows the
+  case resonance high, `python3 meander.py 6.14` writes that footprint (results/SWRA117D_new.kicad_mod).
+Efficiency (P_rad / P_accepted, 2.40 / 2.44 / 2.48 GHz): bare 0.81 / 0.84 / 0.87, case 0.80 / 0.81 / 0.83, wrist 0.056
+  (-12.5 dB, body loss, flat in band); with the match (x transducer gain): case 0.69 / 0.74 / 0.77, wrist 0.05.
+Spring bar (+X, steel, 2.15 mm past the end face): 1 mm closer moves the case resonance -0.7 % (S11 min 2.505 -> 2.487
+  GHz; same at trim 6.14) and helps (case -10.8 .. -15.8 dB); no bar + strap moves it +1.1 % (2.533) and costs case
+  -6.2 .. -10.4 dB. The bar is a parasitic radiator: it adds ~3 points of efficiency (0.78 -> 0.81). Keep BAR_DX within
+  ~+-1 mm of 2.15 or re-run; a bar further out trends toward the no-bar case.
+Model v2 (sim.py docstring): stack from spec.PCB_T (F.Cu 0.6 / In1 0.5 / In2 0.1 / B.Cu 0; 3313 prepreg 0.1, core
+  0.4); ground = the board's real per-layer GND copper (as built only In1 reaches the keep-out, see below) + F.Cu GND
+  stubs, C11/C12 GND pads, GND vias; IFA short = its 0.75 mm x 0.3 mm stub + via; antenna = meander.py trim of the
+  untrimmed SWRA117D at the AE1 placement (self-checked against the board copper); case per spec.py + cad/horae.py
+  (pebble rounds, lugs, +-X steel spring bars dia 1.5 x 16 mm at 2.15 mm past the end face and z 2.4, silicone strap
+  loops er 3 / tan d 0.02, 3.7 mm loop + 1.8 mm x 12 mm strap; 3.0 mm cell = PEC); 32 mm of air before the PML.
+  v1 (2026-10-03) had the PML ~4 mm off the case: harmless for env (env_v2_trim6.64_air4, PML 4 mm off everything: same
+  Z within 0.1 ohm, same efficiency), but its wrist slab (60 x 50 mm) ran through the NF2FF box (x +-19.6) into the PML,
+  so power absorbed outside the box counted as radiated: v1's on-wrist efficiency (0.27) was too optimistic.
+  Mesh check env_v2_trim6.64_res0.07: S11 minimum 2.500 vs 2.505 GHz, Z within 1 ohm, efficiency 0.81: converged.
+Board finding (route.py, not RF-owned): line 37 `ANT_KEEP_X = [... if z.GetIsRuleArea()][0]` returns the first rule
+  area, which since fab1576 is a touch no-pour zone ('touch 3', left edge x = -7.5), so the F.Cu / In2 / B.Cu GND pours
+  end at x = -7.5 and the stitching grid at x = -8.1 (HEAD has the same, ending at 'touch 1'). Only In1 reaches the
+  antenna keep-out; the RF feed is a 46.5 ohm microstrip, not the 43.9 ohm GCPW the DRU rule assumes. Fix: select the
+  zone named "antenna keep-out". RF impact of the fix is small: what-if geom_pour.json (extract.py --pour): X=0 2.548 ->
+  2.550 GHz, rad. eff. 0.81 -> 0.81; the recommended match gives -8.6 .. -14.0 dB in case with the pours (GCPW, 0.1 nH
+  cap grounds). No re-tune after the fix.
+Caveats: absolute resonance +-3 % (PETG er 2.6 and print infill, e-paper stack as er 6 glass, FR4 er at 2.4 GHz,
+  0.05 mm gaps meshed as 0.1, no solder mask / copper thickness). The env/wrist spread (~100 MHz)
+  is the limit: a +3 % shift costs env ~4 dB of return loss at the band edge, -3 % costs wrist the same. Wrist = flat
+  60 x 50 x 12 mm dry-skin slab (er 38, 1.46 S/m) directly under the floor: crude, likely pessimistic for efficiency.
+  Verify on the first boards: VNA through a coax pigtail soldered to the C11 RF pad (feed trace to U1 cut) in the
+  closed case, strap on, off and on a wrist; then retune C11/L3 (C12 is the spare shunt spot).

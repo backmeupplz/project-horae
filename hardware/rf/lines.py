@@ -1,7 +1,8 @@
 """Quasi-static Z0 / eps_eff of the RF feed trace cross-section (2D finite-difference Laplace solve).
 
-  RF feed (U1 -> C11 -> L3 -> C12 -> AE1): F.Cu 0.20 mm GCPW, 0.15 mm gaps, over In1 (0.1 mm 3313 prepreg, er 4.1),
-          solder mask 20 um er 3.8.
+  RF feed (U1 -> C11 -> L3 -> C12 -> AE1): F.Cu 0.20 mm over In1 (0.0994 mm 3313 prepreg, er 4.1; same in the 0.8 and
+          0.6 mm JLC stacks), solder mask 20 um er 3.8. GCPW (0.15 mm gaps to an F.Cu GND pour) or plain microstrip
+          (no F.Cu pour along the feed: the board as built on 2026-10-04).
 Z0 = 1 / (c * sqrt(C * C_air)); eps_eff = C / C_air.
 """
 import numpy as np
@@ -63,6 +64,19 @@ def gcpw(diel, w=0.2, gap=0.15):   # x across, y up; In1 at y=0.2 (box bottom be
     cond |= tr; sig[tr] = 1
     return eps, cond, sig
 
+def ms(diel, w=0.2):   # microstrip: no coplanar ground; bigger box so its walls stay out of the fringing field
+    x, y, eps, cond, sig = grid(5.0, 3.0)
+    yi, yt, xc, t = 0.2, 0.3, 2.5, 0.035
+    if diel:
+        eps[(y > yi) & (y < yt)] = 4.1
+        eps[(y >= yt) & (y < yt + t + 0.02)] = 3.8
+    cond |= y <= yi
+    tr = (abs(x - xc) < w / 2) & (y >= yt) & (y < yt + t)
+    cond |= tr; sig[tr] = 1
+    return eps, cond, sig
+
 if __name__ == "__main__":
     z, ee = z0(gcpw)
     print(f"RF feed 0.20/0.15 GCPW: Z0 = {z:.1f} ohm, eps_eff = {ee:.2f}")
+    z, ee = z0(ms)
+    print(f"RF feed 0.20 microstrip: Z0 = {z:.1f} ohm, eps_eff = {ee:.2f}")
