@@ -83,8 +83,8 @@ PARTS = [
     C("C9", "100nF", C100N, "VDD_SPI", "GND", "mcu"),
     R("R1", "10k", R10K, "+3V3", "EN", "mcu"),
     C("C10", "1uF", C1U, "EN", "GND", "mcu"),
-    # RF: match from the openEMS sim of the trimmed antenna in the slim case with spring bars (hardware/rf, report_v2); C12 is a tuning spot
-    C("C11", "0.3pF", "C76927", "RF_CHIP", "GND", "rf"),        # Murata GRM0335C1HR30BA01D +-0.1 pF
+    # RF: match from the openEMS sim of the trimmed antenna in the two-shell case with spring bars (hardware/rf, report_v3); C12 is a tuning spot
+    C("C11", "0.5pF", "C85920", "RF_CHIP", "GND", "rf"),        # Murata GRM0335C1HR50BA01D +-0.1 pF
     ("L3", "Device:L", "1.2nH", L0201, "C77113", {"1": "RF_CHIP", "2": "RF_ANT"}, "rf"),   # Murata LQP03TN1N2B02D +-0.1 nH
     C("C12", "DNP", "", "RF_ANT", "GND", "rf"),
     ("AE1", "Device:Antenna_Chip", "PCB IFA", "horae:SWRA117D", "", {"1": "RF_ANT", "2": "GND"}, "rf"),

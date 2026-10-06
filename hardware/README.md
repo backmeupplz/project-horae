@@ -1,11 +1,11 @@
 # Horae rev A hardware
 
 ESP32-S3 band watch board, **33.8 × 16.2 × 0.6 mm, 4 layers**, assembled by JLCPCB (Standard PCBA, top side only).
-The case around it is **35.6 × 18.0 × 7.05 mm**, smaller than a Fitbit Charge 3 (38 × 18.3 × 11.8) in every direction.
+The case around it is **35.6 × 18.0 × 6.80 mm**, smaller than a Fitbit Charge 3 (38 × 18.3 × 11.8) in every direction: two PETG shells that click together, no glue (see `../cad/horae.py`).
 
 **Status (2026-10-04):** second ("slim") pass, ready for review, **not ordered**.
 - ERC: 0. DRC: 0 errors, 0 warnings, 0 unconnected.
-- RF: re-simulated in openEMS for this board, the case, both steel spring bars and the strap (`rf/results/report_v2_trim6.64.txt`).
+- RF: re-simulated in openEMS for this board and the two-shell case, modelled straight from the CAD solids, with both steel spring bars and the strap (`rf/results/report_v3_trim6.64.txt`).
 
 Everything here is generated from two files:
 - [`design.py`](design.py), the netlist
@@ -32,9 +32,9 @@ It needs Docker (it runs KiCad 10 from the official `kicad/kicad:10.0` image thr
 ## Design summary
 - **MCU:** ESP32-S3FN8 (8 MB in-package flash) with a 40 MHz crystal and Espressif's 24 nH series L on XTAL_P.
   - **Timekeeping:** a 32.768 kHz crystal on GPIO15/16 drives the ESP32's own RTC, as on Watchy v3 and Yatchy. No RTC chip (saves $3.44 and an I²C device). ±20 ppm is ~1 min/month before the phone sync corrects it.
-  - **Antenna:** Watchy's meander IFA, trimmed 6.64 mm, ending 0.35 mm from the board edge. Match **C11 0.3 pF / L3 1.2 nH**, C12 not fitted (spare tuning spot). Simulated S11 across 2.40–2.48 GHz: −9.2 to −14.7 dB in the case, −9.1 to −13.7 dB on the wrist; radiation efficiency ~0.74 in the case including the match (on a wrist the body absorbs most of it, ~6%, as for any wrist wearable).
+  - **Antenna:** Watchy's meander IFA, trimmed 6.64 mm, ending 0.35 mm from the board edge. Match **C11 0.5 pF / L3 1.2 nH**, C12 not fitted (spare tuning spot). Simulated S11 across 2.40–2.48 GHz: −8.8 to −15.7 dB in the case, −8.8 to −14.4 dB on the wrist; radiation efficiency ~0.73 in the case including the match (on a wrist the body absorbs most of it, ~4–5%, as for any wrist wearable).
 - **Power:**
-  - 4 pogo pads on the bottom: VBUS + D− on one side, GND + D+ on the other; USBLC6 for ESD.
+  - 4 pads on the bottom (VBUS + D− on one side, GND + D+ on the other) for the magnetic charging/USB cable head, whose spring pins reach them through the case floor; USBLC6 for ESD.
   - **TI BQ25101** linear charger (1.6 × 0.9 mm WCSP): 24 mA (~0.5C for the 40–55 mAh cell), input tolerates 28 V, 75 nA battery drain (the TP4054 it replaces drew µA).
   - **TI TPS62840** buck (60 nA quiescent, 750 mA, 3.3 V set by a 267 kΩ VSET resistor) replaces the RT9080 LDO (2 µA, and ~10% less efficient at Wi-Fi currents).
   - Battery voltage through a 10 MΩ / 10 MΩ divider (0.2 µA) with 100 nF at the ADC.
@@ -51,7 +51,7 @@ It needs Docker (it runs KiCad 10 from the official `kicad/kicad:10.0` image thr
 |---|---|---|
 | facing the antenna (pins 6–14) | 1, 2, 3, 4 | touch DOWN, BACK, MENU, UP |
 | | 5 | vibration motor |
-| | 6 | charger CHG (low = charging: wakes the watch on the dock) |
+| | 6 | charger CHG (low = charging: wakes the watch when the charging cable snaps on) |
 | | 7 | battery ADC |
 | | 8, 9 | accelerometer INT2, INT1 |
 | facing the display connector (pins 15–27) | 10, 11 | I²C SDA, SCL |
@@ -76,9 +76,9 @@ Every display, I²C, touch and wake line is on an RTC GPIO (0–21), so the ULP 
 6. **Charger:** BQ25101 TS has a 10 kΩ resistor to GND (no thermistor), ISET 5.6 kΩ = 24 mA. Raise the current (lower ISET) only if the chosen cell allows it.
 7. **Buck:** VSET 267 kΩ (1%) selects 3.3 V; confirm against TI's table before ordering.
 8. **Battery:** a 3.0 × 15 × 18–19 mm cell with protection (301518 / 301519 class, 40–55 mAh, ≤ 21 mm with the PCM). Solder it to TP5 (+, KiCad +Y) and TP6 (−). Check the cell's polarity before soldering.
-9. **No load-sharing power path.** While docked, the charger charges the battery while the ESP32 runs from it.
+9. **No load-sharing power path.** While the charging cable is on, the charger charges the battery while the ESP32 runs from it.
 10. **JLC CPL rotations:** LCSC-imported footprints sometimes need rotation offsets. Check JLC's placement preview, especially the WCSPs, SOT-883 and SOD-882 parts.
-11. **Recovery without buttons:** EN, BOOT (GPIO0), TXD0/RXD0 and 3.3 V are on bottom test pads; USB is on the dock pads.
+11. **Recovery without buttons:** EN, BOOT (GPIO0), TXD0/RXD0 and 3.3 V are on bottom test pads; USB is on the charging-cable pads.
 
 ## Cost breakdown (JLC Standard PCBA, live prices 2026-10-04; `python3 cost.py`)
 | Item | 2 boards assembled | 5 boards assembled |
@@ -86,7 +86,7 @@ Every display, I²C, touch and wake line is on an RTC GPIO (0–21), so the ULP 
 | Bare PCB: 4-layer, 0.6 mm, ENIG, 0.4/0.2 vias, impedance stack-up, panelized | ~$15–30 | ~$15–30 |
 | Standard PCBA setup $25 + stencil $7.86 + panel $7.81 | $40.67 | $40.67 |
 | Extended-part loading: 28 lines × $3 | $84 | $84 |
-| Parts at $11.71 per board (biggest: LIS2DUX12 $4.03, ESP32-S3 $3.33, TPS62840 $1.20, BQ25101 $0.73) | $23 | $59 |
+| Parts at $11.72 per board (biggest: LIS2DUX12 $4.03, ESP32-S3 $3.33, TPS62840 $1.20, BQ25101 $0.73) | $23 | $59 |
 | Solder joints ($0.0016 each) | ~$0.5 | ~$1 |
 | **Subtotal (USD)** | **≈ $163–178** | **≈ $198–213** |
 | Shipping: DHL Express ~$25, or Global Standard ~$10 (1–2 weeks) | $10–25 | $10–25 |
@@ -96,7 +96,7 @@ Every display, I²C, touch and wake line is on an RTC GPIO (0–21), so the ULP 
 
 **Where the money goes:**
 - **Loading fees** are $84 of it: JLC has no basic or preferred 0201 parts, and every unique extended part costs $3 per order. Swapping 0201s for basic 0402s would need board area this board doesn't have.
-- **Parts** dropped from $14.61 to $11.71 per board: the $3.44 RTC chip is gone (32 kHz crystal instead), while the better charger (+$0.60) and buck (+$1.08) cost a little more.
+- **Parts** dropped from $14.61 to $11.72 per board: the $3.44 RTC chip is gone (32 kHz crystal instead), while the better charger (+$0.60) and buck (+$1.08) cost a little more.
 
 **Options:**
 1. **5 boards instead of 2:** fees are per order, so each extra assembled board costs only ~$12 in parts.

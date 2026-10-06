@@ -4955,7 +4955,7 @@
         (font
           (size 1.27 1.27))
         (justify left)))
-    (property "Value" "0.3pF"
+    (property "Value" "0.5pF"
       (at 28.45 273.01 0)
       (effects
         (font
@@ -4975,7 +4975,7 @@
           (size 1.27 1.27))
         (justify left)
         (hide yes)))
-    (property "LCSC" "C76927"
+    (property "LCSC" "C85920"
       (at 30.48 266.70 0)
       (effects
         (font
