@@ -142,6 +142,40 @@ footer { border-top: 1px solid var(--line); padding: 24px 0 48px; font-size: 13p
 <ol class="timeline">
 
   <li class="entry">
+    <time class="mono" datetime="2026-10-05">2026-10-05 · Day 2</time>
+    <h2>Two shells that click together, ears that grow out of the case <span class="tag">design</span></h2>
+    <p>A round driven by review feedback: the strap lugs looked like an afterthought, the gaskets would have needed glue, and the dock was one more thing to print. The case is now <b>35.6 × 18.0 × 6.80 mm</b>.</p>
+    <ul>
+      <li><b>No glue, no screws:</b> two PETG shells click together on 4 snap bumps (about 46 N to close, 130 N to open with a spudger in the end notch). A TPU 90A ring between them seals sideways. Every soft part (bezel gasket, glass corner cushions, pogo seals, motor pad, mic seal) is held in place by the closed case. So are the carbon-fibre version's plain-PETG antenna and touch windows.</li>
+      <li><b>Strap ears:</b> each ear is the case's own side profile carried past the end, sloping down onto the spring bar: one surface from the top of the case to the bar. The root section is 1.6× bigger and about 2.5× stronger in bending. Still standard 16 mm spring bars, 43.1 mm lug to lug.</li>
+      <li><b>Thinner:</b> a 0.3 mm bezel lip, a 0.15 mm gasket and a 0.4 mm floor take 0.25 mm off, with no change to the electronics.</li>
+      <li><b>Colours:</b> 8 colourways in real filaments sold in Canada: Bambu PETG-CF (Black, Titan Gray, Indigo Blue, Malachite Green), PETG Matte, PETG Basic and Prusament Galaxy Black, with TPU 90A/95A accent rings. The renders now use the filaments' real colours and finishes.</li>
+      <li><b>Charging:</b> the dock is gone. A small magnetic cable head snaps onto the back, with 4 Mill-Max spring pins and 2 polarity-keyed magnets. Turned 180° it repels instead of shorting VBUS to ground. The magnets hold with twice the pins' spring force, and the head's two halves click together around the pins and a cut USB cable.</li>
+      <li><b>Antenna:</b> re-checked against the new shells, now modelled straight from the CAD solids. The extra plastic around the antenna end pulled the resonance down about 1%, so one capacitor changes (0.3 → 0.5 pF): −9 to −16 dB across the 2.4 GHz band in the case and −9 to −14 dB on the wrist.</li>
+    </ul>
+    <div class="photos">
+      <a href="media/2026-10-05/cad-assembled.png"><img src="media/2026-10-05/cad-assembled.png" alt="Rev A, 35.6 × 18.0 × 6.80 mm: strap ears swept out of the side walls onto 16 mm spring bars" loading="lazy"></a>
+      <a href="media/2026-10-05/cad-colors.png"><img src="media/2026-10-05/cad-colors.png" alt="Eight colourways in real filaments: Stealth, Titanium, Arctic, Galaxy, Indigo, Malachite, Paper, Ember" loading="lazy"></a>
+      <a href="media/2026-10-05/cad-lug.png"><img src="media/2026-10-05/cad-lug.png" alt="Strap ear close-up: three-quarter, side profile and top view" loading="lazy"></a>
+      <a href="media/2026-10-05/cad-assembly.png"><img src="media/2026-10-05/cad-assembly.png" alt="Assembly order, no glue: top shell, gasket, display, cushions, mic seal, board, battery and motor, pogo seals, bottom shell" loading="lazy"></a>
+      <a href="media/2026-10-05/cad-snap.png"><img src="media/2026-10-05/cad-snap.png" alt="Section through the snap bumps and the radial TPU seal between the shells" loading="lazy"></a>
+      <a href="media/2026-10-05/cad-charger.png"><img src="media/2026-10-05/cad-charger.png" alt="Magnetic charging head on the case back, and exploded: spring pins, keyed magnets, TPU boot" loading="lazy"></a>
+      <a href="media/2026-10-05/cad-section.png"><img src="media/2026-10-05/cad-section.png" alt="Cross-section with the 6.80 mm stack-up dimensioned" loading="lazy"></a>
+      <a href="media/2026-10-05/cad-exploded.png"><img src="media/2026-10-05/cad-exploded.png" alt="Exploded view of the two shells and everything they hold" loading="lazy"></a>
+      <a href="media/2026-10-05/cad-scale.png"><img src="media/2026-10-05/cad-scale.png" alt="To scale against a Fitbit Charge 3" loading="lazy"></a>
+      <a href="media/2026-10-05/cad-sealing.png"><img src="media/2026-10-05/cad-sealing.png" alt="Splash sealing: radial shell seal, bezel gasket, pogo seals" loading="lazy"></a>
+      <a href="media/2026-10-05/cad-mic.png"><img src="media/2026-10-05/cad-mic.png" alt="Mic duct, seal and vent" loading="lazy"></a>
+      <a href="media/2026-10-05/cad-board-in-case.png"><img src="media/2026-10-05/cad-board-in-case.png" alt="Board in the top shell" loading="lazy"></a>
+      <a href="media/2026-10-05/rf-s11.png"><img src="media/2026-10-05/rf-s11.png" alt="openEMS: antenna S11 in the two-shell case and on the wrist, previous vs new match" loading="lazy"></a>
+      <a href="media/2026-10-05/rf-smith.png"><img src="media/2026-10-05/rf-smith.png" alt="Smith chart of the antenna in the two-shell case with the new match" loading="lazy"></a>
+    </div>
+    <div class="cards">
+      <a href="https://github.com/backmeupplz/project-horae/tree/main/cad"><b>Case CAD</b><span>build123d source, STL/3MF per part and material, charger</span></a>
+      <a href="https://github.com/backmeupplz/project-horae/blob/main/hardware/README.md"><b>Hardware README</b><span>Design, review checklist, cost</span></a>
+    </div>
+  </li>
+
+  <li class="entry">
     <time class="mono" datetime="2026-10-04">2026-10-04 · Day 1</time>
     <h2>Rev A, slimmer: smaller than a Charge 3 <span class="tag">design</span></h2>
     <p>A full review and an "optimize everything" pass, borrowing ideas from Pebble 2, Watchy v3 and Yatchy. The watch is now <b>35.6 × 18.0 × 7.05 mm</b>: smaller than a Fitbit Charge 3 (38 × 18.3 × 11.8) in every direction, and 40% thinner. Day 0 was 40.5 × 18.5 × 7.15; an interim pass capped at the Charge 6 length was 36.7 × 20.0 × 7.45.</p>
