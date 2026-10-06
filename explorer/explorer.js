@@ -342,6 +342,7 @@ function buildUi() {
   $("ex-explode").oninput = e => { state.t = state.target = Number(e.target.value); document.querySelectorAll("[data-view]").forEach(b => b.setAttribute("aria-pressed", "false")); };
   $("ex-strap").onclick = () => setStrap(!state.strap);
   $("ex-dock").onclick = () => setDock(!state.dock);
+  $("ex-dock").hidden = !manifest.parts.some(p => p.group === "Dock");   // shown once the dock is exported
   $("ex-labels").onclick = () => setLabels(!state.labels);
   $("ex-spin").onclick = () => setSpin(!controls.autoRotate);
   $("ex-reset").onclick = () => { resetView(); setView("assembled"); select(null); for (const p of parts.values()) p.node.visible = true; setStrap(true); setDock(state.dock); };
