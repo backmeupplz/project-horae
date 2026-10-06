@@ -1,0 +1,52 @@
+# Antenna_v3_trim6.64 at pad 1 (vs In1), 50 ohm reference; rad. eff. = P_rad / P_accepted at 2.40 / 2.44 / 2.48 GHz
+
+bare: X=0 rising at [2.99] GHz; S11 min -28.1 dB at 2.985; Z [2.40: 103.7+314.8j, 2.44: 185.0+364.1j, 2.48: 344.2+376.1j]; rad. eff. 0.80 / 0.83 / 0.86
+env: X=0 rising at [2.525] GHz; S11 min -11.5 dB at 2.478; Z [2.40: 43.4-35.6j, 2.44: 36.2-21.9j, 2.48: 31.1-10.7j]; rad. eff. 0.79 / 0.80 / 0.81
+wrist: X=0 rising at [2.428] GHz; S11 min -11.3 dB at 2.362; Z [2.40: 27.8-6.0j, 2.44: 23.8+2.5j, 2.48: 20.7+10.0j]; rad. eff. 0.05 / 0.05 / 0.05
+
+## minimax over ['env', 'wrist']: top 8 (worst in-band transducer loss dB, worst S11 dB, C11 pF / L3 nH / C12 pF)
+   0.81    -8.8  0.5 / 1.2 / 0
+   0.81    -8.6  0.4 / 1 / 0
+   0.81    -8.0  0.3 / 0.6 / 0
+   0.83    -8.8  0.7 / 1.5 / 0
+   0.83    -8.3  0.3 / 0.8 / 0
+   0.83    -8.0  0.4 / 0.8 / 0
+   0.83    -8.2  0.6 / 1.2 / 0
+   0.83    -8.1  0.5 / 1 / 0
+  minimax pick -> bare: band S11 -0.7 .. -1.0 dB; -10 dB band 2.875-3.092; worst in-band transducer loss 8.49 dB; total eff. (rad x transducer) 0.11 / 0.14 / 0.17
+  minimax pick -> env: band S11 -8.8 .. -15.7 dB; -10 dB band 2.415-2.575; worst in-band transducer loss 0.73 dB; total eff. (rad x transducer) 0.67 / 0.73 / 0.76
+  minimax pick -> wrist: band S11 -8.8 .. -14.4 dB; -10 dB band 2.312-2.460; worst in-band transducer loss 0.81 dB; total eff. (rad x transducer) 0.04 / 0.04 / 0.04
+  rev A as built 0.3/1.2/DNP -> bare: band S11 -0.7 .. -1.1 dB; -10 dB band 2.842-3.090; worst in-band transducer loss 8.04 dB; total eff. (rad x transducer) 0.12 / 0.15 / 0.19
+  rev A as built 0.3/1.2/DNP -> env: band S11 -10.3 .. -14.2 dB; -10 dB band 2.397-2.545; worst in-band transducer loss 0.55 dB; total eff. (rad x transducer) 0.69 / 0.74 / 0.75
+  rev A as built 0.3/1.2/DNP -> wrist: band S11 -7.3 .. -12.1 dB; -10 dB band 2.290-2.430; worst in-band transducer loss 1.08 dB; total eff. (rad x transducer) 0.04 / 0.04 / 0.04
+
+robustness of these values (band worst S11 dB): antenna resonance -3% / +3%; parts at tolerance (C +-0.1 pF, L +-max(5%, 0.1 nH)); model variants
+  env: shift -11.5 / -5.0; part corners worst -7.9
+  wrist: shift -5.4 / -11.6; part corners worst -7.7
+
+C11 0.5 pF {'lcsc': 'C85920', 'lib': 'expand', 'stock': 64930, 'desc': '0.5pF 50V C0G 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS'}
+L3  1.2 nH {'lcsc': 'C77113', 'lib': 'expand', 'stock': 220833, 'desc': '1.2nH 100mΩ 14@500MHz 17GHz 750mA Thick Film Inductor 0201 Inductors (SMD) ROHS'}
+C12 0 pF {'lcsc': 'DNP'}
+
+## Notes (RF re-check 2026-10-05; v3 = case from the CAD's own solids, board with the pours restored)
+What changed vs v2 (report_v2_trim6.64.txt):
+- Board: route.py's keep-out lookup is fixed and the board re-routed: the F.Cu / In2 / B.Cu GND pours reach the antenna
+  keep-out, so the feed is the 43.9 ohm GCPW again (sim.py records it, match.py uses it). Antenna, pads, RF chain and
+  feed lengths are identical. As the v2 what-if predicted, the antenna barely notices (bare: X=0 2.982 -> 2.990 GHz,
+  rad. eff. 0.84 -> 0.83).
+- Case (spec.py + cad/horae.py, 2026-10-05): 6.80 mm tall (FLOOR 0.4, LIP 0.3, bezel gasket 0.15), plan corners R1.6,
+  two PETG shells with a TPU 90A radial seal ring, bezel gasket and glass-corner cushions, full-height ears carried past
+  the end faces and falling onto the bar boss, +X bar axis still 2.15 mm past the end face but now 1.95 mm above the
+  floor (was 2.4), strap leaving at wrist level. sim.py now imports the CAD solids (case_stl.py -> case/*.stl, as
+  polyhedra; TPU er 3.0 / tan d 0.05), so no hand-made case geometry is left to drift from the CAD.
+- Effect: more PETG and TPU around the antenna end and the skin 0.1 mm closer: resonance -1.1 % in case (S11 minimum
+  2.505 -> 2.478 GHz) and -1.6 % on the wrist (2.402 -> 2.362); rad. eff. in case 0.81 -> 0.80, on the wrist
+  0.056 -> 0.047 (-0.8 dB).
+Match: the fitted 0.3 pF / 1.2 nH still works but is now lopsided: in case -10.3 .. -14.2 dB, on the wrist -7.3 .. -12.1
+  dB (the wrist's top band edge; 1.08 dB worst in-band transducer loss). Recommended: C11 0.5 pF C85920 (Murata
+  GRM0335C1HR50BA01D, +-0.1 pF), L3 1.2 nH C77113 unchanged, C12 DNP: in case -8.8 .. -15.7 dB, wrist -8.8 .. -14.4 dB,
+  0.81 dB worst. It beats 0.3 pF by ~0.3 dB of worst-case loss under every uncertainty tried (nominal 0.81 vs 1.08 dB,
+  +-1.5 % resonance shift 1.21 vs 1.51, +-3 % 1.73 vs 2.01). 0.4 pF / 1.0 nH is equivalent (within 0.06 dB) but changes
+  two parts. A one-part BOM change; if the BOM is frozen, 0.3 pF is acceptable and the bench tune decides.
+Caveats as in v2: absolute resonance +-3 %, crude flat wrist slab (efficiency likely pessimistic), v2 bar sensitivity
+  (-0.7 % resonance per mm closer) still applies.

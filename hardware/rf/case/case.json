@@ -1,0 +1,19 @@
+{
+ "X_BAR": 19.95,
+ "Z_BAR": -1.7499999999999996,
+ "BAR_D": 1.5,
+ "STRAP_R": 1.85,
+ "EAR_R": 1.6,
+ "STRAP_W": 16.0,
+ "Z_LIP0": 2.8000000000000003,
+ "Z_STEP": 1.5500000000000003,
+ "Z_ROUND": 0.6000000000000001,
+ "SEAL_GAP": 0.45,
+ "materials": {
+  "top_shell": "petg",
+  "bottom_shell": "petg",
+  "tpu": "tpu",
+  "strap": "strap",
+  "metal": "pec"
+ }
+}

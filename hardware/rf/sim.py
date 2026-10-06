@@ -1,24 +1,23 @@
-"""openEMS FDTD model of the Horae rev A antenna end. Geometry from geom.json (rf/extract.py), case from spec.py + cad/horae.py.
+"""openEMS FDTD model of the Horae rev A antenna end. Board from geom.json (rf/extract.py), case from cad/horae.py.
 
 Run (inside the horae-openems image, repo at /work):
   docker run --rm -v "$PWD/../..":/work -w /work/hardware/rf horae-openems python sim.py bare|env|wrist \
-      [--trim MM] [--res MM] [--bar-dx MM | --no-bar] [--geom FILE] [--air MM] [--threads N] [--dry]   (or ./run_all.sh)
+      [--trim MM] [--res MM] [--geom FILE] [--air MM] [--threads N] [--dry]   (or ./run_all.sh)
+env/wrist read the case meshes in case/ (case_stl.py: run it on the host after any change to cad/horae.py or spec.py).
 
 Model frame: x = KiCad x - 100 (+X = antenna end), y = KiCad y - 100, z = 0 at the PCB bottom (B.Cu), F.Cu at spec.PCB_T.
 Stack (JLC 0.6 mm 4-layer, 3313): B.Cu 0 | prepreg 0.1 | In2 | core | In1 | prepreg 0.1 | F.Cu, zero-thickness copper.
 Ground: one PEC block (full thickness) left of X_FULL; right of it, every GND fill polygon of every layer at its own z,
-F.Cu GND tracks + C11/C12 GND pads, GND vias as through-board posts (In1 is the only plane that reaches the keep-out on
-the board as built; --geom geom_pour.json = F/In2/B pours to the keep-out too). Antenna: meander.py trim of the
-untrimmed SWRA117D, placed like AE1 (self-checked against the board copper at the lib trim).
-Case (spec.py; cad/horae.py constants copied below): PETG shell with plan corner radii and the pebble edge rounds,
-cavity, glass ledges / antenna-end block / upper walls, back blocks, glass slab, battery = floating PEC box, steel
-spring bars (PEC) in the lugs with a silicone strap end looped round each. Not modelled: motor, mic duct, touch
-windows, gaskets (= PETG), solder mask, non-GND copper; part/PCB gaps of 0.05 become 0.1 (mesh).
---trim MM: cut from the untrimmed open end (6.64 = the rev A lib footprint). --bar-dx: +X bar axis past the case end.
-Mesh: 0.1 mm at the antenna (0.07 gives the same), AIR (32 mm) of air around everything before the 8 PML cells. The
-2026-10-03 mesh had the PML ~4 mm off the case: fine for env (--air 4: same Z and efficiency, 30 % faster), but its
-NF2FF box (x +-19.6) cut through the wrist slab, which ran into the PML: v1's on-wrist efficiency was too high.
-Results: results/{case}_v2_trim{T}[_res][_bar][_nobar][_pour][_air].npz (v2 = the 0.6 mm board; no v2 = 0.8 mm board).
+F.Cu GND tracks + C11/C12 GND pads, GND vias as through-board posts. Antenna: meander.py trim of the untrimmed SWRA117D,
+placed like AE1 (self-checked against the board copper at the lib trim).
+Case = the CAD's own solids (case_stl.py): PETG top shell (walls, lip, inner blocks, ears) + bottom shell, TPU 90A seal
+ring / bezel gasket / cushions / small seals, strap stubs (er 3), steel spring bars + battery + magnets + motor (PEC);
+display = er 6 glass slab. The shells' 0.05 mm gaps over and under the PCB are kept 0.1 of air (mesh). Not modelled:
+solder mask, non-GND copper, FPC, components. wrist: flat dry-skin slab under the case.
+--trim MM: cut from the untrimmed open end (6.64 = the rev A lib footprint).
+Mesh: 0.1 mm at the antenna (0.07 gives the same), AIR (32 mm) of air around everything before the 8 PML cells.
+Results: results/{case}_{V}_trim{T}[_res][_pour][_air].npz; V: v3 = CAD case of 2026-10-05 (two shells, full-height
+ears, pours to the keep-out); v2 = the analytic case of 2026-10-04; no V = the 0.8 mm board of 2026-10-03.
 """
 import json, math, os, sys
 import numpy as np
@@ -31,18 +30,15 @@ sys.path.insert(0, "../.."); sys.path.insert(0, ".")
 import spec as S
 import meander
 
+V = "v3"
 arg = lambda k, d: type(d)(sys.argv[sys.argv.index(k) + 1]) if k in sys.argv else d
 case = sys.argv[1] if len(sys.argv) > 1 else "bare"
 trim = arg("--trim", meander.LIB_TRIM)
 RES = arg("--res", 0.1)                     # fine x/y cell (mm)
 GEOM = arg("--geom", "geom.json")
 AIR = arg("--air", 32.0)                    # air between every structure and the PML (~lambda/4 at 2.4 GHz)
-# cad/horae.py (2026-10-04): BAR_D 1.5, STRAP_W 16, STRAP_R 1.85, BAR_DX = STRAP_R + 0.3, EAR_R 1.6, Z_BAR = FLOOR + BACK_GASKET + EAR_R
-BAR_D, STRAP_W, STRAP_R, EAR_R, BACK_GASKET = 1.5, 16.0, 1.85, 1.6, 0.3
-BAR_DX = arg("--bar-dx", STRAP_R + 0.3)
-BAR = "--no-bar" not in sys.argv
-tag = (f"{case}_v2_trim{trim:g}" + (f"_res{RES:g}" if RES != 0.1 else "") + (f"_bar{BAR_DX:g}" if "--bar-dx" in sys.argv else "")
-       + ("" if BAR else "_nobar") + (f"_{os.path.basename(GEOM)[5:-5]}" if GEOM != "geom.json" else "") + (f"_air{AIR:g}" if AIR != 32 else ""))
+tag = (f"{case}_{V}_trim{trim:g}" + (f"_res{RES:g}" if RES != 0.1 else "")
+       + (f"_{os.path.basename(GEOM)[5:-5]}" if GEOM != "geom.json" else "") + (f"_air{AIR:g}" if AIR != 32 else ""))
 OUT = os.path.abspath("results")              # FDTD.Run chdirs into the sim folder
 F0, FC, FT = 2.5e9, 1.0e9, 2.44e9            # excitation centre, half-bandwidth, loss-tangent reference
 FE = np.array([2.40e9, 2.44e9, 2.48e9])       # radiation efficiency at these
@@ -114,67 +110,27 @@ for v in g["vias"]:
         gnd.AddBox([x - 0.1, y - 0.1, 0.0], [x + 0.1, y + 0.1, T], priority=10)   # barrel (0.2 drill)
         gnd.AddBox([x - 0.2, y - 0.2, T], [x + 0.2, y + 0.2, T], priority=10)     # F.Cu ring
 
-# ---------------- environment (spec.py, z re-referenced to the PCB bottom)
-zr = lambda z_abs: z_abs - S.Z_PCB0
+# ---------------- environment: the CAD case (case_stl.py), glass slab, wrist slab
 env = case in ("env", "wrist")
+zr = lambda z_abs: z_abs - S.Z_PCB0
 OL, OW, HL, HW = S.CASE_L / 2, S.CASE_W / 2, S.CAV_L / 2, S.CAV_W / 2
-X_BAR, Z_BAR = OL + BAR_DX, zr(S.FLOOR + BACK_GASKET + EAR_R)
-Z_FRAME0, Z_ROUND, Y_TOP = zr(S.FLOOR + BACK_GASKET), zr(S.CASE_T - 2.5), S.DISP_W / 2 + 0.15
-TOP_R, BOT_R = (1.6, 2.5), 1.2                # pebble: elliptical top round (across, down), bottom fillet
-def rrect(l, w, r, n=8):                      # plan-view rounded rectangle
-    pts = []
-    for cx, cy, a0 in ((l / 2 - r, w / 2 - r, 0), (-l / 2 + r, w / 2 - r, 90), (-l / 2 + r, -w / 2 + r, 180), (l / 2 - r, -w / 2 + r, 270)):
-        pts += [(cx + r * np.cos(np.radians(a0 + 90 * k / n)), cy + r * np.sin(np.radians(a0 + 90 * k / n))) for k in range(n + 1)]
-    return np.array(pts).T
-def spandrel(a, b, top):                      # between a corner (at the origin) and its elliptical round (a across, b in z)
-    ph = np.linspace(0, np.pi / 2, 9)
-    return np.r_[-a + a * np.cos(ph), 0], np.r_[(b * np.sin(ph) - b) if top else (b - b * np.sin(ph)), 0]
 if env:
-    petg = CSX.AddMaterial("petg", epsilon=2.6, kappa=kap(2.6, 0.02))
+    cad = json.load(open("case/case.json"))
+    mat = {"petg": (CSX.AddMaterial("petg", epsilon=2.6, kappa=kap(2.6, 0.02)), 3),
+           "tpu": (CSX.AddMaterial("tpu", epsilon=3.0, kappa=kap(3.0, 0.05)), 5),          # TPU 90A
+           "strap": (CSX.AddMaterial("strap", epsilon=3.0, kappa=kap(3.0, 0.02)), 3),      # silicone / FKM
+           "pec": (CSX.AddMetal("case_metal"), 7)}
+    for name, m in cad["materials"].items():
+        p = mat[m][0].AddPolyhedronReader(os.path.abspath(f"case/{name}.stl"), priority=mat[m][1])
+        assert p.ReadFile(), f"case/{name}.stl: run case_stl.py"
     air = CSX.AddMaterial("air", epsilon=1.0)
+    for z0, z1 in ((T + 0.001, T + 0.099), (-0.099, -0.001)):   # 0.05 shell-to-PCB gaps -> one 0.1 air cell
+        air.AddBox([-HL, -HW, z0], [HL, HW, z1], priority=4)
     glass = CSX.AddMaterial("glass", epsilon=6.0, kappa=kap(6.0, 0.005))
-    zf, zt = zr(0.0), zr(S.CASE_T)
-    petg.AddLinPoly(rrect(S.CASE_L, S.CASE_W, S.CORNER_R), "z", zf, zt - zf, priority=1)          # shell
-    air.AddLinPoly(rrect(S.CAV_L, S.CAV_W, S.PCB_CORNER_R + 0.1), "z", zr(S.FLOOR), zr(S.Z_DISP1) - zr(S.FLOOR), priority=2)
-    aa_x1 = S.DISP_X1 - S.DISP_AA_MARGIN_FAR; m = S.DISP_AA_MARGIN_FAR - S.LIP_OVERLAP
-    air.AddBox([aa_x1 - S.DISP_AA_L - m, -S.DISP_AA_W / 2 - m, zr(S.Z_DISP1)],  # bezel window
-               [aa_x1 + m, S.DISP_AA_W / 2 + m, zt], priority=2)
-    zp = T + 0.1                                                                # case parts resting on the PCB top
-    petg.AddBox([S.DISP_X1 + 0.15, -HW, zp], [HL, HW, zr(S.Z_DISP1)], priority=3)    # antenna-end block, full width
-    for sx in (-1, 1):
-        for sy in (-1, 1):
-            xa, xb_ = (S.DISP_X1 - S.LEDGE, HL) if sx > 0 else (-HL, S.DISP_X0 + S.LEDGE)
-            petg.AddBox([xa, sy * S.LEDGE_Y, zp], [xb_, sy * HW, zr(S.Z_DISP1)], priority=3)  # glass-end ledges
-        petg.AddBox([-HL, sx * Y_TOP, zr(S.Z_DISP0 - 0.1)], [HL, sx * HW, zr(S.Z_DISP1)], priority=3)  # upper walls
-    petg.AddBox([S.BAT_X1 + 0.25, -HW, zr(S.FLOOR)], [HL, HW, -0.1], priority=3)      # back blocks (gap 0.05 -> 0.1)
-    petg.AddBox([-HL, -HW, zr(S.FLOOR)], [S.BAT_X0 - 0.25, HW, -0.1], priority=3)
     glass.AddBox([S.DISP_X0, -S.DISP_W / 2, zr(S.Z_DISP0)], [S.DISP_X1, S.DISP_W / 2, zr(S.Z_DISP1)], priority=4)
-    bat = CSX.AddMetal("battery")
-    bat.AddBox([S.BAT_X0, -S.BAT_W / 2, zr(S.Z_BAT0)], [S.BAT_X1, S.BAT_W / 2, zr(S.Z_BAT0 + S.BAT_T)], priority=6)
-    for top, (a, b) in ((True, TOP_R), (False, (BOT_R, BOT_R))):               # edge rounds, cut from every PETG part
-        u, v = spandrel(a, b, top); zc = zt if top else zf
-        for sx in (-1, 1):
-            air.AddLinPoly(np.array([zc + v, sx * (OL + u)]), "y", -OW, 2 * OW, priority=5)
-            air.AddLinPoly(np.array([sx * (OW + u), zc + v]), "x", -OL, 2 * OL, priority=5)
-    if BAR:
-        steel, sil = CSX.AddMetal("spring_bar"), CSX.AddMaterial("strap", epsilon=3.0, kappa=kap(3.0, 0.02))
-        c0 = np.array([X_BAR, Z_BAR]); p0 = np.array([OL, Z_ROUND]); dd = p0 - c0
-        th = math.atan2(dd[1], dd[0]) - math.acos(EAR_R / np.hypot(*dd)); tp = c0 + EAR_R * np.array([math.cos(th), math.sin(th)])
-        for sx in (-1, 1):
-            xb = sx * X_BAR
-            steel.AddCylinder([xb, -STRAP_W / 2 + 0.05, Z_BAR], [xb, STRAP_W / 2 - 0.05, Z_BAR], BAR_D / 2, priority=7)
-            steel.AddCylinder([xb, -OW + 0.05, Z_BAR], [xb, OW - 0.05, Z_BAR], 0.4, priority=7)        # tips in the ears
-            w = STRAP_W / 2 - 0.1
-            sil.AddCylinder([xb, -w, Z_BAR], [xb, w, Z_BAR], STRAP_R, priority=3)                      # strap loop
-            sil.AddBox([xb, -w, Z_BAR + 0.05], [sx * (X_BAR + 12), w, Z_BAR + STRAP_R], priority=3)    # 12 mm of strap
-            ear = np.array([[Z_FRAME0, Z_FRAME0, Z_BAR, tp[1], Z_ROUND, Z_ROUND],
-                            sx * np.array([OL - S.CORNER_R - 0.5, X_BAR, X_BAR, tp[0], OL, OL - S.CORNER_R - 0.5])])
-            for sy in (-1, 1):
-                petg.AddLinPoly(ear, "y", min(sy * OW, sy * STRAP_W / 2), OW - STRAP_W / 2, priority=3)   # lugs
-                petg.AddCylinder([xb, sy * STRAP_W / 2, Z_BAR], [xb, sy * OW, Z_BAR], EAR_R, priority=3)
-    if case == "wrist":   # crude flat skin-equivalent slab (2.45 GHz dry skin: er 38, sigma 1.46 S/m) under the floor
+    if case == "wrist":   # crude flat skin-equivalent slab (2.45 GHz dry skin: er 38, sigma 1.46 S/m) under the case
         skin = CSX.AddMaterial("skin", epsilon=38.0, kappa=1.46)
-        skin.AddBox([-30, -25, zf - 12.0], [30, 25, zf], priority=1)
+        skin.AddBox([-30, -25, zr(0.0) - 12.0], [30, 25, zr(0.0)], priority=1)
 
 # ---------------- mesh: 0.1 (RES) at the antenna, 0.6 (z 0.5) over the case, 2 over strap/skin, 4 in the air
 def lines(tiers):
@@ -192,18 +148,17 @@ fz = np.arange(0, T + 0.01, 0.1)
 midx, midy, midz = [x0b, x1b], [-yb, yb], []
 far = [[], [], []]
 if env:
+    xb, zb, sr = cad["X_BAR"], cad["Z_BAR"], cad["STRAP_R"]
     for sx in (-1, 1):
-        midx += [sx * v for v in (OL, HL, OL - TOP_R[0], OL - BOT_R, S.DISP_X1 + 0.15, S.DISP_X1 - S.LEDGE)]
-        midy += [sx * v for v in (OW, HW, OW - TOP_R[0], OW - BOT_R, S.DISP_W / 2, Y_TOP, S.LEDGE_Y, S.BAT_W / 2)]
+        midx += [sx * v for v in (OL, HL, HL - cad["SEAL_GAP"], OL - 1.6, OL - 0.6, S.DISP_X1 + 0.15, S.DISP_X1 - S.LEDGE,
+                                  xb + cad["EAR_R"])]
+        midx += [sx * (xb + d) for d in (-sr, -0.75, -0.375, 0, 0.375, 0.75, sr)]
+        midy += [sx * v for v in (OW, HW, HW - cad["SEAL_GAP"], OW - 1.6, OW - 0.6, S.DISP_W / 2, S.DISP_W / 2 + 0.15,
+                                  S.LEDGE_Y, S.BAT_W / 2, cad["STRAP_W"] / 2, cad["STRAP_W"] / 2 - 0.1, OW - 0.05)]
+        far[0] += [sx * (xb + 14)]
     midx += [S.BAT_X0, S.BAT_X1, S.BAT_X1 + 0.25, S.BAT_X0 - 0.25, S.DISP_X0, S.DISP_X1]
-    midz += [zr(0.0), zr(S.FLOOR), zr(S.Z_BAT0 + S.BAT_T), -0.1, T + 0.1, zr(S.Z_DISP0), zr(S.Z_DISP1), zr(S.CASE_T),
-             zr(S.Z_DISP0 - 0.1), Z_ROUND, zr(BOT_R)]
-    if BAR:
-        for sx in (-1, 1):
-            midx += [sx * (X_BAR + d) for d in (-STRAP_R, -0.75, -0.375, 0, 0.375, 0.75, STRAP_R)]
-            far[0] += [sx * (X_BAR + 12)]
-        midy += [sx * v for sx in (-1, 1) for v in (STRAP_W / 2 - 0.1, OW - 0.05)]
-        midz += [Z_BAR + d for d in (-STRAP_R, -0.75, -0.375, 0, 0.375, 0.75, STRAP_R)] + [Z_FRAME0]
+    midz += [zr(0.0), zr(S.FLOOR), zr(S.Z_BAT0 + S.BAT_T), -0.1, T + 0.1, zr(S.Z_DISP0), zr(S.Z_DISP1), cad["Z_LIP0"],
+             zr(S.CASE_T), cad["Z_STEP"], cad["Z_ROUND"], zr(1.2), zr(0.1), zr(2.1)] + [zb + d for d in (-sr, -0.75, -0.375, 0, 0.375, 0.75, sr)]
     if case == "wrist":
         far[0] += [-30, 30]; far[1] += [-25, 25]; far[2] += [zr(0.0) - 12]
 ax = [lines([(fx, RES), (midx, 0.6), (far[0], 2.0)]), lines([(fy, RES), (midy, 0.6), (far[1], 2.0)]),
@@ -211,7 +166,6 @@ ax = [lines([(fx, RES), (midx, 0.6), (far[0], 2.0)]), lines([(fy, RES), (midy, 0
 for d, a in zip("xyz", ax):   # AIR of air past every structure, then 8 PML cells of 4 mm
     mesh.AddLine(d, SmoothMeshLines(np.unique(np.r_[a, a[0] - AIR - 32, a[-1] + AIR + 32]), 4.0, 1.4))
 nf2ff = FDTD.CreateNF2FFBox()
-
 sim = f"/tmp/horae_{tag}"
 nl = [len(mesh.GetLines(d)) for d in "xyz"]
 print(tag, "cells:", nl, np.prod(nl) / 1e6, "M; nf2ff box", [np.round(mesh.GetLines(d)[[11, -12]], 1).tolist() for d in "xyz"])
@@ -227,5 +181,6 @@ res = nf2ff.CalcNF2FF(sim, FE, np.array([90.0]), np.array([0.0]))
 port.CalcPort(sim, FE)
 eff = np.real(res.Prad) / np.real(port.P_acc)
 os.makedirs(OUT, exist_ok=True)
-np.savez(f"{OUT}/{tag}.npz", f=f, s11=s11, zin=zin, rad_eff_2g44=float(eff[1]), rad_eff=eff, f_eff=FE)
+pour = any(max(x for x, _ in p) - 100 > X_FULL for p in g["fills"].get("F.Cu", []))   # F.Cu GND along the feed: GCPW
+np.savez(f"{OUT}/{tag}.npz", f=f, s11=s11, zin=zin, rad_eff_2g44=float(eff[1]), rad_eff=eff, f_eff=FE, pour=pour)
 print(tag, "rad. efficiency @2.40/2.44/2.48 GHz:", np.round(eff, 3), "fmin:", f[np.argmin(abs(s11))] / 1e9)

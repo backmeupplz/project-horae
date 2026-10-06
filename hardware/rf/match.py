@@ -2,15 +2,16 @@
 
 Circuit (0.6 mm board, geom.json of 2026-10-04), chip pin -> antenna pad 1, F.Cu 0.20 mm over In1 (lines.py):
   chip -- 1.05 mm -- C11 -- 0.5 mm -- L3 -- 0.42 mm -- C12 -- 1.215 mm -- antenna pad 1 (edge; the pad is in the FDTD)
-  as built: no F.Cu pour along the feed -> microstrip Z0 46.5 ohm, eps_eff 3.28; C11 grounds through two 0.5 mm stubs
-  to vias (~0.1 nH), C12 through one 0.58 mm stub (~0.2 nH). "_pour" runs (F.Cu pour to the keep-out): GCPW 43.9 ohm,
+  F.Cu GND pour along the feed (board since 2026-10-05; sim.py stores it as "pour"): GCPW Z0 43.9 ohm, eps_eff 3.21,
+  0.1 nH cap grounds; without it (v2 board, 2026-10-04): microstrip 46.5 ohm, eps_eff 3.28, C11 ~0.1 nH, C12 ~0.2 nH;
   eps_eff 3.21, 0.1 nH for both.
 Parts: 0201 C0G, ESL 0.2 nH, ESR 0.3 ohm; 0201 thick-film L, Q 20 at 2.44 GHz (R ~ sqrt f), C_par 0.08 pF.
 Run on the host: ../../.venv/bin/python match.py SUFFIX [--plots DIR]
-  SUFFIX e.g. _v2_trim7.5 -> results/{bare,env,wrist}_v2_trim7.5.npz; every results/{env,wrist}SUFFIX_*.npz (spring-bar
-  position, pours, mesh, ...) is evaluated as a robustness case. --plots DIR: rf-s11.png / rf-smith.png there.
+  SUFFIX e.g. _v3_trim6.64 -> results/{bare,env,wrist}_v3_trim6.64.npz; every results/{env,wrist}SUFFIX_*.npz (mesh,
+  pours, ...) is evaluated as a robustness case. --plots DIR: rf-s11.png / rf-smith.png there. "As built" = the C11 /
+  L3 / C12 values in ../design.py; --match C11/L3/C12 (e.g. 0.3/1.2/DNP) evaluates and plots those instead of the pick.
 """
-import glob, itertools, json, os, sys
+import glob, itertools, json, os, re, sys
 import numpy as np
 import matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt
 
@@ -23,7 +24,9 @@ INDS = sorted(float(v) for v, h in PARTS["L"].items() if h)
 LINES = {False: ((46.5, 3.28), (0.1e-9, 0.2e-9)),   # as built: microstrip; C11 / C12 ground path
          True: ((43.9, 3.21), (0.1e-9, 0.1e-9))}    # F.Cu pour to the keep-out: GCPW (lines.py)
 SEG = (1.05, 0.5, 0.42, 1.215)                       # mm: chip-C11, C11-L3, L3-C12, C12-pad 1
-NOW = (0.9, 0.6, 0.0)                                # rev A as built (design.py): C11 0.9 pF, L3 0.6 nH, C12 DNP
+_d = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../design.py")).read()
+NOW = tuple(float((re.search(rf'"{r}",\s*(?:"Device:L",\s*)?"([\d.]+|DNP)', _d).group(1)).replace("DNP", "0"))
+            for r in ("C11", "L3", "C12"))           # rev A as built (design.py)
 
 def tl(f, l_mm, z, ee):
     b = 2 * np.pi * f * np.sqrt(ee) / C0 * l_mm * 1e-3
@@ -54,6 +57,10 @@ def chain(f, c, pour=False):
 
 def s11(z): return (z - Z0) / (z + Z0)
 db = lambda g: 20 * np.log10(np.abs(g))
+
+def feed_pour(tag):   # F.Cu GND pour along the feed? (sim.py stores it; older runs: "pour" in the tag)
+    d = np.load(f"results/{tag}.npz")
+    return bool(d["pour"]) if "pour" in d else "pour" in tag
 
 def load(tag):
     d = np.load(f"results/{tag}.npz")
@@ -104,8 +111,8 @@ if __name__ == "__main__":
     pdir = sys.argv[sys.argv.index("--plots") + 1] if "--plots" in sys.argv else None
     trim = sfx.split("trim")[1].split("_")[0]
     name = f", 0.6 mm board, trim {trim} mm"
-    pour = "pour" in sfx
     tags = [t for t in ("bare", "env", "wrist") if os.path.exists(f"results/{t}{sfx}.npz")]
+    pour = feed_pour(tags[0] + sfx)
     data = {t: load(t + sfx) for t in tags}
     variants = sorted(os.path.basename(p)[:-4] for p in glob.glob(f"results/env{sfx}_*.npz") + glob.glob(f"results/wrist{sfx}_*.npz"))
     fs = data[tags[0]][0]
@@ -120,9 +127,12 @@ if __name__ == "__main__":
     envs = [t for t in ("env", "wrist") if t in data] or tags
     r = best(fs, [data[t][1] for t in envs], pour)
     design = r[0][2:]
+    if "--match" in sys.argv:   # evaluate / plot these values instead of the minimax pick, e.g. --match 0.3/1.2/DNP
+        design = tuple(float(v.replace("DNP", "0")) for v in sys.argv[sys.argv.index("--match") + 1].split("/"))
     rep.append(f"\n## minimax over {envs}: top 8 (worst in-band transducer loss dB, worst S11 dB, C11 pF / L3 nH / C12 pF)")
     rep += [f"  {w:5.2f}  {ws:6.1f}  {a:g} / {b:g} / {c:g}" for w, ws, a, b, c in r[:8]]
-    for lbl, c in (("recommended", design), ("rev A as built 0.9/0.6/DNP", NOW)):
+    now = "/".join(f"{v:g}" if v else "DNP" for v in NOW)
+    for lbl, c in (("--match" in sys.argv and "chosen" or "minimax pick", design), (f"rev A as built {now}", NOW)):
         for t in tags:
             z, eff = data[t][1], data[t][2]
             g = s11(M(fs, z, c)); tl_ = tloss_db(chain(fs, c, pour), z)
@@ -130,7 +140,7 @@ if __name__ == "__main__":
             rep.append(f"  {lbl} -> {t}: band S11 {db(g[band]).max():.1f} .. {db(g[band]).min():.1f} dB; -10 dB band {bw(fs, g)}; "
                        f"worst in-band transducer loss {tl_[band].max():.2f} dB; total eff. (rad x transducer) "
                        f"{' / '.join(f'{e:.2f}' for e in tot)}")
-    rep.append("\nrobustness of the recommended values (band worst S11 dB): antenna resonance -3% / +3%; parts at tolerance "
+    rep.append("\nrobustness of these values (band worst S11 dB): antenna resonance -3% / +3%; parts at tolerance "
                "(C +-0.1 pF, L +-max(5%, 0.1 nH)); model variants")
     c11, l3, c12 = design
     dl = max(0.05 * l3, 0.1)
@@ -143,7 +153,7 @@ if __name__ == "__main__":
                    for a in (-0.1, 0.1) for b in (-dl, dl) for c in ((-0.1, 0.1) if c12 else (0,))]
         rep.append(f"  {t}: shift {out[0]} / {out[1]}; part corners worst {max(corners):.1f}")
     for v in variants:
-        f, z, eff = load(v); p = pour or "pour" in v
+        f, z, eff = load(v); p = feed_pour(v)
         g = s11(M(f, z, design, p)); tl_ = tloss_db(chain(f, design, p), z)
         rep.append(f"  {v}: band S11 {db(g[band]).max():.1f} .. {db(g[band]).min():.1f} dB; worst transducer loss "
                    f"{tl_[band].max():.2f} dB; rad. eff. {' / '.join(f'{e:.2f}' for e in eff)}")
@@ -154,7 +164,7 @@ if __name__ == "__main__":
     # ---- plots: antenna alone (dotted), with the recommended match (solid), rev A as built on this board (dash-dot)
     col = {"bare": "#1f77b4", "env": "#d62728", "wrist": "#2ca02c"}
     lab = {"bare": "bare board", "env": "in case", "wrist": "in case, on wrist"}
-    before = {t: load(f"{t}_v2_trim6.64")[:2] for t in envs if os.path.exists(f"results/{t}_v2_trim6.64.npz")}
+    before = {t: data[t][:2] for t in envs} if tuple(design) != NOW else {}   # same antenna, as-built values
     out = lambda n: os.path.join(pdir, f"{n}.png") if pdir else f"{n}{sfx}.png"
     fig, ax = plt.subplots(figsize=(8, 4.8))
     ax.axvspan(FA / 1e9, FB / 1e9, color="0.92"); ax.axhline(-10, color="0.6", ls="--", lw=0.8)
@@ -164,8 +174,8 @@ if __name__ == "__main__":
         ax.plot(f[k] / 1e9, db(s11(M(f[k], z[k], design))), color=col[t], label=f"{lab[t]}: with match")
     for t, (f, z) in before.items():
         k = (f >= 2e9) & (f <= 3e9)
-        ax.plot(f[k] / 1e9, db(s11(M(f[k], z[k], NOW, False))), color=col[t], ls="-.", lw=1,
-                label=f"{lab[t]}: before (rev A as built: trim 6.64, 0.9 pF / 0.6 nH)")
+        ax.plot(f[k] / 1e9, db(s11(M(f[k], z[k], NOW))), color=col[t], ls="-.", lw=1,
+                label=f"{lab[t]}: before (rev A as built: {now})")
     ax.set_xlabel("frequency (GHz)"); ax.set_ylabel("S11 (dB, 50 Ω)"); ax.set_ylim(-30, 0); ax.set_xlim(2, 3)
     parts = f"C11 {c11:g} pF / L3 {l3:g} nH / C12 {f'{c12:g} pF' if c12 else 'DNP'}"
     ax.set_title(f"Horae antenna{name} (openEMS FDTD); match {parts}", fontsize=10)
@@ -180,9 +190,9 @@ if __name__ == "__main__":
         ax.plot(g1[k].real, g1[k].imag, color=col[t], lw=1, label=f"{lab[t]}: matched, at chip pin")
         ax.plot(g1[b].real, g1[b].imag, color=col[t], lw=3.5)
     for t, (f, z) in before.items():
-        b = (f >= FA) & (f <= FB); g = s11(M(f, z, NOW, False))
+        b = (f >= FA) & (f <= FB); g = s11(M(f, z, NOW))
         ax.plot(g[b].real, g[b].imag, color=col[t], ls="-.", lw=1.5, label=f"{lab[t]}: before (rev A as built), band")
     ax.plot([], [], color="k", lw=3.5, label="thick = 2.40-2.48 GHz")
     ax.legend(fontsize=7, loc="upper left", bbox_to_anchor=(-0.02, 1.0), framealpha=0.9)
-    ax.set_title(f"Smith, 50 Ω{name}: before / after {parts}", fontsize=10)
+    ax.set_title(f"Smith, 50 Ω{name}: {'before / after ' if before else 'with '}{parts}", fontsize=10)
     fig.tight_layout(); fig.savefig(out("rf-smith"), dpi=130)
