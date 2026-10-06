@@ -81,6 +81,55 @@ header p { margin: 0 0 12px; max-width: 34em; }
 .cards b { display: block; font-weight: 600; margin-bottom: 2px; }
 .cards span { font-size: 14px; color: var(--muted); }
 footer { border-top: 1px solid var(--line); padding: 24px 0 48px; font-size: 13px; color: var(--muted); }
+/* 3D explorer: wider than the text column */
+.explorer { --exw: min(1120px, calc(100vw - 32px)); width: var(--exw); margin: 0 0 56px calc(50% - var(--exw) / 2); }
+.explorer h2 { font-size: 22px; margin: 0 0 4px; letter-spacing: -0.01em; font-weight: 600; }
+.ex-intro p { margin: 0 0 16px; max-width: 46em; color: var(--muted); }
+.ex-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 12px; }
+@media (max-width: 860px) { .ex-grid { grid-template-columns: 1fr; } }
+.ex-stage { position: relative; aspect-ratio: 16 / 11; min-height: 320px; max-height: 76vh; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--card); }
+@media (max-width: 860px) { .ex-stage { aspect-ratio: 4 / 3.4; } }
+.ex-stage canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; touch-action: none; }
+.ex-poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.ex-ready .ex-poster, .ex-ready .ex-load { display: none; }
+.ex-loading .ex-poster { filter: blur(2px) opacity(.7); transition: filter .4s; }
+.ex-load { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); font: inherit; font-size: 15px; background: var(--ink); color: var(--paper); border: 0; border-radius: 99px; padding: 10px 18px; cursor: pointer; white-space: nowrap; }
+.ex-load span { opacity: .7; font-size: 12px; margin-left: 4px; }
+.ex-load:focus-visible, .ex-panel button:focus-visible, .ex-tools button:focus-visible { outline: 2px solid #3d8bff; outline-offset: 2px; }
+.ex-progress { position: absolute; left: 14px; bottom: 6px; margin: 0; font-size: 12px; color: var(--muted); }
+.ex-dims { position: absolute; left: 14px; top: 10px; font-size: 12px; color: var(--muted); pointer-events: none; }
+.ex-tools { position: absolute; right: 10px; top: 10px; display: flex; gap: 6px; z-index: 2; }
+.ex-tools button { width: 34px; height: 34px; border-radius: 99px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); font-size: 16px; line-height: 1; cursor: pointer; }
+.ex-tools button[aria-pressed="false"] { opacity: .55; }
+.ex-labels { position: absolute; inset: 0; pointer-events: none; }
+.ex-hot { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font: 600 10px/1 "IBM Plex Mono", ui-monospace, monospace; color: #fff; background: #3d8bff; box-shadow: 0 0 0 2px rgba(255,255,255,.85); }
+.ex-legend { margin: 0; padding: 0; list-style: none; display: grid; gap: 3px; font-size: 13px; }
+.ex-legend[hidden] { display: none; }
+.ex-legend li { display: flex; gap: 8px; align-items: baseline; }
+.ex-legend b { flex: none; width: 18px; height: 18px; border-radius: 50%; display: inline-grid; place-items: center; font: 600 10px/1 "IBM Plex Mono", monospace; color: #fff; background: #3d8bff; }
+.ex-panel { display: flex; flex-direction: column; gap: 14px; padding: 14px; font-size: 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); }
+@media (min-width: 861px) { .ex-panel { max-height: 76vh; overflow-y: auto; } }
+.ex-row { display: flex; flex-direction: column; gap: 6px; margin: 0; }
+.ex-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+.ex-seg { display: flex; flex-wrap: wrap; gap: 4px; }
+.ex-panel button { font: inherit; font-size: 13px; color: var(--ink); background: var(--paper); border: 1px solid var(--line); border-radius: 99px; padding: 4px 11px; cursor: pointer; }
+.ex-panel button[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.ex-panel input[type="range"] { width: 100%; accent-color: var(--ink); }
+.ex-swatches { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.ex-swatches button { display: flex; flex-direction: column; align-items: center; gap: 3px; border-radius: 8px; padding: 6px 2px 4px; font-size: 11px; }
+.ex-swatches i { width: 24px; height: 24px; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 3px var(--r), 0 0 0 1px var(--line); }
+.ex-swatches button[aria-pressed="true"] i { box-shadow: inset 0 0 0 3px var(--r), 0 0 0 2px var(--paper); }
+.ex-cw { margin: 2px 0 0; font-size: 11px; color: var(--muted); min-height: 1.4em; }
+#ex-parts { display: flex; flex-direction: column; gap: 8px; }
+.ex-group { display: flex; flex-wrap: wrap; gap: 4px; }
+.ex-group h4 { flex: 0 0 100%; margin: 0; font-size: 11px; font-weight: 500; color: var(--muted); }
+.ex-info { border-top: 1px solid var(--line); padding-top: 12px; }
+.ex-info h3 { margin: 0 0 4px; font-size: 16px; }
+.ex-info p { margin: 0 0 8px; }
+.ex-meta, .ex-hint { font-size: 12px; color: var(--muted); }
+.ex-actions { display: flex; flex-wrap: wrap; gap: 4px; }
+.explorer:fullscreen { --exw: 100vw; margin: 0; padding: 16px; background: var(--paper); overflow: auto; }
+.explorer:fullscreen .ex-stage { aspect-ratio: auto; height: calc(100vh - 120px); max-height: none; }
 /* lightbox: native <dialog>, arrows/swipe within one photo group */
 #lb { border: 0; padding: 0; background: transparent; max-width: 100vw; max-height: 100vh; width: 100vw; height: 100vh; }
 #lb::backdrop { background: rgba(0,0,0,.95); }
@@ -117,6 +166,50 @@ footer { border-top: 1px solid var(--line); padding: 24px 0 48px; font-size: 13p
     <text x="46" y="152" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" fill="#555">SAT 03</text>
   </svg>
 </header>
+
+<section class="explorer" id="explore" aria-labelledby="explore-title">
+  <div class="ex-intro">
+    <h2 id="explore-title">Explore rev A in 3D</h2>
+    <p>The actual case CAD and the routed board, in your browser. Drag to orbit, scroll or pinch to zoom, pull it apart, try the colourways, and tap any part to see what it is.</p>
+  </div>
+  <div class="ex-grid">
+    <div class="ex-stage" id="ex-stage">
+      <img class="ex-poster" src="media/2026-10-05/cad-assembled.png" alt="Rendered Horae rev A on its strap" loading="lazy">
+      <div class="ex-dims mono" id="ex-dims">35.6 × 18.0 × 6.80 mm</div>
+      <div class="ex-tools">
+        <button type="button" id="ex-reset" aria-label="Reset the view" title="Reset the view">↺</button>
+        <button type="button" id="ex-spin" aria-pressed="true" aria-label="Auto-rotate" title="Auto-rotate">⟳</button>
+        <button type="button" id="ex-full" aria-label="Full screen" title="Full screen">⛶</button>
+      </div>
+      <button type="button" class="ex-load" id="ex-load">Load the 3D model<span class="mono">≈2 MB</span></button>
+      <p class="ex-progress mono" id="ex-progress" aria-live="polite"></p>
+    </div>
+    <div class="ex-panel">
+      <div class="ex-row"><span class="ex-label mono">View</span>
+        <div class="ex-seg" role="group" aria-label="View">
+          <button type="button" data-view="assembled" aria-pressed="true">Assembled</button>
+          <button type="button" data-view="exploded" aria-pressed="false">Exploded</button>
+          <button type="button" data-view="cut" aria-pressed="false">Cutaway</button>
+        </div>
+      </div>
+      <label class="ex-row"><span class="ex-label mono">Pull apart</span><input type="range" id="ex-explode" min="0" max="1" step="0.001" value="0"></label>
+      <div class="ex-row"><span class="ex-label mono">Colourway</span><div class="ex-swatches" id="ex-swatches"></div><p class="ex-cw mono" id="ex-cw"></p></div>
+      <div class="ex-row"><span class="ex-label mono">Show</span>
+        <div class="ex-seg">
+          <button type="button" id="ex-strap" aria-pressed="true">Strap</button>
+          <button type="button" id="ex-dock" aria-pressed="false">Dock</button>
+          <button type="button" id="ex-labels" aria-pressed="false">Chip labels</button>
+        </div>
+      </div>
+      <ol class="ex-legend" id="ex-legend" hidden></ol>
+      <div class="ex-row"><span class="ex-label mono">Parts</span><div id="ex-parts"></div></div>
+      <div class="ex-info" id="ex-info" aria-live="polite"></div>
+    </div>
+  </div>
+  <noscript><p>The 3D explorer needs JavaScript; the rendered views are in the build log below.</p></noscript>
+</section>
+<script type="importmap">{"imports": {"three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+<script type="module" src="explorer/explorer.js"></script>
 
 <section class="waitlist" aria-labelledby="waitlist-title">
   <h2 id="waitlist-title">Join the waitlist to get email when it's done and available to purchase</h2>

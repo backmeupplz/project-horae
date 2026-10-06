@@ -12,5 +12,9 @@ Build log: **[projecthorae.com](https://projecthorae.com)**
 - [Prototype v0](research/prototyping.md): breadboard kit, steps, charging
 - [Build plan, rev A](research/build-plan.md): custom board straight away, order → solder → firmware → case → wear
 
+## 3D explorer
+The landing page's interactive model (`explorer/`) is generated from the case CAD and the KiCad board:
+`.venv/bin/python cad/web.py` (needs Docker for KiCad and `npx` for gltf-transform). Re-run it after changing the CAD or the board.
+
 ## Adding a timeline entry
 The timeline is newest first. Add a new `<li class="entry">` block at the top of the `<ol class="timeline">` in `index.html`, and put its photos in `media/YYYY-MM-DD/`.

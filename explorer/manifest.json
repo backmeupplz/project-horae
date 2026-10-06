@@ -1,0 +1,759 @@
+{
+ "units": "mm",
+ "generated_from": "cad/horae.py + hardware/horae.kicad_pcb (cad/web.py)",
+ "case": {
+  "L": 35.6,
+  "W": 18.0,
+  "T": 6.8
+ },
+ "files": {
+  "case": "models/case.glb",
+  "pcb": "models/pcb.glb"
+ },
+ "pcb_offset": [
+  -100.0,
+  3.6999999999999997,
+  -100.0
+ ],
+ "face": {
+  "file": "face.png",
+  "center": [
+   1.32,
+   6.36,
+   -0.0
+  ],
+  "size": [
+   22.26,
+   10.65
+  ]
+ },
+ "parts": [
+  {
+   "key": "top_shell",
+   "name": "Top shell",
+   "group": "Case",
+   "desc": "One PETG print: the 0.3 mm bezel lip, walls, the strap ears drilled for 16 mm spring bars, and the snap recesses.",
+   "role": "case",
+   "explode": [
+    0,
+    30,
+    0
+   ],
+   "tris": 61642,
+   "size": [
+    43.1,
+    18.0,
+    6.8
+   ]
+  },
+  {
+   "key": "bars",
+   "name": "Spring bars",
+   "group": "Strap",
+   "desc": "Standard 16 mm quick-release spring bars through the ears.",
+   "role": "metal",
+   "explode": [
+    0,
+    30,
+    0
+   ],
+   "tris": 1256,
+   "size": [
+    1.5,
+    17.9,
+    1.5
+   ]
+  },
+  {
+   "key": "rf_pin",
+   "name": "Spring bars",
+   "group": "Strap",
+   "desc": "Standard 16 mm quick-release spring bars through the ears.",
+   "role": "metal",
+   "explode": [
+    0,
+    30,
+    0
+   ],
+   "tris": 1256,
+   "size": [
+    1.5,
+    17.9,
+    1.5
+   ]
+  },
+  {
+   "key": "bezel_gasket",
+   "name": "Bezel gasket",
+   "group": "Seals",
+   "desc": "TPU 90A, 0.15 mm squeezed: seals the glass to the lip.",
+   "role": "tpu",
+   "explode": [
+    0,
+    23,
+    0
+   ],
+   "tris": 912,
+   "size": [
+    30.3,
+    14.45,
+    0.15
+   ]
+  },
+  {
+   "key": "vent",
+   "name": "Mic vent",
+   "group": "Seals",
+   "desc": "Hydrophobic membrane that lets sound in and keeps splashes out.",
+   "role": "membrane",
+   "explode": [
+    0,
+    23,
+    0
+   ],
+   "tris": 12,
+   "size": [
+    1.4,
+    1.03,
+    0.15
+   ]
+  },
+  {
+   "key": "display",
+   "name": "E-paper display",
+   "group": "Display",
+   "desc": "Good Display GDEM0097T61: 0.97\" 184 x 88 e-paper, 30 x 14.15 x 1 mm.",
+   "role": "epaper",
+   "explode": [
+    0,
+    16,
+    0
+   ],
+   "tris": 12,
+   "size": [
+    30.0,
+    14.15,
+    1.0
+   ]
+  },
+  {
+   "key": "fpc",
+   "name": "Display ribbon",
+   "group": "Display",
+   "desc": "Folds under the glass and plugs into the board's FH34SRJ connector.",
+   "role": "pcb",
+   "explode": [
+    0,
+    16,
+    0
+   ],
+   "tris": 444,
+   "size": [
+    10.05,
+    9.5,
+    0.78
+   ]
+  },
+  {
+   "key": "stiffener",
+   "name": "Display ribbon",
+   "group": "Display",
+   "desc": "Folds under the glass and plugs into the board's FH34SRJ connector.",
+   "role": "pcb",
+   "explode": [
+    0,
+    16,
+    0
+   ],
+   "tris": 12,
+   "size": [
+    3.5,
+    9.5,
+    0.3
+   ]
+  },
+  {
+   "key": "cushions",
+   "name": "Glass cushions",
+   "group": "Seals",
+   "desc": "Four TPU pads that press the glass up against the bezel gasket.",
+   "role": "tpu",
+   "explode": [
+    0,
+    10.5,
+    0
+   ],
+   "tris": 48,
+   "size": [
+    30.2,
+    14.35,
+    1.05
+   ]
+  },
+  {
+   "key": "mic_seal",
+   "name": "Mic seal",
+   "group": "Seals",
+   "desc": "Ring between the microphone and the duct to the outside.",
+   "role": "tpu",
+   "explode": [
+    0,
+    5,
+    0
+   ],
+   "tris": 48,
+   "size": [
+    1.75,
+    1.3,
+    0.24
+   ]
+  },
+  {
+   "key": "battery",
+   "name": "Battery",
+   "group": "Electronics",
+   "desc": "LiPo pouch 3 x 15 x 18-19 mm with protection, 40-55 mAh, soldered to two pads.",
+   "role": "metal",
+   "explode": [
+    0,
+    -1,
+    0
+   ],
+   "tris": 360,
+   "size": [
+    21.2,
+    15.7,
+    3.5
+   ]
+  },
+  {
+   "key": "bat_leads",
+   "name": "Battery",
+   "group": "Electronics",
+   "desc": "LiPo pouch 3 x 15 x 18-19 mm with protection, 40-55 mAh, soldered to two pads.",
+   "role": "gold",
+   "explode": [
+    0,
+    -1,
+    0
+   ],
+   "tris": 40,
+   "size": [
+    3.75,
+    14.0,
+    2.07
+   ]
+  },
+  {
+   "key": "motor",
+   "name": "Vibration motor",
+   "group": "Electronics",
+   "desc": "6 x 2.5 mm coin motor (Vybronics VC0625B001L), leads soldered to the board.",
+   "role": "metal",
+   "explode": [
+    0,
+    -1,
+    0
+   ],
+   "tris": 416,
+   "size": [
+    6.0,
+    6.0,
+    2.5
+   ]
+  },
+  {
+   "key": "motor_leads",
+   "name": "Vibration motor",
+   "group": "Electronics",
+   "desc": "6 x 2.5 mm coin motor (Vybronics VC0625B001L), leads soldered to the board.",
+   "role": "gold",
+   "explode": [
+    0,
+    -1,
+    0
+   ],
+   "tris": 832,
+   "size": [
+    3.2,
+    0.4,
+    0.72
+   ]
+  },
+  {
+   "key": "motor_pad",
+   "name": "Motor pad",
+   "group": "Seals",
+   "desc": "TPU pad that holds the motor still.",
+   "role": "tpu",
+   "explode": [
+    0,
+    1.5,
+    0
+   ],
+   "tris": 124,
+   "size": [
+    3.6,
+    5.8,
+    0.77
+   ]
+  },
+  {
+   "key": "pogo_seals",
+   "name": "Charging-pad seals",
+   "group": "Seals",
+   "desc": "TPU rings around the four charging pads.",
+   "role": "tpu",
+   "explode": [
+    0,
+    1.5,
+    0
+   ],
+   "tris": 3360,
+   "size": [
+    5.5,
+    10.7,
+    0.45
+   ]
+  },
+  {
+   "key": "bottom_seal",
+   "name": "Shell seal ring",
+   "group": "Seals",
+   "desc": "TPU 90A ring that seals between the two shells, sideways.",
+   "role": "tpu",
+   "explode": [
+    0,
+    -6,
+    0
+   ],
+   "tris": 896,
+   "size": [
+    34.0,
+    16.4,
+    0.4
+   ]
+  },
+  {
+   "key": "bottom_shell",
+   "name": "Bottom shell",
+   "group": "Case",
+   "desc": "One PETG print: the 0.4 mm floor, motor and pad block, and 4 snap bumps that click into the top shell.",
+   "role": "case",
+   "explode": [
+    0,
+    -11,
+    0
+   ],
+   "tris": 7296,
+   "size": [
+    34.4,
+    16.2,
+    3.65
+   ]
+  },
+  {
+   "key": "watch_magnets",
+   "name": "Dock magnets",
+   "group": "Case",
+   "desc": "Two 3 x 1 mm N52 magnets, one N and one S out, so the dock only fits one way.",
+   "role": "metal",
+   "explode": [
+    0,
+    -11,
+    0
+   ],
+   "tris": 832,
+   "size": [
+    3.0,
+    14.8,
+    1.0
+   ]
+  },
+  {
+   "key": "strap_l",
+   "name": "Strap",
+   "group": "Strap",
+   "desc": "Any two-piece 16 mm strap with spring-bar ends.",
+   "role": "strap",
+   "explode": [
+    -8.0,
+    30,
+    0
+   ],
+   "tris": 3812,
+   "size": [
+    15.84,
+    15.8,
+    3.7
+   ]
+  },
+  {
+   "key": "strap_r",
+   "name": "Strap",
+   "group": "Strap",
+   "desc": "Any two-piece 16 mm strap with spring-bar ends.",
+   "role": "strap",
+   "explode": [
+    8.0,
+    30,
+    0
+   ],
+   "tris": 3812,
+   "size": [
+    15.84,
+    15.8,
+    3.7
+   ]
+  },
+  {
+   "key": "pcb",
+   "name": "Main board",
+   "group": "Electronics",
+   "desc": "33.8 x 16.2 x 0.6 mm, 4 layers, fully assembled by JLCPCB: ESP32-S3, accelerometer, charger, buck regulator, e-paper booster, mic, touch pads, antenna.",
+   "role": "pcb",
+   "explode": [
+    0,
+    5,
+    0
+   ],
+   "size": [
+    33.8,
+    16.2,
+    1.6
+   ]
+  }
+ ],
+ "hotspots": [
+  {
+   "ref": "Y1",
+   "label": "40 MHz crystal",
+   "pos": [
+    8.1,
+    5.3,
+    5.9
+   ]
+  },
+  {
+   "ref": "L4",
+   "label": "E-paper booster",
+   "pos": [
+    -3.4,
+    5.3,
+    -0.6
+   ]
+  },
+  {
+   "ref": "J1",
+   "label": "Display connector",
+   "pos": [
+    -8.3,
+    5.3,
+    -0.0
+   ]
+  },
+  {
+   "ref": "U1",
+   "label": "ESP32-S3: Wi-Fi + Bluetooth LE",
+   "pos": [
+    4.8,
+    5.3,
+    -0.0
+   ]
+  },
+  {
+   "ref": "MIC1",
+   "label": "PDM microphone",
+   "pos": [
+    -1.5,
+    5.3,
+    6.55
+   ]
+  },
+  {
+   "ref": "U2",
+   "label": "BQ25101 charger",
+   "pos": [
+    -14.25,
+    5.3,
+    -6.2
+   ]
+  },
+  {
+   "ref": "U3",
+   "label": "TPS62840 buck regulator",
+   "pos": [
+    -10.0,
+    5.3,
+    6.6
+   ]
+  },
+  {
+   "ref": "U6",
+   "label": "LIS2DUX12 accelerometer",
+   "pos": [
+    -0.485,
+    5.3,
+    -4.599
+   ]
+  },
+  {
+   "ref": "Y2",
+   "label": "32 kHz clock crystal",
+   "pos": [
+    9.8,
+    5.3,
+    -5.0
+   ]
+  },
+  {
+   "ref": "AE1",
+   "label": "2.4 GHz antenna (meander)",
+   "pos": [
+    14.0,
+    4.3,
+    -0.0
+   ]
+  },
+  {
+   "ref": "TCH0",
+   "label": "Touch pad",
+   "pos": [
+    -5.2,
+    4.3,
+    -7.0
+   ]
+  },
+  {
+   "ref": "TCH1",
+   "label": "Touch pad",
+   "pos": [
+    3.0,
+    4.3,
+    -7.0
+   ]
+  }
+ ],
+ "hero": "Titanium",
+ "colorways": {
+  "Stealth": {
+   "case": "Bambu PETG-CF Black",
+   "case_hex": "#2C2C2C",
+   "case_finish": "cf",
+   "tpu": "TPU 95A HF Black",
+   "tpu_hex": "#1A1C22",
+   "tpu_finish": "tpu",
+   "strap": "black FKM",
+   "strap_hex": "#1E1F21",
+   "inserts": "Bambu PETG Matte Black"
+  },
+  "Titanium": {
+   "case": "Bambu PETG-CF Titan Gray",
+   "case_hex": "#5E5F60",
+   "case_finish": "cf",
+   "tpu": "TPU 90A Quicksilver",
+   "tpu_hex": "#9EA2A2",
+   "tpu_finish": "tpu",
+   "strap": "charcoal nylon",
+   "strap_hex": "#3A3C40",
+   "inserts": "grey PETG Basic (e.g. Gray, matched to the printed Titan Gray)"
+  },
+  "Arctic": {
+   "case": "Bambu PETG Matte White",
+   "case_hex": "#E9E9E6",
+   "case_finish": "matte",
+   "tpu": "TPU 90A Crystal Blue",
+   "tpu_hex": "#7EB4E1",
+   "tpu_finish": "tpu_clear",
+   "strap": "white silicone",
+   "strap_hex": "#E6E6E2",
+   "inserts": null
+  },
+  "Galaxy": {
+   "case": "Prusament PETG Galaxy Black",
+   "case_hex": "#1E1F21",
+   "case_finish": "glitter",
+   "tpu": "TPU 95A HF Blue",
+   "tpu_hex": "#0072CE",
+   "tpu_finish": "tpu",
+   "strap": "navy",
+   "strap_hex": "#1F2A44",
+   "inserts": null
+  },
+  "Indigo": {
+   "case": "Bambu PETG-CF Indigo Blue",
+   "case_hex": "#46527A",
+   "case_finish": "cf",
+   "tpu": "TPU 90A White",
+   "tpu_hex": "#F2F2E6",
+   "tpu_finish": "tpu",
+   "strap": "navy",
+   "strap_hex": "#1F2A44",
+   "inserts": "navy PETG"
+  },
+  "Malachite": {
+   "case": "Bambu PETG-CF Malachite Green",
+   "case_hex": "#3A8F7C",
+   "case_finish": "cf",
+   "tpu": "TPU 95A HF Black",
+   "tpu_hex": "#1A1C22",
+   "tpu_finish": "tpu",
+   "strap": "black",
+   "strap_hex": "#1E1F21",
+   "inserts": "teal-green PETG"
+  },
+  "Paper": {
+   "case": "Bambu PETG Basic Dark Beige",
+   "case_hex": "#DBC8B6",
+   "case_finish": "gloss",
+   "tpu": "TPU 90A Cocoa Brown",
+   "tpu_hex": "#5C4738",
+   "tpu_finish": "tpu",
+   "strap": "tan leather",
+   "strap_hex": "#A97C55",
+   "inserts": null
+  },
+  "Ember": {
+   "case": "Bambu PETG Matte Black",
+   "case_hex": "#262628",
+   "case_finish": "matte",
+   "tpu": "TPU 95A HF Red",
+   "tpu_hex": "#C8102E",
+   "tpu_finish": "tpu",
+   "strap": "black",
+   "strap_hex": "#1E1F21",
+   "inserts": null
+  }
+ },
+ "finishes": {
+  "gloss": {
+   "metallic": 0.0,
+   "roughness": 0.2,
+   "texture": null,
+   "opacity": 1.0
+  },
+  "satin": {
+   "metallic": 0.0,
+   "roughness": 0.35,
+   "texture": null,
+   "opacity": 1.0
+  },
+  "matte": {
+   "metallic": 0.0,
+   "roughness": 0.62,
+   "texture": null,
+   "opacity": 1.0
+  },
+  "cf": {
+   "metallic": 0.0,
+   "roughness": 0.62,
+   "texture": "cf",
+   "opacity": 1.0
+  },
+  "glitter": {
+   "metallic": 0.0,
+   "roughness": 0.25,
+   "texture": "glitter",
+   "opacity": 1.0
+  },
+  "tpu": {
+   "metallic": 0.0,
+   "roughness": 0.52,
+   "texture": null,
+   "opacity": 1.0
+  },
+  "matte_tile": {
+   "metallic": 0.0,
+   "roughness": 0.62,
+   "texture": "plain",
+   "opacity": 1.0
+  },
+  "tpu_clear": {
+   "metallic": 0.0,
+   "roughness": 0.42,
+   "texture": null,
+   "opacity": 0.72
+  },
+  "metal": {
+   "metallic": 1.0,
+   "roughness": 0.22,
+   "texture": null,
+   "opacity": 1.0
+  },
+  "gold": {
+   "metallic": 1.0,
+   "roughness": 0.28,
+   "texture": null,
+   "opacity": 1.0
+  },
+  "pcb": {
+   "metallic": 0.0,
+   "roughness": 0.45,
+   "texture": null,
+   "opacity": 1.0
+  },
+  "plastic": {
+   "metallic": 0.0,
+   "roughness": 0.45,
+   "texture": null,
+   "opacity": 1.0
+  },
+  "epaper": {
+   "metallic": 0.0,
+   "roughness": 0.85,
+   "texture": null,
+   "opacity": 1.0
+  },
+  "strap": {
+   "metallic": 0.0,
+   "roughness": 0.68,
+   "texture": null,
+   "opacity": 1.0
+  },
+  "membrane": {
+   "metallic": 0.0,
+   "roughness": 0.6,
+   "texture": null,
+   "opacity": 1.0
+  }
+ },
+ "tech": {
+  "top_shell": "#62666d",
+  "bottom_shell": "#4c5056",
+  "top_shell_cf": "#3b3e43",
+  "antenna_window": "#d9d3c3",
+  "touch_windows": "#d9d3c3",
+  "bezel_gasket": "#e4572e",
+  "cushions": "#e4572e",
+  "bottom_seal": "#e4572e",
+  "pogo_seals": "#e4572e",
+  "motor_pad": "#e4572e",
+  "mic_seal": "#e4572e",
+  "vent": "#f4f4ef",
+  "boot": "#e4572e",
+  "display": "#dcdad1",
+  "fpc": "#c8861a",
+  "stiffener": "#9c6610",
+  "pcb": "#1e5b3e",
+  "qfn": "#2b2b2d",
+  "ffc": "#e6dfca",
+  "chips": "#3a3a3c",
+  "switches": "#b9bec5",
+  "touch": "#d9a92e",
+  "pads": "#d9a92e",
+  "antenna": "#c9a24a",
+  "battery": "#c4c9cf",
+  "bat_leads": "#d8b246",
+  "watch_magnets": "#a8aeb5",
+  "motor": "#a7adb4",
+  "motor_leads": "#d8b246",
+  "bars": "#cfd3d8",
+  "rf_pin": "#cfd3d8",
+  "strap": "#2b2d31",
+  "puck_top": "#e8e6e1",
+  "puck_base": "#d6d3cc",
+  "pins": "#d8b246",
+  "puck_magnets": "#a8aeb5",
+  "cable": "#1e1f21"
+ }
+}
