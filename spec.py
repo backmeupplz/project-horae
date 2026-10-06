@@ -10,11 +10,11 @@ POGO_PADS with this flip and cross-checks each pin's net against hardware/horae.
 
 # --- case shell ---
 WALL = 0.8            # side wall: two 0.4 mm perimeters
-FLOOR = 0.5
-LIP = 0.4             # top bezel thickness over the display glass
+FLOOR = 0.4            # bottom shell floor (4 x 0.1 mm layers)
+LIP = 0.3             # bezel lip over the glass: the first 3 layers of the top shell, printed face down
 LIP_OVERLAP = 1.0     # how far the bezel covers the glass edge (glass border is 1.75)
-BEZEL_GASKET = 0.2    # TPU seal under the bezel, on the glass border + frame top (compressed); splash resistance
-CORNER_R = 3.3        # outer plan-view corner radius (PCB R2.5 + wall)
+BEZEL_GASKET = 0.15   # TPU seal between the lip and the glass border (compressed; printed ~0.2), held by the closed case
+CORNER_R = 1.6        # outer plan-view corner radius: small, because the strap ears continue the side walls past the ends
 
 # --- display: Good Display GDEM0097T61 (datasheet p.7) ---
 DISP_L, DISP_W, DISP_T = 30.0, 14.15, 1.0
@@ -89,5 +89,5 @@ if __name__ == "__main__":
 
 # board details the case depends on (set by hardware/gen_pcb.py)
 FFC_X = DISP_X0 + 7.5 # FH34SRJ centre; ribbon enters from -X (shorter bend leaves 0.6 mm more tail)
-PCB_CORNER_R = 2.5    # must stay below the case inner corner radius (CORNER_R - WALL)
+PCB_CORNER_R = 2.5    # the case cavity corners follow this radius (cad/horae.py)
 MIC_X, MIC_Y = -1.5, 6.55  # LMD2718T top-port mic (KiCad coords, long axis across the board): port 0.6 mm outward, mid-strip beside the glass
