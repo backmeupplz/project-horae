@@ -110,7 +110,7 @@ Every display, I²C, touch and wake line is on an RTC GPIO (0–21), so the ULP 
 
 ## Charging dock (bought parts; the tray, lid and grip pad print with the case)
 - 4 Mill-Max 0955-0-15-20-71-14-11-0 spring pins (plus 2 spares). Docked, each presses about 42 g on its pad.
-- 4 × 3 × 3 mm N52 magnets in the dock (the case holds 2 × 3 × 1 mm N52). Placed end for end, the watch is pushed off, so VBUS never lands on GND. They hold 2.3× the pins' spring force.
+- 4 × 3 × 3 mm N52 magnets in the dock (the case holds 2 × 3 × 1 mm N52). Placed end for end, the watch is pushed off, so VBUS never lands on GND. They hold 1.9× the pins' spring force. The case's magnets click into the bottom shell from the inside, behind a 0.1 mm skin (print it with a 0.1 mm first layer), so lifting the watch off can't pull them out. To get the poles right, stick each one onto the dock magnet it will sit over: the face touching the dock faces out.
 - [Adafruit 6050](https://www.adafruit.com/product/6050) sunken USB-C breakout (5.1 kΩ CC pull-downs, so any USB-C charger gives 5 V; D+/D− broken out for flashing).
 - 2–3 cm each of 30 AWG wire for VBUS, GND, D+ and D− (twist D+ with D−). These 4 wires are the dock's only soldering.
 - Drill the case's 4 pin bores with a 1.0 mm bit after printing (FDM prints small holes undersize).
