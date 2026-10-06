@@ -27,6 +27,10 @@ MODELS = OUT / "models"
 GLTF_TRANSFORM = ["npx", "-y", "@gltf-transform/cli@4"]
 
 # key -> (name, group, description); explode is (dx, dy, dz) in the viewer frame (y up), mm, at full explode
+BATTERY = (f"LiPo pouch {S.BAT_T:g} x 15 x 18-19 mm with protection, 40-55 mAh; its two wire leads (red +, black -) "
+           f"are soldered to two pads.")
+USB = ("Adafruit 6050 sunken USB-C breakout with 5.1k CC pull-downs, so any USB-C charger gives 5 V; 4 short wires "
+       "to the pins.")
 PARTS = {
     "top_shell": ("Top shell", "Case", f"One PETG print: the {S.LIP:g} mm bezel lip, walls, the strap ears drilled for "
                   f"16 mm spring bars, and the snap recesses."),
@@ -44,30 +48,34 @@ PARTS = {
     "mic_seal": ("Mic seal", "Seals", "Ring between the microphone and the duct to the outside."),
     "pcb": ("Main board", "Electronics", f"{S.PCB_L:g} x {S.PCB_W:g} x {S.PCB_T:g} mm, 4 layers, fully assembled by "
             f"JLCPCB: ESP32-S3, accelerometer, charger, buck regulator, e-paper booster, mic, touch pads, antenna."),
-    "battery": ("Battery", "Electronics", f"LiPo pouch {S.BAT_T:g} x 15 x 18-19 mm with protection, 40-55 mAh, "
-                f"soldered to two pads."),
-    "bat_leads": ("Battery", "Electronics", f"LiPo pouch {S.BAT_T:g} x 15 x 18-19 mm with protection, 40-55 mAh, "
-                  f"soldered to two pads."),
+    "battery": ("Battery", "Electronics", BATTERY),
+    "bat_lead_red": ("Battery", "Electronics", BATTERY),
+    "bat_lead_black": ("Battery", "Electronics", BATTERY),
     "motor": ("Vibration motor", "Electronics", f"{S.MOTOR_D:g} x {S.MOTOR_T:g} mm coin motor (Vybronics "
               f"VC0625B001L), leads soldered to the board."),
     "motor_leads": ("Vibration motor", "Electronics", f"{S.MOTOR_D:g} x {S.MOTOR_T:g} mm coin motor (Vybronics "
                     f"VC0625B001L), leads soldered to the board."),
-    "motor_pad": ("Motor pad", "Seals", "TPU pad that holds the motor still."),
-    "pogo_seals": ("Charging-pad seals", "Seals", "TPU rings around the four charging pads."),
+    "pogo_seals": ("Charging-pad seal", "Seals", "One TPU piece: a ring around each of the four charging pads, "
+                   "joined by webs."),
     "bottom_seal": ("Shell seal ring", "Seals", "TPU 90A ring that seals between the two shells, sideways."),
-    "bottom_shell": ("Bottom shell", "Case", f"One PETG print: the {S.FLOOR:g} mm floor, motor and pad block, and 4 "
-                     f"snap bumps that click into the top shell."),
-    "watch_magnets": ("Dock magnets", "Case", "Two 3 x 1 mm N52 magnets, one N and one S out, so the dock only fits "
-                      "one way."),
+    "bottom_shell": ("Bottom shell", "Case", f"One PETG print: the {S.FLOOR:g} mm floor, the motor pocket whose 4 "
+                     f"sprung fingers grip the motor, and 4 snap bumps that click into the top shell."),
+    "watch_magnets": ("Watch magnets", "Case", "Two 3 x 1 mm N52 magnets in the floor, one N and one S out, so the "
+                      "watch only docks one way round."),
+    "dock_base": ("Dock tray", "Dock", "PETG print: the floor, side lips that locate the watch, sockets for the "
+                  "spring pins, magnet posts and pegs for the USB-C board."),
+    "dock_lid": ("Dock lid", "Dock", "PETG plate that snaps into the tray: pin bores and magnet holes with a 0.1 mm "
+                 "retaining lip. Nothing is glued."),
+    "dock_pins": ("Spring pins", "Dock", "4 Mill-Max 0955 spring pins pressing about 42 g on each charging pad."),
+    "dock_magnets": ("Dock magnets", "Dock", "4 x 3 x 3 mm N52: the watch snaps on the right way round; turned end for "
+                     "end, it is pushed off."),
+    "dock_usb": ("USB-C breakout", "Dock", USB),
+    "dock_wires": ("USB-C breakout", "Dock", USB),
+    "dock_feet": ("Grip pad", "Dock", "TPU 90A pad with 4 press-in stems, so the dock stays put on the desk."),
 }
-EXPLODE = {  # viewer y = CAD z
-    "top_shell": 30, "bars": 30, "rf_pin": 30, "strap_l": 30, "strap_r": 30, "bezel_gasket": 23, "vent": 23,
-    "display": 16, "fpc": 16, "stiffener": 16, "cushions": 10.5, "mic_seal": 5, "pcb": 5,
-    "battery": -1, "bat_leads": -1, "motor": -1, "motor_leads": -1, "motor_pad": 1.5, "pogo_seals": 1.5,
-    "bottom_seal": -6, "bottom_shell": -11, "watch_magnets": -11,
-}
+EXPLODE = {k: v[2] for k, v in H.EXPLODE.items()} | dict.fromkeys(("strap_l", "strap_r"), H.EXPLODE["bars"][2])
 STRAP_DX = 8.0          # strap stubs also slide off the bars when exploded
-DOCK_DY = -24.0         # dock parts at full explode (they sit under the watch when assembled)
+DOCK_DY = -24.0         # the dock at full explode (it sits under the watch when assembled), plus H.DOCK_EXPLODE
 HOTSPOTS = {  # board refs worth a label: ref -> label
     "U1": "ESP32-S3: Wi-Fi + Bluetooth LE", "J1": "Display connector", "U6": "LIS2DUX12 accelerometer",
     "MIC1": "PDM microphone", "U2": "BQ25101 charger", "U3": "TPS62840 buck regulator", "L4": "E-paper booster",
@@ -109,14 +117,11 @@ def export_case(m):
     if m.get("strap") is not None:
         left, right = solids_by_side(m["strap"])
         items += [("strap_l", left), ("strap_r", right)]
-    dock = [k for k in m if k.startswith("dock") and m[k] is not None and hasattr(m[k], "wrapped")]
-    items += [(k, m[k]) for k in dock]
     for key, shape in items:
         mesh = part_mesh(shape, key)
         role = H.ROLE.get(key, H.ROLE.get("strap") if key.startswith("strap") else "plastic")
-        name, group, desc = PARTS.get(key, (key.replace("dock_", "Dock ").replace("_", " ").capitalize(), "Dock",
-                                            "Part of the charging dock."))
-        dy = EXPLODE.get(key, DOCK_DY if key.startswith("dock") else 0)
+        name, group, desc = PARTS[key]
+        dy = EXPLODE.get(key, DOCK_DY + H.DOCK_EXPLODE.get(key, (0, 0, 0))[2] if group == "Dock" else 0)
         dx = -STRAP_DX if key == "strap_l" else STRAP_DX if key == "strap_r" else 0
         scene.add_geometry(mesh, node_name=key, geom_name=key)
         bb = shape.bounding_box()
@@ -212,6 +217,8 @@ def main():
         files=dict(case="models/case.glb", pcb="models/pcb.glb"),
         pcb_offset=[-100.0, S.Z_PCB0, -100.0],          # KiCad GLB is in page coordinates, board bottom at y = 0
         face=face_png(), parts=parts, hotspots=hotspots(), hero=H.HERO,
+        dock=dict(desk=round(H.dock_levels()["desk"], 2),
+                  low=min((p["explode"][1] for p in parts if p["group"] == "Dock"), default=DOCK_DY)),
         colorways={k: dict(case=v[0], case_hex=v[1], case_finish=v[2], tpu=v[3], tpu_hex=v[4], tpu_finish=v[5],
                            strap=v[6], strap_hex=v[7], inserts=H.INSERTS.get(k)) for k, v in H.COLORWAYS.items()},
         finishes={k: dict(metallic=v[0], roughness=v[1], texture=v[2], opacity=v[3]) for k, v in H.FINISH.items()},

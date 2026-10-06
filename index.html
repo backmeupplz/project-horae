@@ -86,8 +86,8 @@ footer { border-top: 1px solid var(--line); padding: 24px 0 48px; font-size: 13p
 .explorer h2 { font-size: 22px; margin: 0 0 4px; letter-spacing: -0.01em; font-weight: 600; }
 .ex-intro p { margin: 0 0 16px; max-width: 46em; color: var(--muted); }
 .ex-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 12px; }
-@media (max-width: 860px) { .ex-grid { grid-template-columns: 1fr; } }
-.ex-stage { position: relative; aspect-ratio: 16 / 11; min-height: 320px; max-height: 76vh; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--card); }
+@media (max-width: 860px) { .ex-grid { grid-template-columns: minmax(0, 1fr); } }
+.ex-stage { position: relative; width: 100%; aspect-ratio: 16 / 11; min-height: 320px; max-height: 76vh; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--card); }
 @media (max-width: 860px) { .ex-stage { aspect-ratio: 4 / 3.4; } }
 .ex-stage canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; touch-action: none; }
 .ex-poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
@@ -181,7 +181,7 @@ footer { border-top: 1px solid var(--line); padding: 24px 0 48px; font-size: 13p
         <button type="button" id="ex-spin" aria-pressed="true" aria-label="Auto-rotate" title="Auto-rotate">⟳</button>
         <button type="button" id="ex-full" aria-label="Full screen" title="Full screen">⛶</button>
       </div>
-      <button type="button" class="ex-load" id="ex-load">Load the 3D model<span class="mono">≈2 MB</span></button>
+      <button type="button" class="ex-load" id="ex-load">Load the 3D model<span class="mono">≈2.5 MB</span></button>
       <p class="ex-progress mono" id="ex-progress" aria-live="polite"></p>
     </div>
     <div class="ex-panel">
@@ -233,6 +233,31 @@ footer { border-top: 1px solid var(--line); padding: 24px 0 48px; font-size: 13p
 <script src="waitlist.js" defer></script>
 
 <ol class="timeline">
+  <li class="entry">
+    <time class="mono" datetime="2026-10-06">2026-10-06 · Day 3</time>
+    <h2>A small charging dock, fewer printed parts <span class="tag">design</span></h2>
+    <p>The cut-cable charging head is replaced by a small desk dock, and the print list gets shorter. The watch stays 35.6 × 18.0 × 6.80 mm.</p>
+    <ul>
+      <li><b>Charging dock:</b> 35.2 × 20.1 mm, with the watch's back 5.7 mm above the desk. Four Mill-Max spring pins press about 42 g on each pad, and four 3 × 3 mm magnets hold the watch down with 2.3× the pins' push. Put it on end for end and the magnets push it off, so VBUS never touches GND. Power comes in through a sunken USB-C breakout (Adafruit 6050) with the CC resistors, so any USB-C charger works, and D+/D− still reach the ESP32 for flashing. The tray and lid snap together; the only soldering is 4 short wires to the pins.</li>
+      <li><b>Fewer printed parts:</b> the motor pad is gone (four sprung fingers in the bottom shell hold the motor still), the four charging-pad seals are one piece, and the carbon-fibre version has 2 touch windows instead of 4. A watch is now 10 printed pieces instead of 14 (13 instead of 19 in carbon fibre). The glass cushions, mic seal, bezel gasket and shell seal stay separate: joining them would cross board parts, the antenna, or a gap too thin to print.</li>
+      <li><b>Two print jobs:</b> ready-made A1 mini plates, one PETG (both shells plus the dock's tray and lid) and one TPU (every soft part plus the dock's grip pad). The carbon-fibre version takes 3.</li>
+      <li><b>Battery wires:</b> cells this size come with two bare wire leads and no plug, so the model now has real 0.6 mm wires in a channel with room for a slack loop: red to +, black to −.</li>
+      <li><b>3D explorer:</b> the dock is in the explorer at the top of the page. Switch it on with <i>Dock</i> and pull it apart.</li>
+    </ul>
+    <div class="photos">
+      <a href="media/2026-10-06/cad-dock.png"><img src="media/2026-10-06/cad-dock.png" alt="The watch on its charging dock, and the dock exploded: lid, magnets, spring pins, USB-C breakout, tray and grip pad" loading="lazy"></a>
+      <a href="media/2026-10-06/explorer-dock.png"><img src="media/2026-10-06/explorer-dock.png" alt="The 3D explorer with the dock switched on" loading="lazy"></a>
+      <a href="media/2026-10-06/explorer-dock-exploded.png"><img src="media/2026-10-06/explorer-dock-exploded.png" alt="The 3D explorer pulled apart in the Ember colourway, with the USB-C breakout selected" loading="lazy"></a>
+      <a href="media/2026-10-06/cad-exploded.png"><img src="media/2026-10-06/cad-exploded.png" alt="Exploded view: one-piece pogo seal, battery wire leads, motor held by the bottom shell" loading="lazy"></a>
+      <a href="media/2026-10-06/cad-assembly.png"><img src="media/2026-10-06/cad-assembly.png" alt="Assembly order with the shorter part list, no glue" loading="lazy"></a>
+      <a href="media/2026-10-06/cad-sealing.png"><img src="media/2026-10-06/cad-sealing.png" alt="Sealing: bezel gasket, glass cushions, mic seal, shell seal ring and the one-piece pogo seal" loading="lazy"></a>
+    </div>
+    <div class="cards">
+      <a href="https://github.com/backmeupplz/project-horae/tree/main/cad/out/plates"><b>Print plates</b><span>PETG and TPU 3MF plates for the A1 mini</span></a>
+      <a href="https://github.com/backmeupplz/project-horae/blob/main/hardware/README.md"><b>Hardware README</b><span>Dock parts list, battery, review checklist</span></a>
+    </div>
+  </li>
+
 
   <li class="entry">
     <time class="mono" datetime="2026-10-05">2026-10-05 · Day 2</time>

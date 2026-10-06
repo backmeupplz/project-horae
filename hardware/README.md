@@ -34,7 +34,7 @@ It needs Docker (it runs KiCad 10 from the official `kicad/kicad:10.0` image thr
   - **Timekeeping:** a 32.768 kHz crystal on GPIO15/16 drives the ESP32's own RTC, as on Watchy v3 and Yatchy. No RTC chip (saves $3.44 and an I²C device). ±20 ppm is ~1 min/month before the phone sync corrects it.
   - **Antenna:** Watchy's meander IFA, trimmed 6.64 mm, ending 0.35 mm from the board edge. Match **C11 0.5 pF / L3 1.2 nH**, C12 not fitted (spare tuning spot). Simulated S11 across 2.40–2.48 GHz: −8.8 to −15.7 dB in the case, −8.8 to −14.4 dB on the wrist; radiation efficiency ~0.73 in the case including the match (on a wrist the body absorbs most of it, ~4–5%, as for any wrist wearable).
 - **Power:**
-  - 4 pads on the bottom (VBUS + D− on one side, GND + D+ on the other) for the magnetic charging/USB cable head, whose spring pins reach them through the case floor; USBLC6 for ESD.
+  - 4 pads on the bottom (VBUS + D− on one side, GND + D+ on the other) for the charging/USB dock, whose spring pins reach them through the case floor; USBLC6 for ESD.
   - **TI BQ25101** linear charger (1.6 × 0.9 mm WCSP): 24 mA (~0.5C for the 40–55 mAh cell), input tolerates 28 V, 75 nA battery drain (the TP4054 it replaces drew µA).
   - **TI TPS62840** buck (60 nA quiescent, 750 mA, 3.3 V set by a 267 kΩ VSET resistor) replaces the RT9080 LDO (2 µA, and ~10% less efficient at Wi-Fi currents).
   - Battery voltage through a 10 MΩ / 10 MΩ divider (0.2 µA) with 100 nF at the ADC.
@@ -51,7 +51,7 @@ It needs Docker (it runs KiCad 10 from the official `kicad/kicad:10.0` image thr
 |---|---|---|
 | facing the antenna (pins 6–14) | 1, 2, 3, 4 | touch DOWN, BACK, MENU, UP |
 | | 5 | vibration motor |
-| | 6 | charger CHG (low = charging: wakes the watch when the charging cable snaps on) |
+| | 6 | charger CHG (low = charging: wakes the watch when it is put on the dock) |
 | | 7 | battery ADC |
 | | 8, 9 | accelerometer INT2, INT1 |
 | facing the display connector (pins 15–27) | 10, 11 | I²C SDA, SCL |
@@ -76,9 +76,9 @@ Every display, I²C, touch and wake line is on an RTC GPIO (0–21), so the ULP 
 6. **Charger:** BQ25101 TS has a 10 kΩ resistor to GND (no thermistor), ISET 5.6 kΩ = 24 mA. Raise the current (lower ISET) only if the chosen cell allows it.
 7. **Buck:** VSET 267 kΩ (1%) selects 3.3 V; confirm against TI's table before ordering.
 8. **Battery:** a 3.0 × 15 × 18–19 mm cell with protection (301518 / 301519 class, 40–55 mAh, ≤ 21 mm with the PCM). Solder it to TP5 (+, KiCad +Y) and TP6 (−). Check the cell's polarity before soldering.
-9. **No load-sharing power path.** While the charging cable is on, the charger charges the battery while the ESP32 runs from it.
+9. **No load-sharing power path.** While docked, the charger charges the battery while the ESP32 runs from it.
 10. **JLC CPL rotations:** LCSC-imported footprints sometimes need rotation offsets. Check JLC's placement preview, especially the WCSPs, SOT-883 and SOD-882 parts.
-11. **Recovery without buttons:** EN, BOOT (GPIO0), TXD0/RXD0 and 3.3 V are on bottom test pads; USB is on the charging-cable pads.
+11. **Recovery without buttons:** EN, BOOT (GPIO0), TXD0/RXD0 and 3.3 V are on bottom test pads; USB is on the dock pads.
 
 ## Cost breakdown (JLC Standard PCBA, live prices 2026-10-04; `python3 cost.py`)
 | Item | 2 boards assembled | 5 boards assembled |
@@ -104,6 +104,13 @@ Every display, I²C, touch and wake line is on an RTC GPIO (0–21), so the ULP 
 3. **DHL with DDP** (taxes prepaid at checkout): avoids DHL's separate brokerage bill.
 
 ## Battery and motor (bought separately, soldered: 4 joints)
-- **Cell:** 3.0 × 15 × 18–19 mm LiPo with protection (PCM), ≤ 21 mm long including the PCM. Real capacity in this pocket is **40–55 mAh** (tiny cells reach only ~50–65 mAh per 1000 mm³; the Day-0 "~100 mAh" figure was too optimistic). Examples: LiPol LP301518 (40 mAh) / LP301519 (55 mAh), AliExpress 301518 packs. A 2.5 mm cell (LiPol LP251320, 40 mAh, factory order) would make the case 6.55 mm.
+- **Cell:** 3.0 × 15 × 18–19 mm LiPo with protection (PCM), ≤ 21 mm long including the PCM. Real capacity in this pocket is **40–55 mAh** (tiny cells reach only ~50–65 mAh per 1000 mm³; the Day-0 "~100 mAh" figure was too optimistic). Examples: LiPol LP301518 (40 mAh) / LP301519 (55 mAh), AliExpress 301518 packs. They ship with two bare wire leads (no plug, typically 50–100 mm): trim them, red to + and black to −. A 2.5 mm cell (LiPol LP251320, 40 mAh, factory order) would make the case 6.55 mm.
 - **Motor:** Vybronics VC0625B001L, 6 × 2.5 mm brushed coin ERM with 10 mm leads (Digi-Key 1670-VC0625B001L-ND). No 6 mm motor with spring contacts exists off the shelf; the zero-solder options (7–8 mm motors with pads or springs) don't fit this zone.
 - **Why not a plug:** a JST SH socket plus the plug and its lead slack needs ~2 mm more case length and a custom short-lead cell, and it would need JLC to assemble the board's bottom side too (+~$33). Two 2 × 2 mm pads take seconds to solder.
+
+## Charging dock (bought parts; the tray, lid and grip pad print with the case)
+- 4 Mill-Max 0955-0-15-20-71-14-11-0 spring pins (plus 2 spares). Docked, each presses about 42 g on its pad.
+- 4 × 3 × 3 mm N52 magnets in the dock (the case holds 2 × 3 × 1 mm N52). Placed end for end, the watch is pushed off, so VBUS never lands on GND. They hold 2.3× the pins' spring force.
+- [Adafruit 6050](https://www.adafruit.com/product/6050) sunken USB-C breakout (5.1 kΩ CC pull-downs, so any USB-C charger gives 5 V; D+/D− broken out for flashing).
+- 2–3 cm each of 30 AWG wire for VBUS, GND, D+ and D− (twist D+ with D−). These 4 wires are the dock's only soldering.
+- Drill the case's 4 pin bores with a 1.0 mm bit after printing (FDM prints small holes undersize).

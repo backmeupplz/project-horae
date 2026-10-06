@@ -66,6 +66,7 @@ function lookOf(info) {
   const cw = manifest.colorways[state.colorway], role = info.role;
   if (role === "case" || role === "insert") return [cw.case_hex, role === "insert" ? "matte" : cw.case_finish];
   if (role === "tpu") return [cw.tpu_hex, cw.tpu_finish];
+  if (role === "dock") return [cw.case_hex, "matte"];      // the dock prints in the case colour, matte
   if (role === "strap") return [info.key.startsWith("strap") ? cw.strap_hex : "#1e1f21", "strap"];
   const fin = manifest.finishes[role] ? role : "plastic";
   return [manifest.tech[info.key] || manifest.tech[info.key.replace(/_[lr]$/, "")] || "#8a8d93", fin];
@@ -227,8 +228,8 @@ function layout() {
     const [dx, dy, dz] = p.info.explode;
     p.node.position.set(dx * e, dy * e, dz * e);
   }
-  const low = state.dock ? -24 : -11;
-  shadow.position.y = (state.dock ? -4 : -0.05) + low * e;
+  const low = state.dock ? manifest.dock.low : -11;
+  shadow.position.y = (state.dock ? manifest.dock.desk : -0.05) + low * e;
   const aim = focus || new THREE.Vector3(controls.target.x * 0.9, 3.4 + (state.dock ? -2 : 6) * e, controls.target.z * 0.9);
   controls.target.lerp(aim, 0.12);
   $("ex-explode").value = String(state.t);

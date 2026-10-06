@@ -2,7 +2,7 @@
 """Project Horae rev A mechanics: two snap-together shells, captured soft parts, magnetic charging head, checks,
 exports, renders.
 
-    .venv/bin/python cad/horae.py              # everything (cad/out/*, media/2026-10-05/cad-*.png)
+    .venv/bin/python cad/horae.py              # everything (cad/out/*, media/2026-10-06/cad-*.png)
     .venv/bin/python cad/horae.py --no-render
     .venv/bin/python cad/horae.py --thin       # spec with the 2.5 mm cell -> cad/out/variant-thin/, no renders
 
@@ -12,9 +12,11 @@ All shared dimensions come from spec.py. One filament per print (A1 mini, no AMS
   bottom_shell  PETG, printed floor-down: floor plate + motor/pogo/magnet block + antenna-end support block, 4 snap
                 bumps that click into recesses in the top shell's end walls
   TPU 90A       captured by the closed case: bottom_seal (radial ring between the shells), bezel_gasket, cushions
-                (glass corners), pogo_seals, motor_pad, mic_seal; the mic vent membrane sits in the gasket layer
-  variant-cf/   PETG-CF top shell with PETG antenna window + 4 touch windows (captured inserts), PETG bottom shell
-  charger/      magnetic cable head: puck_top + puck_base (PETG) holding 4 spring pins + 2 magnets, TPU cable boot
+                (glass corners), pogo_seals (one piece), mic_seal; the mic vent membrane sits in the gasket layer
+  variant-cf/   PETG-CF top shell with PETG antenna window + 2 touch windows (captured inserts), PETG bottom shell
+  plates/       one ready-to-print 3MF per filament, every part laid out on a 180 x 180 A1 mini plate
+  dock/         charging dock: dock_base tray + dock_lid plate (PETG) capturing 4 spring pins, 4 magnets and a
+                USB-C breakout (4 wires, the only soldering), TPU feet
 If hardware/out/horae.step exists it replaces the placeholder PCB.
 """
 import math
@@ -23,8 +25,8 @@ from pathlib import Path
 
 import numpy as np
 from build123d import (Align, AngularDirection, Axis, Box, Color, Compound, Cone, Cylinder, Edge, Face, Plane,
-                       Polyline, Pos, Rectangle, RectangleRounded, Rot, Solid, Vertex, Wire, export_step, export_stl,
-                       extrude, fillet, import_step, make_face, mirror)
+                       Polyline, Pos, Rectangle, RectangleRounded, Rot, Solid, Vector, Vertex, Wire, export_step,
+                       export_stl, extrude, fillet, import_step, make_face, mirror)
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -40,7 +42,7 @@ if THIN:                  # re-run spec.py with the 2.5 mm cell so every derived
     exec(compile(src, str(ROOT / "spec.py"), "exec"), S.__dict__)
 
 OUT = ROOT / "cad" / "out" / ("variant-thin" if THIN else "")
-MEDIA = ROOT / "media" / "2026-10-05"
+MEDIA = ROOT / "media" / "2026-10-06"
 BOARD_STEP = ROOT / "hardware" / "out" / "horae.step"
 
 # --- cad-only dimensions (nothing here touches the PCB) ---
@@ -79,13 +81,14 @@ CUSHION_T = S.Z_DISP0 - S.Z_PCB1    # TPU blocks under the glass corners, on the
 POGO_GASKET = 0.45    # TPU rings under the PCB around each pogo pad (installed)
 POGO_RING_D, POGO_SEAL_D = 1.9, 0.7   # ring OD (seat = OD + 0.1), hole around the pin plunger (0.48)
 MOTOR_POCKET = S.MOTOR_D + 0.3
-MOTOR_Z0 = S.FLOOR    # the motor sits on the floor; motor_pad holds it down from the PCB (no tape)
-MOTOR_PAD_W = 1.0     # TPU strip on the motor can, between its two lead joints
+MOTOR_Z0 = S.FLOOR    # the motor sits on the floor; 4 sprung fingers in its pocket grip it and hook over its top edge
+MOTOR_FINGERS = (45, 135, 225, 315)    # deg around the pocket: off the leads (on +-X) and the pogo seal's web (on Y)
+BAT_WIRE_D = 0.6      # battery leads: 28-30 AWG insulated, red VBAT to the KiCad +Y pad (physical -Y), black GND
 BAT_PCM_L, BAT_PCM_EXTRA = 2.0, 0.5   # cell's PCM end (-X): up to 0.5 thicker than the cell
 BAT_RECESS, BAT_RECESS_L = 0.25, 2.5  # floor recess under the PCM end: leaves FLOOR - 0.25 of floor
 X_MZ1 = S.BAT_X0 - 0.25               # end of the motor-zone block
 PRINT_T = {"bezel_gasket": 0.16, "cushions": CUSHION_T + 0.1, "bottom_seal": S.FLOOR, "pogo_seals": POGO_GASKET + 0.05,
-           "motor_pad": None, "mic_seal": 0.3}      # free thickness (None: same as installed)
+           "mic_seal": 0.3}      # free thickness
 # mic
 MIC_SEAL = 0.25       # foam (PORON) ring on the mic lid: compressed to this under the frame, to the glass gap under the glass
 MIC_BORE, MIC_HOLE = 0.5, 0.6          # duct (a groove in the rib face, open to the glass-edge slit), lip outlet
@@ -105,8 +108,8 @@ CF_LAP = 0.3          # the CF shell overlaps each PETG insert's flange from out
 Y_TOP = S.DISP_W / 2 + GLASS_FIT                   # cavity narrows to the glass above Z_STEP (thick upper wall)
 Z_STEP = S.Z_DISP0 - 0.1   # upper wall over |y| >= Y_TOP: parts there must stay below Z_STEP (else RELIEFS pockets)
 # outer shape
-R_PLAN = S.CORNER_R   # plan corners: the ears carry the flanks on, so the corners sit under them (>= the top round's
-                      # 1.6, the least the round can turn)
+R_PLAN = 1.6          # plan corners: the ears carry the flanks on, so the corners sit under them (>= the top round's
+                      # 1.6, the least the round can turn); spec CORNER_R (3.3) no longer describes the case outline
 SHAPES = {  # name -> (plan corner R, top edge (across, down), bottom edge (across, up), kind)
     # tall elliptical top round, tangent to the top face (soft pebble): reads like an R2.5 from the side, insets 1.6
     # at the top. Lip-face-down its first layers step out <= 0.25 mm each, on the bed: no support. Tall bottom round.
@@ -116,21 +119,27 @@ SHAPES = {  # name -> (plan corner R, top edge (across, down), bottom edge (acro
 SHAPE = "pebble"
 Z_ROUND = S.CASE_T - SHAPES[SHAPE][1][1]   # the top round starts here: the vertical side band is below it
 MIN_WALL = 0.6        # thinnest allowed top-shell wall above the seal land (touch faces are TOUCH_FACE by design)
-# magnetic charging head (puck): Mill-Max 0955-0-15-20-71-14-11-0 spring pins (solder cup)
-PIN = dict(plunger=0.48, barrel=0.89, collar=1.07, length=7.65, tip=1.6, collar_t=0.25, tail=1.5, stroke=1.4,
-           f0=0.15, k=0.63)   # free plunger length, collar thickness, cup length; force N at contact + N/mm (15 g, 60 g @ 0.7)
-PIN_PRELOAD = 0.35    # pin compression when docked: the tuning knob against the magnet hold
-PIN_BORE = 1.0        # guide bores through the watch's bottom shell (barrel 0.89 enters 2.4 mm)
-MAG_D, MAG_T = 3.0, 1.0           # watch magnets: 3 x 1 N52, press-fit flush with the back (A N-out, B S-out)
-PUCK_MAG_T = 2.0                  # puck magnets: 3 x 2 N52, press-fit flush with the puck face (opposite poles)
+# charging dock: 4 Mill-Max 0955-0-15-20-71-14-11-0 spring pins, Adafruit 6050 sunken USB-C breakout, 4 magnets
+PIN = dict(plunger=0.48, barrel=0.89, collar=1.07, body=1.02, below=3.38, collar_t=0.18, above=4.09, tip=1.55,
+           stroke=1.4, f0=0.147, k=0.49)   # Mill-Max metric drawing: cup end -> collar 3.38, collar 0.18, barrel
+#           4.09 to its top, plunger 1.55 out; spring 71: 15 g at contact, 50 g at 0.7 mid stroke (N, N/mm)
+PIN_PRELOAD = 0.55    # pin compression docked (35-50 g a pad over +-0.15 of stack tolerance); sets the dock's height
+PIN_BORE = 1.0        # guide bores through the watch's bottom shell (barrel 0.89 enters 2.7 mm; ream to 1.0)
+MAG_D, MAG_T = 3.0, 1.0           # watch magnets: 3 x 1 N52, press-fit flush with the back (+Y N out, -Y S out)
 MAG_X, MAG_Y = S.MOTOR_X, 5.9     # between the pogo pairs, clear of the motor pocket and the floor-plate edge
-MAG_PULL = 2.9        # N, both magnet pairs face to face (~300 g hold at 0.2 mm, research)
-PUCK_X = (S.MOTOR_X - 3.9, S.MOTOR_X + 6.4)   # +X extension carries the cable beside the pins
-PUCK_TOP_T, PUCK_H, PUCK_WALL = 2.0, 5.2, 0.8   # face plate, total height, skirt wall
-PUCK_SKIN = 0.2       # PETG over the puck magnets (0.2 mm magnet gap docked)
-PUCK_LIP = 1.0        # cradle lips hug the case's bottom round this high (sideways tug, alignment)
-PUCK_HW = S.CASE_W / 2 + 0.8                    # puck half-width over the lips
-CABLE_D, CABLE_Z = 2.8, -3.4                    # Adafruit 5412-class 4-core cable, exits +Y low
+DOCK_MAG_T = 3.0      # dock magnets 3 x 3 N52 at both ends, +Y ones S up, -Y ones N up: the watch snaps down one way
+DOCK_MAG_LIP = 0.1    # and is pushed off turned end for end; a one-layer lip over each keeps the watch from pulling it out
+MAG_DERATE = 0.65     # real / ideal (surface-charge model) magnet pull: plating, Br spread, flatness; calibrate
+DOCK_GAP = 0.15       # watch to cradle clearance
+DOCK_LIP = 1.2        # the tray's side lips hug the case's bottom round this high (sideways tug, rotation)
+DOCK_WALL = 0.9       # tray wall below the lips
+DOCK_FLOOR = 0.4      # tray floor (the pins stand on it)
+DOCK_FOOT = 0.3       # TPU feet stand this far proud of the floor
+USB_PLUG = 3.4        # min USB-C receptacle centreline above the desk: clears 6.5-7 mm plug overmolds
+USB_PCB_T = 1.6       # breakout PCB, centred in the 3.3 mm mid-mount receptacle (measure the real board)
+USB_BRD = dict(l=20.32, w=13.97, r=2.54, slot=(5.588, 14.732, 7.874), conn=(9.04, 3.3, 7.876, 14.526),
+               holes=((2.286, 10.414), (18.034, 10.414)), hole_d=2.5, pad_y=2.54,
+               pads={"GND": 19.05, "VBUS": 16.51, "USB_DM": 8.89, "USB_DP": 6.35})   # Adafruit 6050 Eagle file (mm)
 FFC_SEAT = 0.2        # FPC tail stops this short of the FFC connector back
 
 IN_R = S.PCB_CORNER_R + FIT                       # cavity corners follow the PCB
@@ -144,6 +153,9 @@ Z_BAR = STRAP_R + 0.1        # strap end loop sits 0.1 above the wrist plane: th
 EAR_TIP = X_BAR + EAR_R
 EAR_W = OW - STRAP_W / 2
 PLATE_HL, PLATE_HW = HL - SEAL_GAP, HW - SEAL_GAP   # bottom shell floor plate half-size
+DOCK_END = OL - 0.2   # the dock stops short of the case ends: strap loops and draped straps stay clear
+DOCK_HW = OW + DOCK_GAP + DOCK_WALL                # dock half-width over the lips
+DOCK_YIN = OW - 0.25  # tray flank walls' inner face (the lid plate fits 0.1 inside)
 assert S.PCB_CORNER_R <= IN_R - FIT + 1e-9, "PCB corners must sit inside the cavity corner radius"
 assert EAR_W >= 0.9, f"{STRAP_W} mm straps leave {EAR_W:.2f} mm ears"
 assert 1.6 <= BAR_DX <= 2.8, "+X bar outside the RF-simulated window (1.6-2.8 mm past the end face)"
@@ -362,19 +374,29 @@ def load_board():
     return board, groups, comps, note
 
 
+def wire(pts, d=BAT_WIRE_D):
+    """Round insulated wire swept along a spline through pts."""
+    path = Edge.make_spline([Vector(*q) for q in pts])
+    ring = Wire([Edge.make_circle(d / 2, Plane(origin=pts[0], z_dir=path.tangent_at(0)))])
+    return Solid.sweep(ring, Wire([path]), is_frenet=True)
+
+
 def battery():
-    """Cell + its thicker PCM end (in the floor recess); leads run in the bottom shell's channel and are soldered to
-    the 2x2 pads (VBAT +, KiCad +Y)."""
+    """Cell + its thicker PCM end (in the floor recess) + two insulated leads (red VBAT, black GND) leaving the PCM end
+    into the bottom shell's channel, looping past the 2 x 2 pads for slack (10-20 mm leads), soldered up into them.
+    -> (cell, red lead, black lead)"""
     z0, z1 = S.Z_BAT0, S.Z_BAT0 + S.BAT_T
     body = box(S.BAT_X0 + BAT_PCM_L, S.BAT_X1, -S.BAT_W / 2, S.BAT_W / 2, z0, z1)
     body = fillet(body.edges().group_by(Axis.Z)[-1], 0.9)
     zp = S.FLOOR - BAT_RECESS
     pcm = box(S.BAT_X0, S.BAT_X0 + BAT_PCM_L + 0.1, -S.BAT_W / 2 + 0.3, S.BAT_W / 2 - 0.3, zp, zp + S.BAT_T + BAT_PCM_EXTRA)
-    zl = MAG_T + 0.6                                     # leads run in the bottom shell's wire channel to the pads
-    leads = union([box(S.BATPAD_X - 0.15, S.BAT_X0, sy * (S.BATPAD_Y - 0.15), sy * (S.BATPAD_Y + 0.15), zl, zl + 0.25)
-                   + box(S.BATPAD_X - 0.15, S.BATPAD_X + 0.15, sy * (S.BATPAD_Y - 0.15), sy * (S.BATPAD_Y + 0.15), zl,
-                         S.Z_PCB0 - 0.03) for sy in (-1, 1)])
-    return body + pcm, leads
+    leads = []
+    for sy in (-1, 1):                               # physical -Y = KiCad +Y = VBAT (red); +Y = GND (black)
+        x0, xp, yp, zt = S.BAT_X0, S.BATPAD_X, sy * S.BATPAD_Y, S.Z_PCB0 - 0.03 - BAT_WIRE_D / 2
+        pts = [(x0, sy * 6.2, 2.05), (x0 - 0.9, sy * 6.35, 2.0), (x0 - 2.4, sy * 7.3, 2.05), (xp - 1.9, sy * 7.25, 2.15),
+               (xp - 1.6, sy * 6.55, 2.75), (xp - 0.7, yp, zt - 0.25), (xp, yp, zt)]
+        leads.append(wire(pts) + cyl(xp, yp, zt - 0.1, S.Z_PCB0 - 0.03, 1.2))      # + the solder fillet on the pad
+    return body + pcm, leads[0], leads[1]
 
 
 def motor():
@@ -526,7 +548,7 @@ def top_inset(d, style=None):
 
 def body_skin(style=None, grow=0.0):
     """Pebble body without the ears: rounded plan (corners under the ears), tall elliptical top round tangent to the
-    top face, tall elliptical bottom round. grow: approximate outward offset (charger cradle)."""
+    top face, tall elliptical bottom round. grow: approximate outward offset."""
     from build123d import chamfer, scale
     r_plan, (a, b), (ab, bb), kind = SHAPES[style or SHAPE]
     edge = fillet if kind == "fillet" else chamfer
@@ -815,12 +837,22 @@ def bottom_shell():
     b += blocks & (box(-HL, X_MZ1, -HW, HW, 0, top) + box(S.BAT_X1 + 0.25, HL, -HW, HW, 0, top))
     b -= cyl(S.MOTOR_X, 0, MOTOR_Z0, top + 1, MOTOR_POCKET)                             # motor stands on the floor
     b -= box(-HL - 1, X_MZ1 + 1, -1.2, 1.2, MOTOR_Z0, top + 1)                          # lead room, open both ends
+    zt = MOTOR_Z0 + S.MOTOR_T
+    for a in MOTOR_FINGERS:                       # sprung fingers: tips on the can (print 0.05 proud), hooks over it
+        R = Pos(S.MOTOR_X, 0, 0) * Rot(0, 0, a)
+        b -= R * box(S.MOTOR_D / 2, S.MOTOR_D / 2 + 0.8, -0.65, 0.65, MOTOR_Z0 + 0.6, top + 1)   # slot frees a finger
+        r0 = S.MOTOR_D / 2
+        zh = min(zt + 0.35, S.Z_PCB0 - 0.05)                                            # (thin cell: under the PCB)
+        b += R * (box(r0, r0 + 0.45, -0.35, 0.35, MOTOR_Z0, zh)
+                  + prism_xz([(r0 - 0.15, zt + 0.05), (r0 + 0.45, zt + 0.05), (r0 + 0.45, zh), (r0, zh),
+                              (r0 - 0.15, (zt + 0.05 + zh) / 2)], -0.35, 0.35))          # hook, lead-in on top
     for x, y in POGO_XY:                                                                 # pogo seal ring seats
         b -= cyl(x, y, S.Z_PCB0 - 0.03 - POGO_GASKET, top + 1, POGO_RING_D + 0.1)
+    b -= pogo_webs(POGO_GASKET + 0.1, 0.1)                                               # + grooves for its webs
     for sy in (-1, 1):
         b -= cyl(MAG_X, sy * MAG_Y, -1, MAG_T, MAG_D)                                    # magnets: press-fit, flush
         b -= box(-HL - 1, S.BAT_X0, sy * (S.POGO_Y + 1.2), sy * (HW + 1), MAG_T + 0.45, top + 1)   # battery leads
-    for x, y in POGO_XY:                                                                 # charger pin guide bores
+    for x, y in POGO_XY:                                                                 # dock pin guide bores
         b -= cyl(x, y, -1, top + 1, PIN_BORE)
         b -= Pos(x, y, -0.01) * Cone(PIN_BORE / 2 + 0.3, PIN_BORE / 2, 0.31, align=(Align.CENTER, Align.CENTER, Align.MIN))
     b -= box(S.BAT_X0 - 0.05, S.BAT_X0 + BAT_RECESS_L, -S.BAT_W / 2 + 0.25, S.BAT_W / 2 - 0.25,
@@ -860,20 +892,28 @@ def bottom_seal(squeeze=0.0):
     return ring - slab(2 * (HL - g), 2 * (HW - g), IN_R - g, -1, S.FLOOR + 1)
 
 
+POGO_CROSS = S.Z_PCB0 - 0.03 - POGO_GASKET - (MOTOR_Z0 + S.MOTOR_T) >= 0.1    # room for a web over the motor?
+
+
+def pogo_webs(t, grow=0.0):
+    """Webs joining the 4 pogo rings: along each pin pair, and one across the motor between its two lead joints when
+    there is room over the can (not with the thin cell: then the seal is two pieces)."""
+    z0, w = S.Z_PCB0 - 0.03 - POGO_GASKET - grow, 0.6 + 2 * grow
+    webs = [box(S.MOTOR_X - S.POGO_DX, S.MOTOR_X + S.POGO_DX, sy * S.POGO_Y - w / 2, sy * S.POGO_Y + w / 2, z0, z0 + t)
+            for sy in (-1, 1)]
+    if POGO_CROSS:
+        webs.append(box(S.MOTOR_X - w / 2, S.MOTOR_X + w / 2, -S.POGO_Y, S.POGO_Y, z0, z0 + t))
+    return union(webs)
+
+
 def pogo_seals(t=POGO_GASKET):
-    """Four TPU 90A rings in counterbores around the pin bores, squeezed against the PCB around each pad: seal the
-    bores from the inside."""
+    """One TPU 90A piece: four rings in counterbores around the pin bores, squeezed against the PCB around each pad
+    (they seal the bores from the inside), joined by webs in grooves (0.15 short of the PCB: unsqueezed) along the
+    pin pairs and across the motor between its lead joints."""
     z1 = S.Z_PCB0 - 0.03
-    return union([cyl(x, y, z1 - t, z1, POGO_RING_D) - cyl(x, y, z1 - t - 1, z1 + 1, POGO_SEAL_D) for x, y in POGO_XY])
-
-
-def motor_pad(extra=0.0):
-    """TPU 90A H-shaped pad on the motor can: the bar runs between the two lead joints, the cross bars key into the
-    motor pocket so it cannot slide; the closed case holds the motor on the floor."""
-    z0, z1, x = MOTOR_Z0 + S.MOTOR_T, S.Z_PCB0 - 0.03 + extra, S.MOTOR_X
-    h = box(x - MOTOR_PAD_W / 2, x + MOTOR_PAD_W / 2, -2.9, 2.9, z0, z1)
-    h += union([box(x - 1.8, x + 1.8, sy * 2.1, sy * 2.9, z0, z1) for sy in (-1, 1)])
-    return h & cyl(x, 0, z0 - 1, z1 + 1, MOTOR_POCKET - 0.1)
+    rings = union([cyl(x, y, z1 - t, z1, POGO_RING_D) for x, y in POGO_XY])
+    rings += pogo_webs(POGO_GASKET - 0.15)
+    return rings - union([cyl(x, y, z1 - t - 1, z1 + 1, POGO_SEAL_D) for x, y in POGO_XY])
 
 
 # ---------------------------------------------------------------- PETG-CF variant: plain-PETG inserts
@@ -885,15 +925,16 @@ def cf_windows(ant_bb):
     za = min(ant_bb.min.Z, S.Z_PCB1) - c - 0.01
     out = [("antenna_window", box(S.DISP_X1 + GLASS_FIT - 0.01, OL + 1, -ya, ya, za, Z_LIP0),
             box(S.DISP_X1 + GLASS_FIT - 0.01, HL + (OL - HL) / 2, -ya - CF_LAP, ya + CF_LAP, za - CF_LAP, Z_LIP0))]
-    for x in S.TOUCH_X:
-        for sy in (-1, 1):
-            out.append(("touch_window", box(x - WIN_X, x + WIN_X, sy * (Y_TOP - 0.01), sy * (OW + 1), za, Z_LIP0),
-                        box(x - WIN_X - CF_LAP, x + WIN_X + CF_LAP, sy * (Y_TOP - 0.01), sy * (OW - 0.4), za - CF_LAP, Z_LIP0)))
+    xa, xb = min(S.TOUCH_X) - WIN_X, max(S.TOUCH_X) + WIN_X        # one window per side spans both electrodes
+    yi = min(Y_TOP, RIB_IN) - 0.01                                   # (and takes the mic rib along)
+    for sy in (-1, 1):
+        out.append(("touch_window", box(xa, xb, sy * yi, sy * (OW + 1), za, Z_LIP0),
+                    box(xa - CF_LAP, xb + CF_LAP, sy * yi, sy * (OW - 0.4), za - CF_LAP, Z_LIP0)))
     return out
 
 
 def cf_split(top, ant_bb):
-    """-> CF top shell, PETG antenna window, PETG touch windows (4 solids)."""
+    """-> CF top shell, PETG antenna window, PETG touch windows (2 solids, one per side)."""
     wins = cf_windows(ant_bb)
     cut = union([r + fl for _, r, fl in wins])
     ant = union([top & (r + fl) for n, r, fl in wins if n == "antenna_window"])
@@ -910,78 +951,168 @@ def carbon_keepouts(ant_bb):
     return boxes
 
 
-# ---------------------------------------------------------------- magnetic charging head
-def pin_geom():
-    """Spring pin z levels in the watch frame (puck face = case back = z 0): tip, barrel top/bottom, collar, tail."""
-    tip_free = S.Z_PCB0 - 0.03 + PIN_PRELOAD
-    btop = tip_free - PIN["tip"]
-    bbot = btop - (PIN["length"] - PIN["tip"] - PIN["collar_t"] - PIN["tail"])
-    return dict(tip_free=tip_free, tip_docked=S.Z_PCB0 - 0.03, btop=btop, bbot=bbot,
-                cbot=bbot - PIN["collar_t"], tbot=bbot - PIN["collar_t"] - PIN["tail"])
+# ---------------------------------------------------------------- charging dock
+def dock_levels():
+    """z levels of the dock in the watch frame (the watch's back = the dock's rest face = z 0)."""
+    tip = S.Z_PCB0 - 0.03                                            # pad copper surface
+    pin_bot = tip + PIN_PRELOAD - (PIN["below"] + PIN["collar_t"] + PIN["above"] + PIN["tip"])
+    lid0 = pin_bot + PIN["below"] + PIN["collar_t"]                  # lid plate underside = pin collar tops
+    usb_c = lid0 - USB_PCB_T / 2                                     # breakout PCB clamped under the lid plate
+    bot = pin_bot - DOCK_FLOOR
+    return dict(tip=tip, pin_bot=pin_bot, lid0=lid0, bot=bot, desk=bot - DOCK_FOOT, usb_c=usb_c,
+                pcb0=lid0 - USB_PCB_T, pcb1=lid0, conn0=usb_c - USB_BRD["conn"][1] / 2,
+                conn1=usb_c + USB_BRD["conn"][1] / 2)
 
 
-def charger_pins(docked=True):
-    g = pin_geom()
-    tip = g["tip_docked"] if docked else g["tip_free"]
-    out = []
+def usb_xy(bx, by):
+    """Breakout coordinates (its Eagle file) -> dock: board turned 180 deg, receptacle mouth flush with the -Y face."""
+    return USB_BRD["l"] / 2 - bx, -DOCK_HW + USB_BRD["conn"][3] - by
+
+
+DOCK_MAGS = [(x, sy * MAG_Y) for x in (MAG_X, -MAG_X) for sy in (1, -1)]
+FEET_XY = [(sx * (DOCK_END - 1.8), sy * (DOCK_YIN - 0.95)) for sx in (-1, 1) for sy in (-1, 1)]
+
+
+def cradle():
+    """The case's side section grown by DOCK_GAP, run along x: the lips follow it (the ears are the flank carried on,
+    so the straight section is the true envelope of body + ears)."""
+    face = make_face(Polyline(*[(0, y, z) for y, z in section_outline(None, -DOCK_GAP)], close=True))
+    return extrude(face, DOCK_END + 2, dir=(1, 0, 0), both=True)
+
+
+def dock_snap(sx, grow=0.0):
+    """XZ outline of the snap bump on the tray's end wall at end sx: 45 deg lead-in above, 45 deg retention below."""
+    xf, d = sx * (DOCK_END - DOCK_WALL), 0.25 + grow
+    return [(xf + sx * 0.1, -1.0 - grow), (xf - sx * d, -0.75 - grow), (xf - sx * d, -0.55 + grow),
+            (xf + sx * 0.1, -0.3 + grow)]
+
+
+def dock_base():
+    """PETG tray, printed floor-down: the floor the pins stand on, walls rising into side lips that hug the case's
+    bottom round, pin sockets, magnet posts, the breakout's pegs and receptacle slot, snap bumps, feet holes."""
+    lv = dock_levels()
+    t = slab(2 * DOCK_END, 2 * DOCK_HW, 1.5, lv["bot"], DOCK_LIP)
+    t -= slab(2 * (DOCK_END - DOCK_WALL), 2 * DOCK_YIN, 0.8, lv["pin_bot"], DOCK_LIP + 1)
+    t -= cradle()                                                      # lips; trims the end walls to the rest face
+    zm = -DOCK_MAG_LIP - DOCK_MAG_T
+    for x, y in POGO_XY:                                               # sockets: the cup ends stand on the floor
+        t += cyl(x, y, lv["pin_bot"] - 0.01, lv["pin_bot"] + 0.7, 2.2)
+    for x, y in DOCK_MAGS:                                             # posts hold the magnets up under the lip
+        t += cyl(x, y, lv["pin_bot"] - 0.01, zm + 0.8, MAG_D + 1.0)
+        t -= cyl(x, y, zm, zm + 1, MAG_D + 0.1)
+    for x, y in POGO_XY:                                               # pin clearance (also through the posts)
+        sy = 1 if y > 0 else -1
+        t -= cyl(x, y, lv["pin_bot"], DOCK_LIP + 1, PIN["body"] + 0.12)
+        t -= box(x - 0.35, x + 0.35, y - sy * 1.5, y, lv["pin_bot"], lv["pin_bot"] + 1)     # wire slot toward y 0
+    for bx, by in USB_BRD["holes"]:                                    # breakout: shoulders + pegs in its holes
+        x, y = usb_xy(bx, by)
+        t += cyl(x, y, lv["pin_bot"] - 0.01, lv["pcb0"], 3.4)
+        t += cyl(x, y, lv["pcb0"] - 0.01, lv["pcb1"] - 0.15, USB_BRD["hole_d"] - 0.2)
+    xb = USB_BRD["l"] / 2 + 0.2                                       # breakout bay: the -Y wall thins to 0.45
+    t -= box(-xb, xb, -DOCK_HW + 0.45, -DOCK_YIN + 0.01, lv["pcb0"] - 0.05, DOCK_LIP + 1)   # (the lid fills above)
+    w = USB_BRD["conn"][0] / 2 + 0.13                                  # receptacle slot, open at the top
+    t -= box(-w, w, -DOCK_HW - 1, -DOCK_YIN + 0.01, lv["conn0"] - 0.1, DOCK_LIP + 1)
+    for sx in (-1, 1):
+        t += prism_xz(dock_snap(sx), -1.5, 1.5)
+    for x, y in FEET_XY:
+        t -= cyl(x, y, lv["bot"] - 1, lv["pin_bot"] + 0.01, 1.0)
+    return t
+
+
+def dock_lid():
+    """Inset PETG plate the watch sits on, printed underside-down: pin bores (the collars stop under them), magnet
+    holes with a one-layer retaining lip, recess over the breakout, a lip piece that closes the receptacle slot,
+    snap grooves at both ends, pry notch."""
+    lv = dock_levels()
+    xi, yi = DOCK_END - DOCK_WALL - 0.1, DOCK_YIN - 0.1
+    p = slab(2 * xi, 2 * yi, 0.7, lv["lid0"], 0)
+    xb, w = USB_BRD["l"] / 2 + 0.15, USB_BRD["conn"][0] / 2 + 0.08
+    p += box(-xb, xb, -DOCK_HW + 0.5, -yi + 0.01, lv["lid0"], DOCK_LIP) - cradle()            # lip over the bay
+    p += box(-w, w, -DOCK_HW, -DOCK_HW + 0.51, lv["conn1"] + 0.1, DOCK_LIP) - cradle()       # closes the slot
     for x, y in POGO_XY:
-        out += [cyl(x, y, g["btop"] - 0.3, tip, PIN["plunger"]), cyl(x, y, g["bbot"], g["btop"], PIN["barrel"]),
-                cyl(x, y, g["cbot"], g["bbot"], PIN["collar"]), cyl(x, y, g["tbot"], g["cbot"], PIN["barrel"])]
+        p -= cyl(x, y, lv["lid0"] - 1, 1, PIN["barrel"] + 0.06)
+    for x, y in DOCK_MAGS:
+        p -= cyl(x, y, lv["lid0"] - 1, -DOCK_MAG_LIP, MAG_D + 0.05)   # magnets press in from below ...
+        p -= cyl(x, y, -DOCK_MAG_LIP - 0.01, 1, MAG_D - 0.2)          # ... up to the lip
+    x0, y0 = usb_xy(USB_BRD["l"], USB_BRD["w"])
+    x1, y1 = usb_xy(0, 0)
+    rec = box(x0 + 0.3, x1 - 0.3, y0 - 1, y1 - 0.3, lv["lid0"] - 1, lv["lid0"] + 0.7)        # parts + joints on top
+    for bx, by in USB_BRD["holes"]:
+        x, y = usb_xy(bx, by)
+        rec -= cyl(x, y, lv["lid0"] - 2, 1, 3.2)                       # clamp pads press the PCB down
+    p -= rec
+    yb0, yb1 = usb_xy(0, USB_BRD["conn"][3])[1], usb_xy(0, USB_BRD["conn"][2])[1]
+    p -= box(-w, w, yb0 - 1, yb1 + 0.1, lv["lid0"] - 1, lv["conn1"] + 0.1)                # receptacle
+    for sx in (-1, 1):
+        p -= prism_xz(dock_snap(sx, 0.05), -1.65, 1.65)
+    return p - box(xi - 0.6, xi + 1, 2.5, 5.5, -0.5, 1)              # pry notch, +X end
+
+
+def dock_pins():
+    """The 4 Mill-Max 0955 pins docked: cup ends on the tray floor, collars under the lid, tips on the pads."""
+    lv = dock_levels()
+    z1 = lv["pin_bot"] + PIN["below"]
+    z2 = z1 + PIN["collar_t"]
+    z3 = z2 + PIN["above"]
+    return union([cyl(x, y, lv["pin_bot"], z1, PIN["body"]) + cyl(x, y, z1, z2, PIN["collar"])
+                  + cyl(x, y, z2, z3, PIN["barrel"]) + cyl(x, y, z3 - 0.3, lv["tip"], PIN["plunger"]) for x, y in POGO_XY])
+
+
+def dock_magnets():
+    z1 = -DOCK_MAG_LIP
+    return union([cyl(x, y, z1 - DOCK_MAG_T, z1, MAG_D) for x, y in DOCK_MAGS])
+
+
+def dock_usb():
+    """Adafruit 6050 sunken USB-C breakout: PCB with the receptacle slot and two 2.5 mounting holes + the receptacle."""
+    lv, b = dock_levels(), USB_BRD
+    (x0, y0), (x1, y1) = usb_xy(b["l"], b["w"]), usb_xy(0, 0)
+    pcb = slab(b["l"], b["w"], b["r"], lv["pcb0"], lv["pcb1"], x=(x0 + x1) / 2, y=(y0 + y1) / 2)
+    sx0, sx1, sy0 = b["slot"]
+    (ax, ay), (bx_, by_) = usb_xy(sx1, b["w"] + 1), usb_xy(sx0, sy0)
+    pcb -= box(ax, bx_, ay, by_, lv["pcb0"] - 1, lv["pcb1"] + 1)
+    for hx, hy in b["holes"]:
+        x, y = usb_xy(hx, hy)
+        pcb -= cyl(x, y, lv["pcb0"] - 1, lv["pcb1"] + 1, b["hole_d"])
+    yb0, yb1 = usb_xy(0, b["conn"][3])[1], usb_xy(0, b["conn"][2])[1]
+    shell = Pos(0, yb0, lv["usb_c"]) * Rot(-90, 0, 0) * extrude(RectangleRounded(b["conn"][0], b["conn"][1], 1.6), yb1 - yb0)
+    shell -= Pos(0, yb0 - 0.01, lv["usb_c"]) * Rot(-90, 0, 0) * extrude(RectangleRounded(8.34, 2.56, 1.25), 6.0)
+    return pcb + shell
+
+
+def dock_wires():
+    """4 x 30 AWG from the breakout's header pads (PCB underside) to the pins' solder cups, along the floor."""
+    lv = dock_levels()
+    z = lv["pin_bot"] + 0.55
+    out = []
+    for x, y, net in POGO:
+        px, py = usb_xy(USB_BRD["pads"][net], USB_BRD["pad_y"])
+        sy, dy = (1 if y > 0 else -1), (2.0 if x < S.MOTOR_X else 1.2)  # far pins route inside: no crossings
+        pts = [(px, py, lv["pcb0"]), (px, py, z), (px, y - sy * dy, z), (x + 0.6, y - sy * dy, z), (x, y - sy * 0.45, z)]
+        out += [Solid.make_cylinder(0.25, math.dist(a, b), Plane(origin=a, z_dir=np.subtract(b, a)))
+                + Solid.make_sphere(0.25, Plane(origin=b)) for a, b in zip(pts, pts[1:])]
     return union(out)
 
 
-def charger():
-    """Magnetic cable head in the watch frame, docked. -> dict of parts (puck_top, puck_base, pins, puck_magnets,
-    cable, boot). Two snapped PETG halves capture the pin collars and clamp the cable; no glue."""
-    g = pin_geom()
-    x0, x1 = PUCK_X
-    xc, L = (x0 + x1) / 2, x1 - x0
-    env = slab(L, 2 * PUCK_HW, 1.6, -PUCK_H, 0, x=xc)
-    lip_x0 = max(x0, -OL + R_PLAN + 0.5)                       # lips only where the case side is straight
-    lips = box(lip_x0, x1, -PUCK_HW, PUCK_HW, -0.01, PUCK_LIP) - box(lip_x0 - 1, x1 + 1, -OW + 0.6, OW - 0.6, -1, 5)
-    env += lips & slab(L, 2 * PUCK_HW, 1.6, -1, PUCK_LIP, x=xc)
-    env -= body_skin(grow=0.1)                                  # cradle: the case back + 0.1
-    inner = slab(L - 2 * PUCK_WALL, 2 * (PUCK_HW - PUCK_WALL), 0.8, -PUCK_H - 1, -PUCK_TOP_T, x=xc)
-    top = env - inner
-    zb = -PUCK_H + 0.8                                          # base plate top
-    base = slab(L - 2 * PUCK_WALL - 0.1, 2 * (PUCK_HW - PUCK_WALL) - 0.1, 0.75, -PUCK_H, zb, x=xc)
-    for x, y in POGO_XY:
-        base += cyl(x, y, zb - 0.01, g["cbot"], 1.6)                                     # posts push the collars up
-        base -= cyl(x, y, zb - 1, g["cbot"] + 1, PIN["barrel"] + 0.06)                   # solder cup
-        top -= cyl(x, y, -PUCK_TOP_T - 1, 1, PIN["barrel"] + 0.04)                      # barrel bore
-        top -= cyl(x, y, -PUCK_TOP_T - 1, g["bbot"], PIN["collar"] + 0.05)              # collar seat from below
-    mags = []
-    for sy in (1, -1):                       # puck magnets go in from inside under a PUCK_SKIN face; base posts hold them
-        top -= cyl(MAG_X, sy * MAG_Y, -PUCK_TOP_T - 1, -PUCK_SKIN, MAG_D)
-        mags.append(cyl(MAG_X, sy * MAG_Y, -PUCK_SKIN - PUCK_MAG_T, -PUCK_SKIN, MAG_D))
-        base += cyl(MAG_X, sy * MAG_Y, zb - 0.01, -PUCK_SKIN - PUCK_MAG_T - 0.02, 2.4)
-    for sx in (-1, 1):                                                                   # base snaps into the skirt
-        bump = box(xc + sx * (L / 2 - PUCK_WALL - 0.3), xc + sx * (L / 2 - PUCK_WALL + 0.2), -2.0, 2.0, zb - 0.55, zb - 0.25)
-        base += bump
-        top -= Pos(0, 0, 0) * box(xc + sx * (L / 2 - PUCK_WALL - 0.1), xc + sx * (L / 2 - PUCK_WALL + 0.25), -2.15, 2.15,
-                                  zb - 0.6, zb - 0.2)
-    cx, cz = S.MOTOR_X + S.POGO_DX + 2.2, CABLE_Z                                         # cable: +Y, low, beside the pins
-    chan = Pos(cx, (PUCK_HW + 2) / 2, cz) * Rot(90, 0, 0) * Cylinder(CABLE_D / 2 - 0.1, PUCK_HW + 2)
-    top -= Pos(cx, PUCK_HW - 0.4, cz) * Rot(90, 0, 0) * Cylinder(1.75, 1.2)              # boot flange seat + exit hole
-    top -= chan
-    base -= chan
-    for yr in (3.0, 5.0):                                                                # strain-relief teeth bite the jacket
-        base += box(cx - CABLE_D / 2, cx + CABLE_D / 2, yr - 0.2, yr + 0.2, cz - CABLE_D / 2 - 0.2, cz - CABLE_D / 2 + 0.25)
-    cable = Pos(cx, (PUCK_HW + 14) / 2 + 1.0, cz) * Rot(90, 0, 0) * Cylinder(CABLE_D / 2, PUCK_HW + 12)
-    boot = (Pos(cx, PUCK_HW + 2.5, cz) * Rot(90, 0, 0) * Cone(1.75, 1.55, 5.0)
-            + Pos(cx, PUCK_HW - 0.35, cz) * Rot(90, 0, 0) * Cylinder(1.7, 0.8))
-    boot -= Pos(cx, PUCK_HW + 2, cz) * Rot(90, 0, 0) * Cylinder(CABLE_D / 2 - 0.05, 8)
-    return dict(puck_top=top, puck_base=base, pins=charger_pins(True), puck_magnets=union(mags),
-                cable=cable, boot=boot)
+def dock_feet():
+    """One TPU 90A pad under the tray (grip), held by 4 stems pressed into its floor holes (printed 0.15 over)."""
+    lv = dock_levels()
+    pad = slab(2 * DOCK_END - 1.0, 2 * DOCK_HW - 1.0, 1.0, lv["desk"], lv["bot"])
+    return pad + union([cyl(x, y, lv["bot"] - 0.01, lv["pin_bot"], 1.0) for x, y in FEET_XY])
 
 
-# ---------------------------------------------------------------- assembly of printed + captured parts
+def dock():
+    """Charging dock in the watch frame, the watch on it. Only soldering: 4 wires breakout -> pins."""
+    return dict(dock_base=dock_base(), dock_lid=dock_lid(), dock_pins=dock_pins(), dock_magnets=dock_magnets(),
+                dock_usb=dock_usb(), dock_wires=dock_wires(), dock_feet=dock_feet())
+
+
 def case_parts(style=None, variant="petg"):
     """All case parts at their installed size. variant 'petg': one-piece PETG top shell; 'cf': CF top shell +
     PETG inserts (needs the antenna copper bbox)."""
     top = top_shell(style) - touch_thin()
     m = dict(top_shell=top, bottom_shell=bottom_shell(), bezel_gasket=bezel_gasket(), cushions=cushions(),
-             bottom_seal=bottom_seal(), pogo_seals=pogo_seals(), motor_pad=motor_pad(), mic_seal=mic_seal(), vent=vent())
+             bottom_seal=bottom_seal(), pogo_seals=pogo_seals(), mic_seal=mic_seal(), vent=vent())
     if variant == "cf":
         m["top_shell_cf"], m["antenna_window"], m["touch_windows"] = cf_split(top, ANT_BB)
         del m["top_shell"]
@@ -1028,26 +1159,26 @@ def build():
         bb = sh.bounding_box()
         RELIEFS.append((ref, val, (bb.min.X, bb.max.X, bb.min.Y, bb.max.Y, bb.min.Z, bb.max.Z)))
     tail, stiff, fit = fpc()
-    bat, leads = battery()
+    bat, red, black = battery()
     m = case_parts()
     m["variant_cf"] = case_parts(variant="cf")
-    m.update(display=display(), fpc=tail, stiffener=stiff, pcb=board, battery=bat, bat_leads=leads,
+    m.update(display=display(), fpc=tail, stiffener=stiff, pcb=board, battery=bat, bat_lead_red=red, bat_lead_black=black,
              watch_magnets=union(watch_magnets()), bars=spring_bars(), rf_pin=rf_pin(), strap=nato())
     m.update(groups)
     m["pads"], m["touch"] = pads(), touch_pads()
     m["motor"], m["motor_leads"] = motor()
-    m.update(charger())
+    m.update(dock())
     return m, fit, comps, note
 
 
 SHELLS = ["top_shell", "bottom_shell"]
-SOFT = ["bezel_gasket", "vent", "cushions", "bottom_seal", "pogo_seals", "motor_pad", "mic_seal"]
+SOFT = ["bezel_gasket", "vent", "cushions", "bottom_seal", "pogo_seals", "mic_seal"]
 CASE = SHELLS + SOFT
 INTERNAL = ["display", "fpc", "stiffener", "pcb", "qfn", "ffc", "chips", "switches", "touch", "antenna", "pads",
-            "battery", "bat_leads", "watch_magnets", "motor", "motor_leads"]
-CHARGER = ["puck_top", "puck_base", "pins", "puck_magnets", "cable", "boot"]
+            "battery", "bat_lead_red", "bat_lead_black", "watch_magnets", "motor", "motor_leads"]
+DOCK = ["dock_base", "dock_lid", "dock_pins", "dock_magnets", "dock_usb", "dock_feet"]   # + dock_wires (render only)
 LOOSE = {  # captured part -> (directions it may legitimately move 0.3 mm in the model, why)
-    "bezel_gasket": ((), ""), "vent": ((), ""), "cushions": ((), ""), "mic_seal": ((), ""), "motor_pad": ((), ""),
+    "bezel_gasket": ((), ""), "vent": ((), ""), "cushions": ((), ""), "mic_seal": ((), ""),
     "pogo_seals": ((), ""), "display": ((), ""), "pcb": ((), ""), "motor": ((), ""),
     "bottom_seal": (("-z",), "radially squeezed, friction"), "watch_magnets": (("-z",), "press-fit"),
     "battery": (("+z",), "0.3 swell gap by design; leads + pocket hold it"),
@@ -1108,8 +1239,6 @@ def stack_numbers():
     a_cush = 4 * (S.LEDGE + GLASS_FIT - 0.05) * (Y_TOP - S.LEDGE_Y - 0.1)
     cush = E_TPU90 * (PRINT_T["cushions"] - CUSHION_T) / PRINT_T["cushions"] * a_cush
     rings = E_TPU90 * (PRINT_T["pogo_seals"] - POGO_GASKET) / PRINT_T["pogo_seals"] * 4 * math.pi / 4 * (POGO_RING_D ** 2 - POGO_SEAL_D ** 2)
-    pad_h = S.Z_PCB0 - 0.03 - MOTOR_Z0 - S.MOTOR_T
-    pad = E_TPU90 * 0.1 / (pad_h + 0.1) * MOTOR_PAD_W * (S.MOTOR_D - 1.6)
     gasket_area = (S.DISP_L + 2 * GLASS_FIT) * (S.DISP_W + 2 * GLASS_FIT) - (S.DISP_AA_L + 2 * WIN_M) * (S.DISP_AA_W + 2 * WIN_M)
     # radial bottom seal: printed SEAL_GAP + 2 SEAL_SQUEEZE in SEAL_GAP; the long walls (cantilevers from the upper
     # wall at Z_STEP) are the spring, the TPU ring nearly rigid in comparison
@@ -1118,8 +1247,60 @@ def stack_numbers():
     k_ring = E_TPU90 * S.FLOOR / SEAL_GAP
     d_wall = 2 * SEAL_SQUEEZE * k_ring / (k_ring + k_wall)
     q = k_wall * d_wall
-    return dict(cushions=cush, rings=rings, pad=pad, gasket_p=cush / gasket_area, wall_bulge=d_wall, seal_q=q,
-                seal_p=q / (S.FLOOR - 0.07), total=cush + rings + pad)
+    return dict(cushions=cush, rings=rings, gasket_p=cush / gasket_area, wall_bulge=d_wall, seal_q=q,
+                seal_p=q / (S.FLOOR - 0.07), total=cush + rings)
+
+
+def magnet_pull(d1, t1, d2, t2, gap, br=1.45):
+    """Ideal attraction (N) between coaxial axially magnetised cylinders facing opposite poles across `gap` (mm):
+    surface-charge model, disk-disk force pi mu0 s1 s2 a b int J1(ka) J1(kb) exp(-kh) / k dk."""
+    from scipy.integrate import quad
+    from scipy.special import j1
+    mu0 = 4e-7 * math.pi
+    M, a, b = br / mu0, d1 / 2e3, d2 / 2e3
+
+    def disk(h):
+        f = lambda k: j1(k * a) * j1(k * b) * math.exp(-k * h) / k
+        ks = np.r_[0, np.geomspace(0.05, 2000, 60)] / min(a, b)
+        return math.pi * a * b * sum(quad(f, k0, k1, limit=200)[0] for k0, k1 in zip(ks[:-1], ks[1:]))
+    f = sum(mu0 * s1 * s2 * disk((z1 - z2) / 1e3) for z1, s1 in ((0.0, -M), (t1, M))
+            for z2, s2 in ((-gap, M), (-gap - t2, -M)))
+    return -f
+
+
+def dock_checks(m):
+    """Dock: height, pin force vs magnet hold, USB-C plug clearance, captured parts, straps clear."""
+    ok = True
+
+    def verdict(good, text):
+        nonlocal ok
+        ok &= bool(good)
+        print(f"  {'ok ' if good else 'BAD'} {text}")
+    lv = dock_levels()
+    print("charging dock")
+    bb = m["dock_base"].bounding_box()
+    print(f"  {bb.size.X:.1f} x {bb.size.Y:.1f} mm footprint (case body {S.CASE_L:.1f} x {S.CASE_W:.1f}); the watch's back "
+          f"{-lv['desk']:.2f} above the desk, lips {DOCK_LIP:g} higher; 4 Mill-Max 0955 pins compressed {PIN_PRELOAD} "
+          f"(barrel {lv['pin_bot'] + PIN['below'] + PIN['collar_t'] + PIN['above']:.2f} into the {PIN_BORE:g} bores)")
+    force = 4 * (PIN["f0"] + PIN["k"] * PIN_PRELOAD)
+    ideal = 2 * magnet_pull(MAG_D, MAG_T, MAG_D, DOCK_MAG_T, DOCK_MAG_LIP)
+    hold = MAG_DERATE * ideal
+    verdict(hold >= 2 * force, f"magnets hold {hold:.2f} N ({ideal:.2f} ideal x {MAG_DERATE} for 2 pairs of 3x1 / "
+            f"3x{DOCK_MAG_T:g} N52 at {DOCK_MAG_LIP} mm) vs pins {force:.2f} N (4 x {1000 * force / 4 / 9.81:.0f} g): "
+            f"{hold / force:.1f}x (>= 2)")
+    plug = lv["usb_c"] - lv["desk"]
+    verdict(plug >= USB_PLUG - 1e-6, f"USB-C receptacle centre {plug:.2f} above the desk (>= {USB_PLUG}: 6.5-7 mm plug "
+            f"overmolds clear), {-lv['conn1']:.2f} of lid over it, mouth flush with the -Y side")
+    others = DOCK
+    for k, allowed in (("dock_pins", ()), ("dock_magnets", ()), ("dock_usb", ()), ("dock_lid", ()), ("dock_feet", ("-z",))):
+        free = play(m, k, others)
+        verdict(not [d for d in free if d not in allowed], f"{k:<13} captured: free 0.3 mm moves {free or 'none'}"
+                + (" (press-fit stems)" if free else ""))
+    hit = max(interference(nato(sw), m[d]) for sw in (0, 45, 90) for d in DOCK)
+    verdict(hit < 1e-3, f"straps at 0 / 45 / 90 deg clear the dock: {hit:.4f} mm^3")
+    print(f"  polarity: dock magnets +Y S up, -Y N up at both ends; the watch's +Y N-out / -Y S-out pair snaps onto the "
+          f"-X pair and is pushed off the +X pair if turned end for end (no pad lands on a pin then)")
+    return ok
 
 
 def checks(m, fit, comps):
@@ -1143,8 +1324,9 @@ def checks(m, fit, comps):
     print(f"  shape '{SHAPE}' {SHAPES[SHAPE]}, lug-to-lug {lug.size.X:.2f} mm (+{(lug.size.X - S.CASE_L) / 2:.2f} per end); "
           f"+X bar axis {X_BAR - OL:.2f} past the end face, {X_BAR - S.PCB_L / 2:.2f} past the PCB edge, "
           f"{X_BAR - ANT_BB.max.X:.2f} (surface {X_BAR - ANT_BB.max.X - BAR_D / 2:.2f}) past the antenna copper")
-    want = dict(top_shell=1, bottom_shell=1, top_shell_cf=1, antenna_window=1, touch_windows=4, bottom_seal=1,
-                bezel_gasket=1, cushions=4, pogo_seals=4, puck_top=1, puck_base=1)
+    want = dict(top_shell=1, bottom_shell=1, top_shell_cf=1, antenna_window=1, touch_windows=2, bottom_seal=1,
+                bezel_gasket=1, cushions=4, pogo_seals=1 if POGO_CROSS else 2, mic_seal=1, dock_base=1, dock_lid=1, dock_pins=4,
+                dock_magnets=4, dock_usb=2, dock_feet=1)
     got = {k: len((m[k] if k in m else v[k]).solids()) for k in want}
     verdict(got == want, "solid counts: " + ", ".join(f"{k} {c}" for k, c in got.items()))
     roots = ear_roots(m["top_shell"])
@@ -1171,7 +1353,7 @@ def checks(m, fit, comps):
     print(f"  FPC: tip {fit['insertion']:.2f} mm into the FFC body ({FFC_D} deep), "
           f"{'slack %.2f' % fit['slack'] if fit['slack'] > 0 else 'short of the back by %.2f' % fit['short']} mm")
     for net, (x, y), got_net in pogo_vs_pcb():
-        verdict(got_net in (net, None), f"charger pin {net:<6} at ({x:+.2f}, {y:+.2f}): PCB pad there is "
+        verdict(got_net in (net, None), f"dock pin {net:<6} at ({x:+.2f}, {y:+.2f}): PCB pad there is "
                 f"{got_net or 'not found (no .kicad_pcb?)'}")
 
     print("closure: snaps, seal, preload")
@@ -1186,11 +1368,11 @@ def checks(m, fit, comps):
     sn = snap_numbers()
     hold = 2 * (sn[-1]["open"] + sn[1]["open"])
     verdict(st["total"] < hold / 3, f"preload on the snaps {st['total']:.0f} N (cushions {st['cushions']:.0f}, pogo rings "
-            f"{st['rings']:.0f}, motor pad {st['pad']:.0f}) vs {hold:.0f} N to pop all four")
+            f"{st['rings']:.0f}) vs {hold:.0f} N to pop all four")
     print(f"  bezel gasket contact {st['gasket_p']:.2f} MPa from the cushions; bottom seal (radial, no snap load): "
           f"walls spring out {st['wall_bulge']:.3f} mm, {st['seal_q']:.2f} N/mm ({st['seal_p']:.2f} MPa) on the TPU ring")
-    others = SHELLS + SOFT + ["display", "fpc", "pcb", "battery", "motor", "motor_leads", "bat_leads", "watch_magnets",
-                              "qfn", "ffc", "chips", "switches"]
+    others = SHELLS + SOFT + ["display", "fpc", "pcb", "battery", "motor", "motor_leads", "bat_lead_red",
+                              "bat_lead_black", "watch_magnets", "qfn", "ffc", "chips", "switches"]
     for k, (allowed, why) in LOOSE.items():
         free = play(m, k, others)
         extra = [d for d in free if d not in allowed]
@@ -1206,13 +1388,14 @@ def checks(m, fit, comps):
     pairs += [(a, b) for i, a in enumerate(CASE) for b in CASE[i + 1:]]
     pairs += [(k, "rf_pin") for k in CASE] + [(k, "bars") for k in CASE]
     pairs += [("strap", k) for k in CASE + ["bars", "rf_pin"]]
-    pairs += [("motor", k) for k in ["battery", "bat_leads", "watch_magnets", "pcb", "motor_pad"]]
-    pairs += [(c, w) for c in CHARGER for w in SHELLS + ["watch_magnets", "pcb", "strap"] if not (c == "pins" and w == "pcb")]
-    clamp = [{"cable", "boot"}, {"cable", "puck_top"}, {"cable", "puck_base"}]          # the halves squeeze the cable
-    pairs += [(a, b) for i, a in enumerate(CHARGER) for b in CHARGER[i + 1:] if {a, b} not in clamp]
+    pairs += [("motor", k) for k in ["battery", "bat_lead_red", "bat_lead_black", "watch_magnets", "pcb"]]
+    pairs += [("bat_lead_red", k) for k in ["bat_lead_black", "watch_magnets", "pads", "motor_leads"]]
+    pairs += [("bat_lead_black", k) for k in ["watch_magnets", "pads", "motor_leads"]]
+    pairs += [(d, w) for d in DOCK for w in SHELLS + SOFT + ["watch_magnets", "pcb", "strap", "bars", "rf_pin"]]
+    pairs += [(a, b) for i, a in enumerate(DOCK) for b in DOCK[i + 1:]]
     gap = S.Z_PCB0 - (MOTOR_Z0 + S.MOTOR_T)
     print(f"  motor {S.MOTOR_D:g} x {S.MOTOR_T:g} on the floor in a {MOTOR_POCKET:.1f} pocket, {gap:.2f} to the PCB "
-          f"(motor_pad + soldered leads); battery {S.BAT_L:.1f} x {S.BAT_W:g} x {S.BAT_T:g}, PCM end "
+          f"(4 sprung fingers + soldered leads); battery {S.BAT_L:.1f} x {S.BAT_W:g} x {S.BAT_T:g}, PCM end "
           f"{S.BAT_T + BAT_PCM_EXTRA:g} thick in a {BAT_RECESS} recess ({S.FLOOR - BAT_RECESS:.2f} floor left, "
           f"{S.Z_PCB0 - (S.FLOOR - BAT_RECESS + S.BAT_T + BAT_PCM_EXTRA):.2f} under the PCB)")
     print(f"  straps {STRAP_W:.0f} mm on {BAR_D} spring bars: ears {EAR_W:.2f} wide, drilled {BAR_TIP_HOLE} through, "
@@ -1228,11 +1411,7 @@ def checks(m, fit, comps):
           f"from the glass edge; duct {MIC_BORE} groove at |y| {abs(yd):.2f}; seal ring walls {inner:.2f} (under the "
           f"glass) / {outer:.2f} (lid edge) / {side:.2f}; vent {vent_box()[1] - vent_box()[0]:.2f} x "
           f"{abs(vent_box()[3] - vent_box()[2]):.2f}; outlet {MIC_HOLE}")
-    g = pin_geom()
-    force = 4 * (PIN["f0"] + PIN["k"] * PIN_PRELOAD)
-    verdict(force < MAG_PULL / 1.5, f"charger: 4 pins x {PIN_PRELOAD} preload = {force:.2f} N vs magnets {MAG_PULL:.1f} N "
-            f"(hold margin {MAG_PULL / force:.1f}x); pin barrel {g['btop']:.2f} mm into the {PIN_BORE} bores, "
-            f"stroke used {PIN_PRELOAD}/{PIN['stroke']}")
+    ok &= dock_checks(m)
     worst = 0.0
     for a, b in pairs:
         val = interference(m[a], m[b])
@@ -1262,24 +1441,45 @@ PRINT = {  # part -> (folder, filament, rotation into print orientation, note)
     "bezel_gasket": ("tpu", "TPU 90A", (0, 0, 0), "flat, 2 x 0.08 layers, 15 mm/s from the external spool"),
     "cushions": ("tpu", "TPU 90A", (0, 0, 0), "4 blocks, printed 0.1 tall (squeezed 8 %)"),
     "bottom_seal": ("tpu", "TPU 90A", (0, 0, 0), f"ring {SEAL_GAP + 2 * SEAL_SQUEEZE:.2f} wide x {S.FLOOR} tall, 0.1 layers"),
-    "pogo_seals": ("tpu", "TPU 90A", (0, 0, 0), "4 rings, printed 0.05 tall"),
-    "motor_pad": ("tpu", "TPU 90A", (0, 0, 0), "strip, printed 0.1 tall"),
+    "pogo_seals": ("tpu", "TPU 90A", (0, 0, 0), "4 rings + webs in one piece, rings printed 0.05 tall"),
     "mic_seal": ("tpu", "TPU 90A", (0, 0, 0), "printed 0.30; die-cut PORON 0.3 is better"),
     "top_shell_cf": ("variant-cf", "PETG-CF", (180, 0, 0), "lip down; hardened 0.4 (0.6 recommended), modest fan"),
     "antenna_window": ("variant-cf", "PETG, matched", (180, 0, 0), "matte, colour-matched (INSERTS); drops in from inside"),
-    "touch_windows": ("variant-cf", "PETG, matched", (180, 0, 0), "4 inserts, flush with the skin; drop in from inside"),
-    "puck_top": ("charger", "PETG Basic", (180, 0, 0), "face down, no supports"),
-    "puck_base": ("charger", "PETG Basic", (0, 0, 0), "plate down"),
-    "boot": ("charger", "TPU 90A", (90, 0, 0), "upright, slow"),
+    "touch_windows": ("variant-cf", "PETG, matched", (180, 0, 0), "2 inserts, flush with the skin; drop in from inside"),
+    "dock_base": ("dock", "PETG Basic / Matte", (0, 0, 0), "floor down, 0.4 nozzle, 0.1 layers, no supports"),
+    "dock_lid": ("dock", "PETG Basic / Matte", (0, 0, 0), "underside down; the recess over the breakout bridges"),
+    "dock_feet": ("dock", "TPU 90A", (0, 0, 0), "pad down; 4 stems printed 0.15 over for the press fit"),
 }
 DENSITY = {"PETG-CF": 1.29e-3, "PETG": 1.27e-3, "TPU": 1.21e-3}
+PLATES = {  # one A1 mini job (180 x 180) per filament: plate -> parts. Standard set: petg + tpu; CF variant:
+    # petg-cf (the CF shell) + petg-cf-set (its PETG parts, in the colour-matched PETG) + tpu
+    "petg": ["top_shell", "bottom_shell", "dock_base", "dock_lid"],
+    "tpu": ["bezel_gasket", "bottom_seal", "cushions", "pogo_seals", "mic_seal", "dock_feet"],
+    "petg-cf": ["top_shell_cf"],
+    "petg-cf-set": ["bottom_shell", "antenna_window", "touch_windows", "dock_base", "dock_lid"],
+}
+
+
+def plate_layout(sizes, plate=180.0, margin=8.0, gap=4.0):
+    """Shelf-pack footprints [(w, d)] onto the plate -> [(x, y)] lower-left corners, the whole set centred."""
+    order = sorted(range(len(sizes)), key=lambda i: -sizes[i][1])
+    pos, x, y, row = [None] * len(sizes), 0.0, 0.0, 0.0
+    for i in order:
+        w, d = sizes[i]
+        if x and x + w > plate - 2 * margin:
+            x, y, row = 0.0, y + row + gap, 0.0
+        pos[i], x, row = (x, y), x + w + gap, max(row, d)
+    span_x = max(p[0] + sizes[i][0] for i, p in enumerate(pos))
+    span_y = max(p[1] + sizes[i][1] for i, p in enumerate(pos))
+    assert span_x <= plate - 2 * margin and span_y <= plate - 2 * margin, "parts do not fit on one plate"
+    return [((plate - span_x) / 2 + p[0], (plate - span_y) / 2 + p[1]) for p in pos]
 
 
 def printable(m, k):
     """Part in print orientation, at its printed (uncompressed) size."""
     extra = {"bezel_gasket": lambda: bezel_gasket(PRINT_T["bezel_gasket"]), "cushions": lambda: cushions(PRINT_T["cushions"]),
              "bottom_seal": lambda: bottom_seal(SEAL_SQUEEZE), "pogo_seals": lambda: pogo_seals(PRINT_T["pogo_seals"]),
-             "motor_pad": lambda: motor_pad(0.1), "mic_seal": lambda: mic_seal(PRINT_T["mic_seal"])}
+             "mic_seal": lambda: mic_seal(PRINT_T["mic_seal"])}
     s = extra[k]() if k in extra else (m[k] if k in m else m["variant_cf"][k])
     s = Rot(*PRINT[k][2]) * s
     return Pos(0, 0, -s.bounding_box().min.Z) * s
@@ -1297,7 +1497,7 @@ def summary(m):
 def export(m):
     import shutil
     import trimesh                       # 3MF via trimesh: OCCT's 3MF mesher rejects some filleted parts
-    for folder in {f for f, *_ in PRINT.values()} | {"multi-material", "petg-cf"}:   # keeps cad/out/variant-thin/
+    for folder in {f for f, *_ in PRINT.values()} | {"multi-material", "petg-cf", "charger"}:   # keeps variant-thin/
         shutil.rmtree(OUT / folder, ignore_errors=True)
     kids = []
     for k, sh in m.items():
@@ -1308,11 +1508,22 @@ def export(m):
         kids.append(sh)
     OUT.mkdir(parents=True, exist_ok=True)
     export_step(Compound(children=kids, label="horae_rev_a"), str(OUT / "horae-assembly.step"))
+    meshes = {}
     for k, (folder, *_ ) in PRINT.items():
         (OUT / folder).mkdir(exist_ok=True)
         stl = OUT / folder / f"{k}.stl"
         export_stl(printable(m, k), str(stl), tolerance=0.005, angular_tolerance=0.1)
-        trimesh.Scene({k: trimesh.load(stl)}).export(OUT / folder / f"{k}.3mf")
+        meshes[k] = trimesh.load(stl)
+        trimesh.Scene({k: meshes[k]}).export(OUT / folder / f"{k}.3mf")
+    shutil.rmtree(OUT / "plates", ignore_errors=True)
+    (OUT / "plates").mkdir()
+    for plate, keys in PLATES.items():
+        sizes = [tuple(meshes[k].bounds[1, :2] - meshes[k].bounds[0, :2]) for k in keys]
+        scene = trimesh.Scene()
+        for k, (x, y) in zip(keys, plate_layout(sizes)):
+            scene.add_geometry(meshes[k].copy().apply_translation([x, y, 0] - meshes[k].bounds[0] * [1, 1, 0]),
+                               node_name=k, geom_name=k)
+        scene.export(OUT / "plates" / f"{plate}.3mf")
 
 
 # ---------------------------------------------------------------- colours, materials
@@ -1343,19 +1554,22 @@ TECH_CASE, TECH_CASE2, TECH_TPU, TECH_INSERT = "#62666d", "#4c5056", "#e4572e", 
 COLORS = dict(
     top_shell=TECH_CASE, bottom_shell=TECH_CASE2, top_shell_cf="#3b3e43", antenna_window=TECH_INSERT,
     touch_windows=TECH_INSERT, bezel_gasket=TECH_TPU, cushions=TECH_TPU, bottom_seal=TECH_TPU, pogo_seals=TECH_TPU,
-    motor_pad=TECH_TPU, mic_seal=TECH_TPU, vent="#f4f4ef", boot=TECH_TPU, display="#dcdad1", fpc="#c8861a",
+    mic_seal=TECH_TPU, vent="#f4f4ef", display="#dcdad1", fpc="#c8861a",
     stiffener="#9c6610", pcb="#1e5b3e", qfn="#2b2b2d", ffc="#e6dfca", chips="#3a3a3c", switches="#b9bec5",
-    touch="#d9a92e", pads="#d9a92e", antenna="#c9a24a", battery="#c4c9cf", bat_leads="#d8b246",
+    touch="#d9a92e", pads="#d9a92e", antenna="#c9a24a", battery="#c4c9cf", bat_lead_red="#c0392b",
+    bat_lead_black="#202124",
     watch_magnets="#a8aeb5", motor="#a7adb4", motor_leads="#d8b246", bars="#cfd3d8", rf_pin="#cfd3d8",
-    strap="#2b2d31", puck_top="#e8e6e1", puck_base="#d6d3cc", pins="#d8b246", puck_magnets="#a8aeb5", cable="#1e1f21",
+    strap="#2b2d31", dock_base="#c9ccd1", dock_lid="#dfe1e4", dock_pins="#d8b246", dock_magnets="#a8aeb5",
+    dock_usb="#1d1e20", dock_wires="#b03a2e", dock_feet=TECH_TPU,
 )
-ROLE = dict(  # part -> (colour source, finish): "case"/"tpu"/"strap"/"insert" follow the colorway
+ROLE = dict(  # part -> (colour source, finish): "case"/"tpu"/"strap"/"insert"/"dock" follow the colorway
     top_shell="case", bottom_shell="case", top_shell_cf="case", antenna_window="insert", touch_windows="insert",
-    bezel_gasket="tpu", cushions="tpu", bottom_seal="tpu", pogo_seals="tpu", motor_pad="tpu", mic_seal="tpu",
+    bezel_gasket="tpu", cushions="tpu", bottom_seal="tpu", pogo_seals="tpu", mic_seal="tpu",
     strap="strap", vent="membrane", display="epaper", fpc="pcb", stiffener="pcb", pcb="pcb", qfn="plastic",
     ffc="plastic", chips="plastic", switches="metal", touch="gold", pads="gold", antenna="gold", battery="metal",
-    bat_leads="gold", watch_magnets="metal", motor="metal", motor_leads="gold", bars="metal", rf_pin="metal",
-    puck_top="gloss", puck_base="gloss", pins="gold", puck_magnets="metal", cable="strap", boot="tpu",
+    bat_lead_red="plastic", bat_lead_black="plastic", watch_magnets="metal", motor="metal", motor_leads="gold", bars="metal", rf_pin="metal",
+    dock_base="dock", dock_lid="dock", dock_pins="gold", dock_magnets="metal", dock_usb="pcb", dock_wires="plastic",
+    dock_feet="tpu",
 )
 WATCH = SHELLS + SOFT + INTERNAL + ["bars", "rf_pin"]
 _mesh_cache = {}
@@ -1501,13 +1715,16 @@ def look(key, colorway=None):
     """(hex, finish) of a part in a colorway (None: technical colours)."""
     role = ROLE.get(key, "plastic")
     if colorway is None:
-        fin = role if role in FINISH else ("gloss" if role in ("case", "insert") else "tpu" if role == "tpu" else "strap")
+        fin = role if role in FINISH else ("gloss" if role in ("case", "insert") else "matte" if role == "dock"
+                                           else "tpu" if role == "tpu" else "strap")
         return COLORS.get(key, "#888888"), fin
     _, case, cfin, _, tpu, tfin, _, strap = COLORWAYS[colorway]
     if role == "case":
         return case, cfin
     if role == "insert":
         return case, "matte_tile"
+    if role == "dock":                                                  # the dock in the case colour, matte PETG
+        return case, "matte"
     if role == "tpu":
         return tpu, tfin
     if role == "strap":
@@ -1740,28 +1957,41 @@ def exploded(m, groups, off, fname, alpha=None, title=None, flip=False, colorway
         dr.multiline_text((tx, ty), label, font=f, fill=(30, 30, 30), anchor="lm" if "\n" not in label else "ls")
     if title:
         dr.text((40, 36), title, font=label_font(34), fill=(30, 30, 30))
+    if fname is None:
+        return img
     img.save(MEDIA / fname)
 
 
+EXPLODED = [  # watch exploded view: (label, keys, z offset); EXPLODE below is the per-part offset map
+    (f"Top shell, one PETG print: {S.LIP:g} lip + walls\n+ {STRAP_W:g} mm strap ears + snap recesses",
+     ["top_shell", "bars", "rf_pin"], 30),
+    (f"TPU 90A bezel gasket {S.BEZEL_GASKET:g} + mic vent", ["bezel_gasket", "vent"], 23),
+    ("Display GDEM0097T61 + FPC tail", ["display", "fpc", "stiffener"], 16),
+    ("4 TPU cushions push the glass up", ["cushions"], 10.5),
+    (f"PCB {S.PCB_T:g} mm + parts, mic seal", ["pcb", "qfn", "ffc", "chips", "switches", "touch", "antenna", "pads",
+                                              "mic_seal"], 5),
+    (f"Battery {S.BAT_L:.1f} x {S.BAT_W:g} x {S.BAT_T:.1f} + coin motor, both\nsoldered; one-piece TPU pogo seal",
+     ["battery", "bat_lead_red", "bat_lead_black", "motor", "motor_leads", "pogo_seals"], -1),
+    ("TPU bottom seal ring (radial)", ["bottom_seal"], -6),
+    ("Bottom shell, one PETG print: floor, blocks,\n4 snap bumps, 2 flush magnets", ["bottom_shell", "watch_magnets"], -11),
+]
+EXPLODE = {k: (0, 0, dz) for _, keys, dz in EXPLODED for k in keys} | {"pogo_seals": (0, 0, 1.5)}
+DOCK_EXPLODED = [  # dock exploded view (the watch lifted off): (label, keys, z offset)
+    ("Watch: 2 flush 3x1 magnets (+Y N out, -Y S out),\n4 pads 3.7 mm above its back", None, 17),
+    ("Lid plate (PETG): pin bores, magnet holes\nwith a 0.1 retaining lip, lip over the USB-C bay", ["dock_lid"], 9),
+    ("4 x 3x3 N52 magnets: +Y S up, -Y N up at both\nends (turned end for end, the watch is pushed off)",
+     ["dock_magnets"], 5.5),
+    ("4 Mill-Max 0955 spring pins: collars under\nthe lid, solder cups on the floor", ["dock_pins"], 2.5),
+    ("Adafruit 6050 sunken USB-C breakout (5.1k CC\npull-downs), 4 wires to the pins", ["dock_usb", "dock_wires"], 2.5),
+    ("Tray (PETG): floor, side lips, sockets, magnet\nposts, pegs, 2 snap bumps", ["dock_base"], 0),
+    ("TPU 90A grip pad, 4 press-in stems", ["dock_feet"], -3),
+]
+DOCK_EXPLODE = {k: (0, 0, dz) for _, keys, dz in DOCK_EXPLODED if keys for k in keys}
+
+
 def render_exploded(m):
-    groups = [  # (label, keys, z offset, anchor z)
-        (f"Top shell, one PETG print: {S.LIP:g} lip + walls\n+ {STRAP_W:g} mm strap ears + snap recesses",
-         ["top_shell", "bars", "rf_pin"], 30, S.Z_DISP1),
-        (f"TPU 90A bezel gasket {S.BEZEL_GASKET:g} + mic vent", ["bezel_gasket", "vent"], 23, S.Z_DISP1),
-        ("Display GDEM0097T61 + FPC tail", ["display", "fpc", "stiffener"], 16, S.Z_DISP0),
-        ("4 TPU cushions push the glass up", ["cushions"], 10.5, S.Z_PCB1 + 0.5),
-        (f"PCB {S.PCB_T:g} mm + parts, mic seal", ["pcb", "qfn", "ffc", "chips", "touch", "antenna", "pads", "mic_seal"],
-         5, S.Z_PCB1),
-        (f"Battery {S.BAT_L:.1f} x {S.BAT_W:g} x {S.BAT_T:.1f} + coin motor,\nboth soldered; TPU motor pad + pogo rings",
-         ["battery", "bat_leads", "motor", "motor_leads", "motor_pad", "pogo_seals"], -1, S.Z_BAT1),
-        ("TPU bottom seal ring (radial)", ["bottom_seal"], -6, S.FLOOR),
-        ("Bottom shell, one PETG print: floor, blocks,\n4 snap bumps, 2 flush magnets", ["bottom_shell", "watch_magnets"],
-         -11, S.FLOOR),
-    ]
-    off = {k: (0, 0, dz) for _, keys, dz, _ in groups for k in keys}
-    off["motor_pad"] = off["pogo_seals"] = (0, 0, 1.5)
     seen = (AA_CX, S.DISP_AA_W / 2 + WIN_M - GASKET_REVEAL / 2, Z_LIP0 + 23)    # the gasket's reveal, far side
-    exploded(m, [(lab, keys, seen if "gasket" in keys[0] else None) for lab, keys, _, _ in groups], off,
+    exploded(m, [(lab, keys, seen if "gasket" in keys[0] else None) for lab, keys, _ in EXPLODED], EXPLODE,
              "cad-exploded.png", size=(1700, 1500))
 
 
@@ -1774,8 +2004,8 @@ def render_assembly(m):
         ("4  4 cushions on the glass corners", ["cushions"]),
         ("5  mic seal into its relief", ["mic_seal"]),
         ("6  fold the PCB over, parts down", ["pcb", "qfn", "ffc", "chips", "touch", "antenna", "pads"]),
-        ("7  battery + motor (soldered), motor pad", ["battery", "bat_leads", "motor", "motor_leads", "motor_pad"]),
-        ("8  pogo seal rings on the pads", ["pogo_seals"]),
+        ("7  battery + motor (soldered leads)", ["battery", "bat_lead_red", "bat_lead_black", "motor", "motor_leads"]),
+        ("8  one-piece pogo seal on the pads", ["pogo_seals"]),
         ("9  seal ring on the floor plate, press\n    the bottom shell on: 4 clicks", ["bottom_seal", "bottom_shell", "watch_magnets"]),
     ]
     off = {k: (0, 0, 5.2 * i - 12) for i, (_, keys) in enumerate(steps) for k in keys}
@@ -1786,7 +2016,7 @@ def render_assembly(m):
 def render_sealing(m):
     ghost = {k: 0.22 for k in ("top_shell", "bottom_shell", "pcb", "display")}
     off = dict(top_shell=(0, 0, 26), bezel_gasket=(0, 0, 20), vent=(0, 0, 20), display=(0, 0, 14), cushions=(0, 0, 9),
-               pcb=(0, 0, 4), touch=(0, 0, 4), mic_seal=(0, 0, 4), pogo_seals=(0, 0, -1.5), motor_pad=(0, 0, -1.5),
+               pcb=(0, 0, 4), touch=(0, 0, 4), mic_seal=(0, 0, 4), pogo_seals=(0, 0, -1.5),
                bottom_seal=(0, 0, -6), bottom_shell=(0, 0, -11), watch_magnets=(0, 0, -11))
     vx0, vx1, vy0, vy1 = vent_box()
     groups = [
@@ -1795,7 +2025,7 @@ def render_sealing(m):
          ["bezel_gasket", "vent"], None),
         ("4 TPU cushions press the glass\ninto the gasket", ["cushions"], None),
         ("Foam seal ring on the mic", ["mic_seal"], None),
-        ("TPU rings seal the 4 pin bores", ["pogo_seals"], None),
+        ("One TPU piece: 4 rings seal the pin bores", ["pogo_seals"], None),
         (f"TPU bottom seal ring {SEAL_GAP:g} wide: radial,\nsqueezed by the springy walls", ["bottom_seal"], None),
         ("Bottom shell (PETG)", ["bottom_shell"], None),
     ]
@@ -1803,47 +2033,32 @@ def render_sealing(m):
              size=(1700, 1500))
 
 
-def render_charger(m):
-    """Magnetic cable head docked on the watch (from below) + exploded."""
-    import pyvista as pv
+def render_dock(m):
+    """The watch on its charging dock (straps draped) + the dock exploded with the watch lifted off."""
     from PIL import Image, ImageDraw
-    keys = WATCH + ["strap"] + CHARGER
-    p = studio(1100, 900)
-    add(p, m, keys, colorway=None)
+    mm, keys = hero_parts(m, HERO)
+    mm["strap"] = nato(35)
+    dk = DOCK + ["dock_wires"]
+    p = studio(1150, 1000)
+    add(p, mm, keys + dk, colorway=HERO)
     finish(p)
-    cam(p, (-55, -60, -45), (S.MOTOR_X + 4, 0, -1), 1.45)
+    cam(p, (-70, -62, 42), (-0.5, 0, -1.5), 1.02)
     left = Image.fromarray(p.screenshot(return_img=True))
     p.close()
-    off = dict(puck_top=(0, 0, -6), puck_magnets=(0, 0, -6), pins=(0, 0, -10), puck_base=(0, 0, -16),
-               cable=(0, 0, -16), boot=(0, 0, -16), bottom_shell=(0, 0, 0), watch_magnets=(0, 0, 0))
-    p = studio(1100, 900)
-    mm = dict(m, bottom_shell=m["bottom_shell"] & box(-OL - 5, S.MOTOR_X + 7.5, -OW - 1, OW + 1, -1, 10))  # -X end
-    add(p, mm, list(off), off)
-    zp = m["pins"].bounding_box().min.Z - 10 - 0.5                   # under the pins' solder cups
-    for (x, y, net) in POGO:
-        p.add_point_labels([(x, y, zp)], [{"USB_DM": "D-", "USB_DP": "D+"}.get(net, net)],
-                           font_size=16, point_size=1, shape_opacity=0.8, always_visible=True, text_color="#222222",
-                           shape_color="#ffffff")
-    for sy, pole in ((1, "N"), (-1, "S")):
-        p.add_point_labels([(MAG_X, sy * MAG_Y, -0.2)], [f"{pole} out"], font_size=14, point_size=1, shape_opacity=0.8,
-                           always_visible=True, text_color="#b03a2e" if pole == "N" else "#1f5aa6", shape_color="#ffffff")
-        p.add_point_labels([(MAG_X, sy * MAG_Y, -6 + PUCK_TOP_T + 0.4)], ["S up" if pole == "N" else "N up"],
-                           font_size=14, point_size=1, shape_opacity=0.8, always_visible=True,
-                           text_color="#1f5aa6" if pole == "N" else "#b03a2e", shape_color="#ffffff")
-    finish(p)
-    cam(p, (-70, -70, 30), (S.MOTOR_X, 0, -8), 1.35)
-    right = Image.fromarray(p.screenshot(return_img=True))
-    p.close()
-    sheet = Image.new("RGB", (2200, 960), (245, 246, 248))
+    watch = [k for k in keys if k != "strap"]
+    off = DOCK_EXPLODE | {k: (0, 0, DOCK_EXPLODED[0][2]) for k in watch}
+    lv = dock_levels()
+    mouth = (0, -DOCK_HW, lv["usb_c"] + DOCK_EXPLODE["dock_usb"][2])       # the receptacle is what shows of the board
+    groups = [(lab, ks or watch, mouth if ks and "dock_usb" in ks else None) for lab, ks, _ in DOCK_EXPLODED]
+    right = exploded(mm, groups, off, None, colorway=HERO, size=(1450, 1000), frac=0.5)
+    sheet = Image.new("RGB", (2600, 1060), (245, 246, 248))
     sheet.paste(left, (0, 60))
-    sheet.paste(right, (1100, 60))
+    sheet.paste(right, (1150, 60))
     d = ImageDraw.Draw(sheet)
-    d.text((30, 20), "Magnetic charging head on the case back", font=label_font(30), fill=(30, 30, 30))
-    d.text((1130, 20), "Exploded: 4 Mill-Max 0955 spring pins, 3 x 2 N52 magnets, TPU boot", font=label_font(30),
-           fill=(30, 30, 30))
-    d.text((1130, 925), "Watch magnets: +Y N out, -Y S out; a puck turned 180 deg repels (it would put VBUS on GND)",
-           font=label_font(20), fill=(90, 90, 90))
-    sheet.save(MEDIA / "cad-charger.png")
+    d.text((30, 18), f"Charging dock: {-lv['desk']:.1f} mm to the watch's back, USB-C in the side",
+           font=label_font(30), fill=(30, 30, 30))
+    d.text((1180, 18), "Exploded: nothing glued, 4 wires the only soldering", font=label_font(30), fill=(30, 30, 30))
+    sheet.save(MEDIA / "cad-dock.png")
 
 
 def min_wall(shape, z0, z1, step=0.1):
@@ -1881,6 +2096,8 @@ def section_polys(shape, y, x=None):
     """Cut shape with the plane y=const (or x=const) -> list of (outer, [holes]) polylines in (x or y, z)."""
     plane = Plane(origin=(x, 0, 0), z_dir=(1, 0, 0)) if x is not None else Plane(origin=(0, y, 0), z_dir=(0, 1, 0))
     cut = shape & (plane * Rectangle(400, 400))
+    if cut is None:
+        return []
 
     def pts(w):
         return np.array([((q.Y if x is not None else q.X), q.Z) for q in (w.position_at(t) for t in np.linspace(0, 1, 240))])
@@ -1947,7 +2164,7 @@ def render_section(m):
                  arrowprops=dict(arrowstyle="-", lw=0.6, color="#333"))
     ax2.set_xlim(-OL - 3.4, -6.5)
     ax2.set_ylim(-1.2, S.CASE_T + 1.4)
-    ax2.set_title(f"Detail, -X end at y = {y2:+.1f} (through two charger pin bores)", fontsize=13, loc="left")
+    ax2.set_title(f"Detail, -X end at y = {y2:+.1f} (through two dock pin bores)", fontsize=13, loc="left")
     px = [x for x, yy in POGO_XY if yy > 0]
     L = -OL
     notes = [((S.DISP_X0 - 0.6, S.Z_DISP0 - 0.3), (L - 1.2, S.CASE_T + 0.9), "FPC U-bend under the hood"),
@@ -2244,7 +2461,7 @@ def main():
     if "--no-render" not in sys.argv and not THIN:
         MEDIA.mkdir(parents=True, exist_ok=True)
         for f in (render_assembled, render_lug, render_colors, render_exploded, render_assembly, render_sealing,
-                  render_section, render_snap, render_scale, render_charger, render_shape_options):
+                  render_section, render_snap, render_scale, render_dock, render_shape_options):
             f(m)
         render_board(m, comps, note)
         render_mic(m, comps)

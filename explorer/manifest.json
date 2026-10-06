@@ -212,7 +212,7 @@
    "key": "battery",
    "name": "Battery",
    "group": "Electronics",
-   "desc": "LiPo pouch 3 x 15 x 18-19 mm with protection, 40-55 mAh, soldered to two pads.",
+   "desc": "LiPo pouch 3 x 15 x 18-19 mm with protection, 40-55 mAh; its two wire leads (red +, black -) are soldered to two pads.",
    "role": "metal",
    "explode": [
     0,
@@ -227,21 +227,39 @@
    ]
   },
   {
-   "key": "bat_leads",
+   "key": "bat_lead_red",
    "name": "Battery",
    "group": "Electronics",
-   "desc": "LiPo pouch 3 x 15 x 18-19 mm with protection, 40-55 mAh, soldered to two pads.",
-   "role": "gold",
+   "desc": "LiPo pouch 3 x 15 x 18-19 mm with protection, 40-55 mAh; its two wire leads (red +, black -) are soldered to two pads.",
+   "role": "plastic",
    "explode": [
     0,
     -1,
     0
    ],
-   "tris": 40,
+   "tris": 20292,
    "size": [
-    3.75,
-    14.0,
-    2.07
+    5.84,
+    2.2,
+    2.1
+   ]
+  },
+  {
+   "key": "bat_lead_black",
+   "name": "Battery",
+   "group": "Electronics",
+   "desc": "LiPo pouch 3 x 15 x 18-19 mm with protection, 40-55 mAh; its two wire leads (red +, black -) are soldered to two pads.",
+   "role": "plastic",
+   "explode": [
+    0,
+    -1,
+    0
+   ],
+   "tris": 20668,
+   "size": [
+    5.84,
+    2.2,
+    2.1
    ]
   },
   {
@@ -281,35 +299,17 @@
    ]
   },
   {
-   "key": "motor_pad",
-   "name": "Motor pad",
-   "group": "Seals",
-   "desc": "TPU pad that holds the motor still.",
-   "role": "tpu",
-   "explode": [
-    0,
-    1.5,
-    0
-   ],
-   "tris": 124,
-   "size": [
-    3.6,
-    5.8,
-    0.77
-   ]
-  },
-  {
    "key": "pogo_seals",
-   "name": "Charging-pad seals",
+   "name": "Charging-pad seal",
    "group": "Seals",
-   "desc": "TPU rings around the four charging pads.",
+   "desc": "One TPU piece: a ring around each of the four charging pads, joined by webs.",
    "role": "tpu",
    "explode": [
     0,
     1.5,
     0
    ],
-   "tris": 3360,
+   "tris": 3420,
    "size": [
     5.5,
     10.7,
@@ -338,14 +338,14 @@
    "key": "bottom_shell",
    "name": "Bottom shell",
    "group": "Case",
-   "desc": "One PETG print: the 0.4 mm floor, motor and pad block, and 4 snap bumps that click into the top shell.",
+   "desc": "One PETG print: the 0.4 mm floor, the motor pocket whose 4 sprung fingers grip the motor, and 4 snap bumps that click into the top shell.",
    "role": "case",
    "explode": [
     0,
     -11,
     0
    ],
-   "tris": 7296,
+   "tris": 7316,
    "size": [
     34.4,
     16.2,
@@ -354,9 +354,9 @@
   },
   {
    "key": "watch_magnets",
-   "name": "Dock magnets",
+   "name": "Watch magnets",
    "group": "Case",
-   "desc": "Two 3 x 1 mm N52 magnets, one N and one S out, so the dock only fits one way.",
+   "desc": "Two 3 x 1 mm N52 magnets in the floor, one N and one S out, so the watch only docks one way round.",
    "role": "metal",
    "explode": [
     0,
@@ -368,6 +368,132 @@
     3.0,
     14.8,
     1.0
+   ]
+  },
+  {
+   "key": "dock_base",
+   "name": "Dock tray",
+   "group": "Dock",
+   "desc": "PETG print: the floor, side lips that locate the watch, sockets for the spring pins, magnet posts and pegs for the USB-C board.",
+   "role": "dock",
+   "explode": [
+    0,
+    -24.0,
+    0
+   ],
+   "tris": 11680,
+   "size": [
+    35.2,
+    20.1,
+    6.58
+   ]
+  },
+  {
+   "key": "dock_lid",
+   "name": "Dock lid",
+   "group": "Dock",
+   "desc": "PETG plate that snaps into the tray: pin bores and magnet holes with a 0.1 mm retaining lip. Nothing is glued.",
+   "role": "dock",
+   "explode": [
+    0,
+    -15.0,
+    0
+   ],
+   "tris": 6636,
+   "size": [
+    33.2,
+    18.7,
+    2.62
+   ]
+  },
+  {
+   "key": "dock_pins",
+   "name": "Spring pins",
+   "group": "Dock",
+   "desc": "4 Mill-Max 0955 spring pins pressing about 42 g on each charging pad.",
+   "role": "gold",
+   "explode": [
+    0,
+    -21.5,
+    0
+   ],
+   "tris": 6704,
+   "size": [
+    4.67,
+    9.87,
+    8.65
+   ]
+  },
+  {
+   "key": "dock_magnets",
+   "name": "Dock magnets",
+   "group": "Dock",
+   "desc": "4 x 3 x 3 mm N52: the watch snaps on the right way round; turned end for end, it is pushed off.",
+   "role": "metal",
+   "explode": [
+    0,
+    -18.5,
+    0
+   ],
+   "tris": 1664,
+   "size": [
+    30.4,
+    14.8,
+    3.0
+   ]
+  },
+  {
+   "key": "dock_usb",
+   "name": "USB-C breakout",
+   "group": "Dock",
+   "desc": "Adafruit 6050 sunken USB-C breakout with 5.1k CC pull-downs, so any USB-C charger gives 5 V; 4 short wires to the pins.",
+   "role": "pcb",
+   "explode": [
+    0,
+    -21.5,
+    0
+   ],
+   "tris": 2200,
+   "size": [
+    20.32,
+    14.53,
+    3.3
+   ]
+  },
+  {
+   "key": "dock_wires",
+   "name": "USB-C breakout",
+   "group": "Dock",
+   "desc": "Adafruit 6050 sunken USB-C breakout with 5.1k CC pull-downs, so any USB-C charger gives 5 V; 4 short wires to the pins.",
+   "role": "plastic",
+   "explode": [
+    0,
+    -21.5,
+    0
+   ],
+   "tris": 31646,
+   "size": [
+    19.81,
+    8.4,
+    1.66
+   ]
+  },
+  {
+   "key": "dock_feet",
+   "name": "Grip pad",
+   "group": "Dock",
+   "desc": "TPU 90A pad with 4 press-in stems, so the dock stays put on the desk.",
+   "role": "tpu",
+   "explode": [
+    0,
+    -27.0,
+    0
+   ],
+   "tris": 2124,
+   "size": [
+    34.2,
+    19.1,
+    0.7
    ]
   },
   {
@@ -535,6 +661,10 @@
   }
  ],
  "hero": "Titanium",
+ "dock": {
+  "desk": -5.68,
+  "low": -27.0
+ },
  "colorways": {
   "Stealth": {
    "case": "Bambu PETG-CF Black",
@@ -727,10 +857,8 @@
   "cushions": "#e4572e",
   "bottom_seal": "#e4572e",
   "pogo_seals": "#e4572e",
-  "motor_pad": "#e4572e",
   "mic_seal": "#e4572e",
   "vent": "#f4f4ef",
-  "boot": "#e4572e",
   "display": "#dcdad1",
   "fpc": "#c8861a",
   "stiffener": "#9c6610",
@@ -743,17 +871,20 @@
   "pads": "#d9a92e",
   "antenna": "#c9a24a",
   "battery": "#c4c9cf",
-  "bat_leads": "#d8b246",
+  "bat_lead_red": "#c0392b",
+  "bat_lead_black": "#202124",
   "watch_magnets": "#a8aeb5",
   "motor": "#a7adb4",
   "motor_leads": "#d8b246",
   "bars": "#cfd3d8",
   "rf_pin": "#cfd3d8",
   "strap": "#2b2d31",
-  "puck_top": "#e8e6e1",
-  "puck_base": "#d6d3cc",
-  "pins": "#d8b246",
-  "puck_magnets": "#a8aeb5",
-  "cable": "#1e1f21"
+  "dock_base": "#c9ccd1",
+  "dock_lid": "#dfe1e4",
+  "dock_pins": "#d8b246",
+  "dock_magnets": "#a8aeb5",
+  "dock_usb": "#1d1e20",
+  "dock_wires": "#b03a2e",
+  "dock_feet": "#e4572e"
  }
 }
