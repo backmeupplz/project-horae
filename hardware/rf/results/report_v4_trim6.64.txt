@@ -1,0 +1,56 @@
+# Antenna_v4_trim6.64 at pad 1 (vs In1), 50 ohm reference; rad. eff. = P_rad / P_accepted at 2.40 / 2.44 / 2.48 GHz
+
+bare: X=0 rising at [2.95] GHz; S11 min -24.0 dB at 2.940; Z [2.40: 96.0+300.2j, 2.44: 170.9+347.4j, 2.48: 320.2+363.3j]; rad. eff. 0.79 / 0.82 / 0.85
+env: X=0 rising at [2.505] GHz; S11 min -11.7 dB at 2.458; Z [2.40: 41.2-30.0j, 2.44: 34.3-16.8j, 2.48: 29.3-5.9j]; rad. eff. 0.78 / 0.80 / 0.81
+wrist: X=0 rising at [2.408] GHz; S11 min -12.2 dB at 2.348; Z [2.40: 27.0-1.6j, 2.44: 23.1+6.5j, 2.48: 20.1+13.7j]; rad. eff. 0.05 / 0.05 / 0.05
+
+## minimax over ['env', 'wrist']: top 8 (worst in-band transducer loss dB, worst S11 dB, C11 pF / L3 nH / C12 pF)
+   0.77    -8.9  0.6 / 1 / 0
+   0.78    -8.6  0.5 / 0.8 / 0
+   0.79    -8.1  0.5 / 0.6 / 0
+   0.80    -8.1  0.6 / 0.8 / 0
+   0.80    -8.9  0.7 / 1.5 / 0.3
+   0.80    -9.0  0.7 / 1.2 / 0
+   0.80    -8.5  0.5 / 1.2 / 0.3
+   0.81    -8.2  0.7 / 1 / 0
+  chosen -> bare: band S11 -0.7 .. -1.0 dB; -10 dB band 2.860-3.078; worst in-band transducer loss 8.29 dB; total eff. (rad x transducer) 0.12 / 0.14 / 0.17
+  chosen -> env: band S11 -8.8 .. -14.2 dB; -10 dB band 2.417-2.567; worst in-band transducer loss 0.69 dB; total eff. (rad x transducer) 0.67 / 0.73 / 0.76
+  chosen -> wrist: band S11 -8.6 .. -13.6 dB; -10 dB band 2.310-2.455; worst in-band transducer loss 0.78 dB; total eff. (rad x transducer) 0.04 / 0.04 / 0.04
+  rev A as built 0.5/1.2/DNP -> bare: band S11 -0.7 .. -1.0 dB; -10 dB band 2.840-3.040; worst in-band transducer loss 8.38 dB; total eff. (rad x transducer) 0.11 / 0.14 / 0.17
+  rev A as built 0.5/1.2/DNP -> env: band S11 -10.6 .. -16.2 dB; -10 dB band 2.395-2.545; worst in-band transducer loss 0.51 dB; total eff. (rad x transducer) 0.70 / 0.75 / 0.76
+  rev A as built 0.5/1.2/DNP -> wrist: band S11 -7.6 .. -13.7 dB; -10 dB band 2.288-2.440; worst in-band transducer loss 1.04 dB; total eff. (rad x transducer) 0.04 / 0.04 / 0.04
+
+robustness of these values (band worst S11 dB): antenna resonance -3% / +3%; parts at tolerance (C +-0.1 pF, L +-max(5%, 0.1 nH)); model variants
+  env: shift -10.6 / -5.1; part corners worst -7.8
+  wrist: shift -5.4 / -11.5; part corners worst -7.6
+
+C11 0.5 pF {'lcsc': 'C85920', 'lib': 'expand', 'stock': 64930, 'desc': '0.5pF 50V C0G 0201 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS'}
+L3  0.8 nH {'lcsc': 'C963916', 'lib': 'expand', 'stock': 14211, 'desc': '0.8nH 10GHz 13@500MHz 550mA 70mΩ Multilayer inductor 0201 Inductors (SMD) ROHS'}
+C12 0 pF {'lcsc': 'DNP'}
+
+## Notes (RF re-check 2026-10-06; v4 = final board + case with crush ribs; plots rf-s11_v4_trim6.64.png, rf-smith_v4_trim6.64.png)
+Recommended: keep C11 0.5 pF (C85920) and C12 DNP, change L3 1.2 -> 0.8 nH: Murata LQP03TN0N8B02D, LCSC C156227 (+-0.1 nH,
+  same LQP03TN series as the 1.2 nH; the C963916 printed above is jlc_parts.json's pick by stock; Murata LQP03HQ0N8B02D,
+  C2043648, is the higher-Q alternative). In band: case -8.8 .. -14.2 dB, wrist -8.6 .. -13.6 dB, 0.78 dB worst loss.
+  The fitted 0.5 pF / 1.2 nH now favours the case (case -10.6 .. -16.2 dB, wrist -7.6 .. -13.7 dB at the top band edge,
+  1.04 dB worst) and ranks ~114th of the JLC combinations. Worst-case loss, 0.5/0.8 vs 0.5/1.2: nominal 0.78 vs 1.04 dB,
+  +-1.5 % resonance shift 1.18 vs 1.52 (the best of all combinations), +-3 % 1.65 vs 2.06; worst S11 at the part
+  tolerance corners -7.6 vs -6.7 dB. 0.6 pF / 1.0 nH is equivalent (0.77 nominal, 1.20 at +-1.5 %) but changes two parts.
+What changed vs v3 (report_v3_trim6.64.txt):
+- Board (final): 33.6 x 16.0, edge 0.2 off every wall; antenna copper, pads and keep-out 0.1 mm toward -X (meander and
+  trim unchanged, sim.py's placement check passes). RF chain re-laid: 0.15/0.15 GCPW feed (lines.py 50.2 ohm, eps_eff
+  3.20), 0.15 mm pad gaps, 0.45/0.2 vias, pours regenerated. Line lengths along the tracks (sim.py now stores the feed
+  with every run; match.py builds each run's circuit from it): chip-C11 1.457 mm (45 deg jog), C11-L3 0.58, L3-C12 0.58,
+  C12-pad 1 edge 0.175 (C12 now sits at the feed pad). Ground near the feed is closer than in v3: C12's GND pad 1.07 mm
+  from the feed pad (v3 1.57), nearest GND via 1.21 mm (1.55), F.Cu pour 0.40 mm from the pad centre (0.48).
+- Case: six PETG crush ribs in the board-edge gap (the +X one at y 0, >= 0.3 mm from the antenna copper); the top shell
+  now carries its touch pockets (case_stl.py takes the CAD's case_parts() and SOFT list); motor pad gone, captive
+  magnets. +X end otherwise unchanged (bar 2.15 mm past the end face, 1.95 above the floor).
+- Effect, antenna alone: resonance -0.8 % in case (S11 minimum 2.478 -> 2.458 GHz; X=0 2.525 -> 2.505), -0.6 % on the
+  wrist (2.362 -> 2.348; X=0 2.428 -> 2.408), -1.5 % bare (2.985 -> 2.940): mostly the ground closer to the feed point.
+  Radiation efficiency unchanged: case 0.80, wrist 0.046, bare 0.82.
+- Split (C11 0.5 / L3 1.2, worst loss case / wrist): v3 0.73 / 0.81 dB; v4 antenna on the v3 feed 0.57 / 0.97; v3
+  antenna on the v4 feed 0.66 / 0.87; v4 0.51 / 1.04. Both changes move the response down against the match, the
+  antenna/case more; a 0.8 nH L3 moves it back up.
+Caveats as in v3: absolute resonance +-3 %, crude flat wrist slab (efficiency likely pessimistic); match.py leaves out the
+  0201 pads' own capacitance beside the 0.15 mm trace (~0.05 pF each), as before.

@@ -234,6 +234,69 @@ footer { border-top: 1px solid var(--line); padding: 24px 0 48px; font-size: 13p
 
 <ol class="timeline">
   <li class="entry">
+    <time class="mono" datetime="2026-10-06">2026-10-06 · Day 3, evening</time>
+    <h2>Pre-order review: 7 blockers found and fixed <span class="tag">review</span></h2>
+    <p>Before ordering anything, four reviews ran in parallel: the schematic and every part against its datasheet, the layout and fab files against JLC's limits, the size, and the shopping list. They found seven problems that would have sunk rev A, plus a long list of smaller ones. All are fixed, and the order and assembly guides are written.</p>
+    <ul>
+      <li><b>The display connector faced the wrong way.</b> The FH34SRJ takes the ribbon on its fitting-nail side, so the display could never have been plugged in. J1 is turned around with its pins remapped. It also moved 1.7 mm, so the ribbon's U-bend keeps Good Display's 0.5 mm minimum radius.</li>
+      <li><b>JLC would have built it wrong.</b> These are all fixed: the board passes every design-rule check, and a probe of JLC's limits is clean.
+        <ul>
+          <li>The placement file used the wrong coordinates, so every part would have landed about 141 mm off.</li>
+          <li>The ESD chip needed a rotation fix.</li>
+          <li>Both power chips' ball pads were below JLC's minimum.</li>
+          <li>The RF match pads were close enough to merge.</li>
+          <li>The ESP32's thermal vias sat open inside its solder paste.</li>
+          <li>Traces ran under the touch electrodes.</li>
+        </ul>
+      </li>
+      <li><b>Better parts, same size:</b>
+        <ul>
+          <li>a buck inductor with 2.5× the current headroom;</li>
+          <li>lower-leakage diodes;</li>
+          <li>display rail caps that keep their value at 20 V;</li>
+          <li>genuine ST ESD protection;</li>
+          <li>the charger filter and caps TI asks for;</li>
+          <li>series resistors on the touch pads;</li>
+          <li>the mic moved off a pin the ESP32 drives during flashing.</li>
+        </ul>
+      </li>
+      <li><b>Antenna re-simulated on the new layout:</b> one part changes (L3 1.2 → 0.8 nH). The in-band loss is now at worst 0.78 dB, in the case and on the wrist.</li>
+      <li><b>Ordering:</b> JLC only assembles boards in a frame of at least 70 × 70 mm, and its own panel would have meant paying for 16 boards. The board now ships in its own frame with snap-off tabs. Slightly wider vias and dropping a needless impedance test cut the bare boards from about US$96 to US$46.</li>
+      <li><b>Thinner?</b> Not without a trade-off:
+        <ul>
+          <li>the tallest parts (the display connector, the booster inductor and the mic) have no lower equivalents;</li>
+          <li>JLC won't assemble a 4-layer board under 0.6 mm;</li>
+          <li>no thinner display exists.</li>
+        </ul>
+        A 2.5 mm cell would make the case 6.30 mm, at 40 mAh instead of up to 55.</li>
+      <li><b>Case:</b>
+        <ul>
+          <li>the board now sits 0.2 mm off the walls (JLC cuts outlines to ±0.2 mm), and six crush ribs centre it;</li>
+          <li>the mic vent takes ePTFE film you can buy;</li>
+          <li>every TPU part is now 90A;</li>
+          <li>the dock has a wiring diagram.</li>
+        </ul>
+      </li>
+      <li><b>Ready to order:</b> <a href="https://github.com/backmeupplz/project-horae/blob/main/ORDER.md">ORDER.md</a> has every JLC setting and a shopping list with Canadian sources: about C$640 to C$780 for 2 watches and a dock. <a href="https://github.com/backmeupplz/project-horae/blob/main/ASSEMBLY.md">ASSEMBLY.md</a> covers the test print, bench bring-up and assembly.</li>
+    </ul>
+    <div class="photos">
+      <a href="media/2026-10-06/board-top.png"><img src="media/2026-10-06/board-top.png" alt="The reworked board, 33.6 × 16.0 mm: display connector turned to face the ribbon, crystals and decoupling at their pins" loading="lazy"></a>
+      <a href="media/2026-10-06/board-panel.png"><img src="media/2026-10-06/board-panel.png" alt="The board in its own 70 × 70 mm frame with snap-off tabs, fiducials and tooling holes, so JLC assembles exactly 2 or 5" loading="lazy"></a>
+      <a href="media/2026-10-06/cad-section.png"><img src="media/2026-10-06/cad-section.png" alt="Section: the display ribbon's single U-bend into the turned connector, with the 6.80 mm stack-up" loading="lazy"></a>
+      <a href="media/2026-10-06/rf-s11-v4.png"><img src="media/2026-10-06/rf-s11-v4.png" alt="openEMS: antenna S11 on the new layout, in the case and on the wrist, with the new 0.8 nH match" loading="lazy"></a>
+      <a href="media/2026-10-06/cad-board-in-case.png"><img src="media/2026-10-06/cad-board-in-case.png" alt="The new board in the top shell, parts labelled" loading="lazy"></a>
+      <a href="media/2026-10-06/cad-mic.png"><img src="media/2026-10-06/cad-mic.png" alt="Mic duct section with the ePTFE vent patch seated under the lip" loading="lazy"></a>
+      <a href="media/2026-10-06/cad-dock-wiring.png"><img src="media/2026-10-06/cad-dock-wiring.png" alt="Dock wiring: which spring pin goes to which USB-C breakout pad, and the magnet poles" loading="lazy"></a>
+      <a href="media/2026-10-06/board-bottom.png"><img src="media/2026-10-06/board-bottom.png" alt="Board bottom: dock pads, square + and round − battery pads, motor pads and debug pads over the flat part of the cell" loading="lazy"></a>
+    </div>
+    <div class="cards">
+      <a href="https://github.com/backmeupplz/project-horae/blob/main/ORDER.md"><b>Order</b><span>JLC settings, shopping list, totals</span></a>
+      <a href="https://github.com/backmeupplz/project-horae/blob/main/ASSEMBLY.md"><b>Assembly</b><span>Print, bring-up, assembly, firmware rules</span></a>
+      <a href="https://github.com/backmeupplz/project-horae/blob/main/hardware/README.md"><b>Hardware README</b><span>Design, review changes, bring-up checks</span></a>
+    </div>
+  </li>
+
+  <li class="entry">
     <time class="mono" datetime="2026-10-06">2026-10-06 · Day 3</time>
     <h2>A small charging dock, fewer printed parts <span class="tag">design</span></h2>
     <p>The cut-cable charging head is replaced by a small desk dock, and the print list gets shorter. The watch stays 35.6 × 18.0 × 6.80 mm.</p>

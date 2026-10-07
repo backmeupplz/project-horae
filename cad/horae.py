@@ -2,7 +2,7 @@
 """Project Horae rev A mechanics: two snap-together shells, captured soft parts, magnetic charging head, checks,
 exports, renders.
 
-    .venv/bin/python cad/horae.py              # everything (cad/out/*, media/2026-10-06/cad-*.png)
+    .venv/bin/python cad/horae.py              # everything (cad/out/*, media/2026-10-07/cad-*.png)
     .venv/bin/python cad/horae.py --no-render
     .venv/bin/python cad/horae.py --thin       # spec with the 2.5 mm cell -> cad/out/variant-thin/, no renders
 
@@ -12,11 +12,14 @@ All shared dimensions come from spec.py. One filament per print (A1 mini, no AMS
   bottom_shell  PETG, printed floor-down: floor plate + motor/pogo/magnet block + antenna-end support block, 4 snap
                 bumps that click into recesses in the top shell's end walls
   TPU 90A       captured by the closed case: bottom_seal (radial ring between the shells), bezel_gasket, cushions
-                (glass corners), pogo_seals (one piece), mic_seal; the mic vent membrane sits in the gasket layer
+                (glass corners), pogo_seals (one piece), mic_seal; the mic vent is a 1.4 x 1.0 patch of bare 0.25 ePTFE
+                film in a seat under the lip (the glass clamps it)
   variant-cf/   PETG-CF top shell with PETG antenna window + 2 touch windows (captured inserts), PETG bottom shell
   plates/       one ready-to-print 3MF per filament, every part laid out on a 180 x 180 A1 mini plate
   dock/         charging dock: dock_base tray + dock_lid plate (PETG) capturing 4 spring pins, 4 magnets and a
                 USB-C breakout (4 wires, the only soldering), TPU feet
+Cell: the pocket takes at most 21.4 x 16.0 x 3.25 mm including the PCM (PCM end <= 3.5 thick, <= 2.5 long); buy
+<= 3.05 thick to keep >= 0.2 mm of swell room under the PCB. A 301520 (20 +-2 long) must measure <= 21.4.
 If hardware/out/horae.step exists it replaces the placeholder PCB.
 """
 import math
@@ -42,7 +45,7 @@ if THIN:                  # re-run spec.py with the 2.5 mm cell so every derived
     exec(compile(src, str(ROOT / "spec.py"), "exec"), S.__dict__)
 
 OUT = ROOT / "cad" / "out" / ("variant-thin" if THIN else "")
-MEDIA = ROOT / "media" / "2026-10-06"
+MEDIA = ROOT / "media" / "2026-10-07"
 BOARD_STEP = ROOT / "hardware" / "out" / "horae.step"
 
 # --- cad-only dimensions (nothing here touches the PCB) ---
@@ -94,10 +97,23 @@ MIC_SEAL = 0.25       # foam (PORON) ring on the mic lid: compressed to this und
 MIC_BORE, MIC_HOLE = 0.5, 0.6          # duct (a groove in the rib face, open to the glass-edge slit), lip outlet
 MIC_RIB_FIT = 0.05    # glass clearance at the local rib that narrows the glass-edge slit over the mic (normal 0.15)
 MIC_RIB_X = 1.3       # rib half-length along X
-VENT_EDGE = 0.3       # border of the rectangular hydrophobic vent around the duct mouth (clamped in the gasket layer)
+VENT_EDGE = 0.3       # border of the rectangular hydrophobic vent around the duct mouth
 VENT_WALL = 0.45      # top-shell wall kept between the vent seat and the top round (local thin spot, reported)
-FFC_L, FFC_D, FFC_H = 12.5, 3.5, 1.0        # FH34SRJ-18S body (Y x X x Z), centred at S.FFC_X
-FPC_T = 0.12          # display FPC tail thickness
+VENT_T = 0.25         # bare ePTFE film (no adhesive): lies on the glass in the gasket layer + a 0.1 recess in the lip ...
+VENT_SLOT = 0.2       # ... and slides 0.2-tall into a slot over the rib (squeezed 0.05): every seat face on a 0.1 layer
+VENT_BORDER = 0.2     # film clamped at least this far around the outlet
+FFC_L, FFC_D, FFC_H = 11.0, 3.8, 1.0        # FH34SRJ-18S body (Y x X x Z, its 3D model), centred at S.FFC_X
+FPC_T = 0.12          # display FPC tail (0.12 +-0.03; 0.30 with the stiffener)
+FPC_TFT = 0.475       # the tail leaves the glass on the TFT's front face, this far above the glass back (GD 0.45-0.5)
+FPC_SLOT = 0.35       # tail underside above the PCB top at J1's slot (its 0.18 stiffener below it)
+FPC_INSERT = 1.3      # into the FH34SRJ slot, which faces the U-bend (-X)
+FPC_STIFF = (3.0, 0.18)   # stiffener at the tail end: length, thickness
+HOOD_Z = S.Z_DISP0 + 0.7  # -X hood underside: the loop tops out at Z_DISP0 + FPC_TFT + FPC_T (~0.6) ...
+HOOD_FOOT = S.Z_DISP0 + 0.15  # ... chamfered down to the end wall here, past the loop's apex (the wall thins under 0.6
+                          # inside the top round above this)
+RIB_CRUSH = 0.05      # board crush ribs on the cavity walls: tips this far inside the nominal board edge
+RIB_X = (-12.0, 8.5)  # long-wall ribs at these x (both walls; clear of the touch pockets, the CF windows and the FPC);
+                      # one more on each end wall at y 0
 # touch + CF variant
 TOUCH_Y = S.PCB_W / 2 - 0.3 - S.TOUCH_W / 2      # electrode centre |y|
 TOUCH_CF_CLEAR = 1.0  # no carbon within this of a touch electrode or of antenna copper
@@ -142,7 +158,6 @@ USB_PCB_T = 1.6       # breakout PCB, centred in the 3.3 mm mid-mount receptacle
 USB_BRD = dict(l=20.32, w=13.97, r=2.54, slot=(5.588, 14.732, 7.874), conn=(9.04, 3.3, 7.876, 14.526),
                holes=((2.286, 10.414), (18.034, 10.414)), hole_d=2.5, pad_y=2.54,
                pads={"GND": 19.05, "VBUS": 16.51, "USB_DM": 8.89, "USB_DP": 6.35})   # Adafruit 6050 Eagle file (mm)
-FFC_SEAT = 0.2        # FPC tail stops this short of the FFC connector back
 
 IN_R = S.PCB_CORNER_R + FIT                       # cavity corners follow the PCB
 HL, HW = S.CAV_L / 2, S.CAV_W / 2
@@ -204,23 +219,23 @@ def display():
     return box(S.DISP_X0, S.DISP_X1, -S.DISP_W / 2, S.DISP_W / 2, S.Z_DISP0, S.Z_DISP1)
 
 
-def fpc():
-    """Tail leaves the -X glass edge, U-bends down within FPC_BEND, runs back over the PCB into the FFC."""
+def fpc(extra=0.0):
+    """Display tail (GD GDEM0097T61): leaves the -X glass edge on the TFT's front face, one 180 deg backward bend
+    (GD: inner R > 0.5, 1.0-1.5 mm past the glass edge), then back over the PCB FPC_INSERT into J1's slot, which faces
+    the bend. The two legs' heights set the bend radius; the tail length (+ extra) sets how far out the bend reaches."""
     t, w = FPC_T, S.FPC_W
-    zt, zb = S.Z_DISP0 + t / 2, S.Z_PCB1 + 0.45            # centre lines of the two runs
+    zt = S.Z_DISP0 + FPC_TFT + t / 2                        # centre lines: top leg on the TFT front face ...
+    zb = S.Z_PCB1 + FPC_SLOT + t / 2                        # ... lower leg at J1's slot
     r, zc = (zt - zb) / 2, (zt + zb) / 2
-    xc = S.DISP_X0 - S.FPC_BEND + 0.2 + r + t / 2           # bend within FPC_BEND of the glass edge
-    a = S.DISP_X0 - xc
-    natural_tip = xc + S.FPC_LEN - a - math.pi * r
-    ffc_back = S.FFC_X + FFC_D / 2
-    tip = min(natural_tip, ffc_back - 0.2)                  # connector back stops it; the rest is slack
+    tip = S.FFC_X - FFC_D / 2 + FPC_INSERT
+    run = (S.FPC_LEN + extra - math.pi * r - (tip - S.DISP_X0)) / 2   # straight top leg past the glass edge
+    xc = S.DISP_X0 - max(run, 0.01)
     ring = Pos(xc, 0, zc) * Rot(90, 0, 0) * (Cylinder(r + t / 2, w) - Cylinder(r - t / 2, w))
-    tail = (box(xc, S.DISP_X0, -w / 2, w / 2, zt - t / 2, zt + t / 2)
-            + (ring & box(xc - 2, xc, -w, w, zc - 2, zc + 2))
+    tail = (box(xc, S.DISP_X0, -w / 2, w / 2, zt - t / 2, zt + t / 2) + (ring & box(xc - 2, xc, -w, w, zc - 2, zc + 2))
             + box(xc, tip, -w / 2, w / 2, zb - t / 2, zb + t / 2))
-    stiffener = box(tip - 3.5, tip, -w / 2, w / 2, zb + t / 2, zb + t / 2 + 0.3)
-    return tail, stiffener, dict(slack=natural_tip - tip, insertion=tip - (S.FFC_X - FFC_D / 2),
-                                 short=ffc_back - natural_tip, natural_tip=natural_tip, bend_r=r)
+    sl, st = FPC_STIFF
+    stiffener = box(tip - sl, tip, -w / 2, w / 2, zb - t / 2 - st, zb - t / 2)
+    return tail, stiffener, dict(r=r, run=run, tip=tip, top=zt + t / 2, apex=run + r + t / 2)   # apex: past the glass
 
 
 def touch_pads():
@@ -525,8 +540,8 @@ def mic_seal_walls():
 
 
 def vent_box():
-    """Rectangular hydrophobic vent over the duct top, in the gasket layer under the lip: inner border on the glass,
-    outer on the rib/upper wall; the lip clamps it when the glass is pushed up."""
+    """Footprint of the mic vent: a patch of bare ePTFE film over the duct top, its inner part on the glass (the
+    cushions press it up into a recess in the lip), its outer part in a slot over the rib (VENT_WALL to the top round)."""
     x, _, _ = mic_port()
     _, yd = duct_xy()
     sy, r = mic_sy(), MIC_BORE / 2 + VENT_EDGE
@@ -536,8 +551,18 @@ def vent_box():
 
 
 def vent():
+    """The film installed: VENT_T on the glass, stepping down at the rib face into the VENT_SLOT slot."""
     x0, x1, y0, y1 = vent_box()
-    return box(x0, x1, y0, y1, S.Z_DISP1, Z_LIP0)
+    sy, (yi, yo) = mic_sy(), sorted((abs(y0), abs(y1)))
+    return (box(x0, x1, sy * yi, sy * RIB_IN, S.Z_DISP1, S.Z_DISP1 + VENT_T)
+            + box(x0, x1, sy * RIB_IN, sy * yo, Z_LIP0 - VENT_SLOT, Z_LIP0))
+
+
+def outlet_xy():
+    """Lip outlet over the vent: on the duct axis, moved in until the film keeps VENT_BORDER all round it."""
+    xd, yd = duct_xy()
+    yo = max(abs(q) for q in vent_box()[2:])
+    return xd, mic_sy() * min(abs(yd), yo - VENT_BORDER - MIC_HOLE / 2)
 
 
 # ---------------------------------------------------------------- outer shape
@@ -631,11 +656,12 @@ def ear_profile(s):
 def ear_stations(n=17):
     """Loft stations (x, zo, f, zb, r) along the ear, closer together at both ends; r = the inner top edge's round:
     none at the knee (where the ear's top still is the flank, so it hands over from the body's corner without a
-    step), EAR_INNER_R along the fall, fading out onto the boss (whose own edge stays sharp)."""
+    step), EAR_INNER_R along the fall, fading out onto the boss (whose own edge stays sharp). The round never drops
+    under 0.05: the step it leaves where the loft meets the sharp boss must mesh watertight (0.03 did not, thin case)."""
     def ease(u):
         u = min(max(u, 0), 1)
         return 3 * u * u - 2 * u ** 3
-    return [ear_profile(s) + (max(EAR_INNER_R * ease(s / 0.3) * (1 - ease((s - 0.55) / 0.45)), 0.03),)
+    return [ear_profile(s) + (max(EAR_INNER_R * ease(s / 0.3) * (1 - ease((s - 0.55) / 0.45)), 0.05),)
             for s in (1 - np.cos(np.linspace(0, math.pi, n))) / 2]
 
 
@@ -741,10 +767,23 @@ def window_cut():
 
 
 def fpc_hood():
-    """-X end over the FPC bend: carries the lip there, chamfered underneath to clear the bend."""
-    zl, yl = S.Z_DISP0 + FPC_T + 0.05, S.LEDGE_Y + 0.1
-    return prism_xz([(-HL - 0.3, zl - 0.42), (-HL, zl - 0.42), (-HL + 0.3, zl), (S.DISP_X0 - GLASS_FIT, zl),
+    """-X end over the FPC bend: carries the lip there, HOOD_Z underneath (clears the loop's top leg), chamfered down
+    to the end wall beyond the loop's apex."""
+    zl, yl = HOOD_Z, S.LEDGE_Y + 0.1
+    return prism_xz([(-HL - 0.3, HOOD_FOOT), (-HL, HOOD_FOOT), (-HL + 0.3, zl), (S.DISP_X0 - GLASS_FIT, zl),
                      (S.DISP_X0 - GLASS_FIT, Z_LIP0), (-HL - 0.3, Z_LIP0)], -yl, yl)
+
+
+def board_ribs():
+    """Crush ribs on the cavity walls beside the board edge, 2 per long wall and 1 per end: their tips reach
+    RIB_CRUSH inside the nominal board outline, so the board presses in centred (opposite ribs crush alike). 45 deg
+    lead-in at the open (lower) end; nothing above the board top, where parts may sit at the board edge."""
+    p, z0, z1 = S.PCB_CLEAR + RIB_CRUSH, S.Z_PCB0, S.Z_PCB1
+    rib = extrude(make_face(Polyline((0.05, -0.4, z0), (0.05, 0.4, z0), (-p, 0.1, z0), (-p, -0.1, z0), close=True)), z1 - z0)
+    rib -= prism_xz([(0.2 - p, z0 - 0.01), (-0.8 - p, z0 - 0.01), (-0.8 - p, z0 + 0.99)], -1, 1)   # (built on a +X wall)
+    out = [Pos(HL, 0, 0) * rib, Pos(-HL, 0, 0) * Rot(0, 0, 180) * rib]
+    out += [Pos(x, sy * HW, 0) * Rot(0, 0, sy * 90) * rib for x in RIB_X for sy in (-1, 1)]
+    return union(out)
 
 
 def snap_profile(sx, grow_tip=0.0, grow_top=0.0):
@@ -779,7 +818,7 @@ def glass_pocket():
 
 def mic_features(f):
     """Mic beside the glass: frame relieved over the mic + seal ring, rib narrowing the glass-edge slit, duct up to
-    the gasket layer, vent seat there, outlet through the lip."""
+    the gasket layer, vent seat there (a recess in the lip over the glass, a slot over the rib), outlet through the lip."""
     x, y, zt = mic_port()
     sy, zr = mic_sy(), zt + MIC_SEAL
     if MIC_BOX:
@@ -790,8 +829,10 @@ def mic_features(f):
     xd, yd = duct_xy()
     f -= cyl(xd, yd, zr - 1, S.Z_DISP1 + 0.01, MIC_BORE)
     vx0, vx1, vy0, vy1 = vent_box()
-    f -= box(vx0 - 0.05, vx1 + 0.05, vy0 - 0.05, vy1 + 0.05, S.Z_DISP1, Z_LIP0)
-    return f - cyl(xd, yd, Z_LIP0 - 0.01, S.CASE_T + 1, MIC_HOLE)
+    yi, yo = sorted((abs(vy0), abs(vy1)))
+    f -= box(vx0 - 0.05, vx1 + 0.05, sy * (yi - 0.05), sy * RIB_IN, S.Z_DISP1, S.Z_DISP1 + VENT_T)
+    f -= box(vx0 - 0.05, vx1 + 0.05, sy * RIB_IN, sy * (yo + 0.05), Z_LIP0 - VENT_SLOT, Z_LIP0)
+    return f - cyl(*outlet_xy(), Z_LIP0 - 0.01, S.CASE_T + 1, MIC_HOLE)
 
 
 def touch_thin():
@@ -815,6 +856,7 @@ def top_shell(style=None, probe=False):
         for sy in (-1, 1):                                                     # pocket corners, filled then re-cut
             inner += box(xa, xb, sy * (Y_TOP - 1.2), sy * (Y_TOP + 0.05), S.Z_DISP0, Z_LIP0)
     f += (inner + fpc_hood()) & slab(S.CAV_L, S.CAV_W, IN_R, z0 - 0.5, Z_LIP0) & body_skin(style)   # never through the round
+    f += board_ribs()
     f -= glass_pocket()                                                        # leaves the pocket corners filled
     f -= window_cut()
     for sx in (-1, 1):
@@ -1088,18 +1130,19 @@ def dock_usb():
     return pcb + shell
 
 
-def dock_wires():
-    """4 x 30 AWG from the breakout's header pads (PCB underside) to the pins' solder cups, along the floor."""
+def dock_wires(nets=False):
+    """4 x 30 AWG from the breakout's header pads (PCB underside) to the pins' solder cups, along the floor.
+    nets: {net: wire} instead of one solid."""
     lv = dock_levels()
     z = lv["pin_bot"] + 0.55
-    out = []
+    out = {}
     for x, y, net in POGO:
         px, py = usb_xy(USB_BRD["pads"][net], USB_BRD["pad_y"])
         sy, dy = (1 if y > 0 else -1), (2.0 if x < S.MOTOR_X else 1.2)  # far pins route inside: no crossings
         pts = [(px, py, lv["pcb0"]), (px, py, z), (px, y - sy * dy, z), (x + 0.6, y - sy * dy, z), (x, y - sy * 0.45, z)]
-        out += [Solid.make_cylinder(0.25, math.dist(a, b), Plane(origin=a, z_dir=np.subtract(b, a)))
-                + Solid.make_sphere(0.25, Plane(origin=b)) for a, b in zip(pts, pts[1:])]
-    return union(out)
+        out[net] = union([Solid.make_cylinder(0.25, math.dist(a, b), Plane(origin=a, z_dir=np.subtract(b, a)))
+                          + Solid.make_sphere(0.25, Plane(origin=b)) for a, b in zip(pts, pts[1:])])
+    return out if nets else union(list(out.values()))
 
 
 def dock_feet():
@@ -1231,7 +1274,7 @@ def snap_numbers(E=E_PETG):
     """Per snap at each end: wall stiffness (cantilever strip from the stiff block above), deflection force, strain,
     closing and opening force (wedge with friction)."""
     out = {}
-    for sx, z_top in ((-1, S.Z_DISP0 + FPC_T + 0.05 - 0.42), (1, S.Z_PCB1 + S.GAP)):
+    for sx, z_top in ((-1, HOOD_FOOT), (1, S.Z_PCB1 + S.GAP)):
         H = z_top - SNAP_Z
         w = SNAP_W + 2 * H
         k = 3 * E * (w * S.WALL ** 3 / 12) / H ** 3
@@ -1257,6 +1300,13 @@ def stack_numbers():
     q = k_wall * d_wall
     return dict(cushions=cush, rings=rings, gasket_p=cush / gasket_area, wall_bulge=d_wall, seal_q=q,
                 seal_p=q / (S.FLOOR - 0.07), total=cush + rings)
+
+
+def cell_max():
+    """Largest cell the pocket takes (L, W, T incl. the PCM, no swell room) and the thickest PCM end: from the
+    motor-zone block to BAT_X1 (0.5 short of the antenna), 0.2 a side in the bore, floor to the PCB's bottom copper."""
+    room = S.Z_PCB0 - 0.03 - S.FLOOR
+    return S.BAT_X1 - X_MZ1, S.CAV_W - 0.4, room, room + BAT_RECESS
 
 
 def magnet_pull(d1, t1, d2, t2, gap, br=1.45):
@@ -1361,10 +1411,36 @@ def checks(m, fit, comps):
     near_cf = max(interference(v["top_shell_cf"], b) for b in carbon_keepouts(ANT_BB))
     verdict(near_cf < 1e-3, f"CF variant: no carbon within {TOUCH_CF_CLEAR} mm of antenna copper or touch electrodes "
             f"({near_cf:.4f} mm^3)")
-    print(f"  FPC: tip {fit['insertion']:.2f} mm into the FFC body ({FFC_D} deep), "
-          f"{'slack %.2f' % fit['slack'] if fit['slack'] > 0 else 'short of the back by %.2f' % fit['short']} mm")
+    front = S.FFC_X - FFC_D / 2                                         # J1's slot face (the slot faces -X)
+    j1 = next((sh.bounding_box() for ref, _, sh in comps if ref == "J1"), None)
+    rot = next((f["rot"] for f in kicad_footprints()[0] if f["ref"] == "J1"), None)
+    if j1 is not None:
+        verdict(abs(j1.min.X - front) < 0.05 and rot in (None, 270, -90), f"J1 in the board: slot face at x "
+                f"{j1.min.X:+.2f} (spec FFC_X - {FFC_D / 2:g} = {front:+.2f}), footprint rot {rot} (270: slot toward the bend)")
+    inner, apex = fit["r"] - FPC_T / 2, fit["apex"]
+    long_tail = max(interference(fpc(0.2)[0], m[k]) for k in ("top_shell", "bottom_shell", "pcb"))
+    verdict(inner > 0.5 and apex >= 1.0 and long_tail < 1e-3,
+            f"FPC: one backward bend, R {fit['r']:.2f} centre line ({inner:.2f} inside, GD > 0.5), apex {apex:.2f} past "
+            f"the glass edge ({apex - 0.1:.2f}..{apex + 0.1:.2f} over the +-0.2 tail, the long one clear of the hood "
+            f"and the end wall at {S.FPC_BEND:g}: {long_tail:.4f} mm^3; GD 1.0-1.5), {fit['run']:.2f} straight before it, "
+            f"{FPC_INSERT:g} into J1's slot, top leg {HOOD_Z - fit['top']:.2f} under the hood")
+    crush = interference(board_ribs(), m["pcb"])
+    p = S.PCB_CLEAR + RIB_CRUSH
+    print(f"  board location: 6 crush ribs ({p:.2f} off the walls) reach {RIB_CRUSH:g} into the nominal "
+          f"{S.PCB_L:g} x {S.PCB_W:g} outline ({crush:.3f} mm^3): {RIB_CRUSH - 0.1:+.2f}..{RIB_CRUSH + 0.1:.2f} per side "
+          f"over a +-0.2 board, +{0.003 * HW:.2f} / +{0.003 * HL:.2f} for 0.3 % PETG shrink across / along; opposite "
+          f"ribs crush alike, so the board centres within the ribs' print scatter (+-0.05)")
+    budget = {"pads to board outline (JLC routing registration)": 0.10, "board in the cavity (crush ribs)": 0.05,
+              "bottom shell in the top shell (FIT; the radial seal centres it)": FIT, "pin bores (print)": 0.05,
+              f"pin barrel {PIN['barrel']} in its {PIN_BORE:g} bore": (PIN_BORE - PIN["barrel"]) / 2,
+              "plunger in its barrel": 0.02}
+    worst, rss = sum(budget.values()), math.sqrt(sum(v * v for v in budget.values()))
+    verdict(worst < POGO_PAD_D / 2 and rss + PIN["plunger"] / 2 < POGO_PAD_D / 2,
+            f"pogo alignment, plunger centre to pad centre: worst {worst:.2f}, RSS {rss:.2f} (pad radius "
+            f"{POGO_PAD_D / 2:g}; the {PIN['plunger']} plunger stays wholly on the pad within "
+            f"{POGO_PAD_D / 2 - PIN['plunger'] / 2:.2f}): " + ", ".join(f"{k} {v:.3g}" for k, v in budget.items()))
     for net, (x, y), got_net in pogo_vs_pcb():
-        verdict(got_net in (net, None), f"dock pin {net:<6} at ({x:+.2f}, {y:+.2f}): PCB pad there is "
+        verdict(got_net in (net, None) or got_net.startswith(net + "_"), f"dock pin {net:<6} at ({x:+.2f}, {y:+.2f}): PCB pad there is "
                 f"{got_net or 'not found (no .kicad_pcb?)'}")
 
     print("closure: snaps, seal, preload")
@@ -1409,6 +1485,11 @@ def checks(m, fit, comps):
           f"(4 sprung fingers + soldered leads); battery {S.BAT_L:.1f} x {S.BAT_W:g} x {S.BAT_T:g}, PCM end "
           f"{S.BAT_T + BAT_PCM_EXTRA:g} thick in a {BAT_RECESS} recess ({S.FLOOR - BAT_RECESS:.2f} floor left, "
           f"{S.Z_PCB0 - (S.FLOOR - BAT_RECESS + S.BAT_T + BAT_PCM_EXTRA):.2f} under the PCB)")
+    l_max, w_max, room, pcm = cell_max()
+    print(f"  cell pocket: largest cell {l_max:.2f} x {w_max:.1f} x {room:.2f} incl. the PCM (no swell room; PCM end "
+          f"<= {pcm:.2f} thick, <= {BAT_RECESS_L:g} long in the recess; the +X end keeps 0.5 to the antenna); a "
+          f"{S.BAT_T + 0.05:.2f} cell leaves {room - S.BAT_T - 0.05:.2f} to swell (designed {room - S.BAT_T:.2f} at "
+          f"{S.BAT_T:g}); a 301520 (20 +-2 long) must measure <= {l_max:.2f}")
     print(f"  straps {STRAP_W:.0f} mm on {BAR_D} spring bars: ears {EAR_W:.2f} wide, drilled {BAR_TIP_HOLE} through, "
           f"{EAR_R - BAR_TIP_HOLE / 2:.2f} mm around the hole; bar axis z {Z_BAR:.2f} "
           f"(strap {Z_BAR - STRAP_R:.2f}..{Z_BAR + STRAP_R:.2f} of {S.CASE_T:.2f})")
@@ -1420,12 +1501,18 @@ def checks(m, fit, comps):
     inner, outer, side = mic_seal_walls()
     print(f"  mic port {2 * MIC_PORT_R:.2f} at ({x:.2f}, {y:+.2f}, z {z:.2f}): edge {abs(y) - MIC_PORT_R - S.DISP_W / 2:+.2f} "
           f"from the glass edge; duct {MIC_BORE} groove at |y| {abs(yd):.2f}; seal ring walls {inner:.2f} (under the "
-          f"glass) / {outer:.2f} (lid edge) / {side:.2f}; vent {vent_box()[1] - vent_box()[0]:.2f} x "
-          f"{abs(vent_box()[3] - vent_box()[2]):.2f}; outlet {MIC_HOLE}")
+          f"glass) / {outer:.2f} (lid edge) / {side:.2f}")
+    vx0, vx1, vy0, vy1 = vent_box()
+    (yi, yo), (_, yt) = sorted((abs(vy0), abs(vy1))), outlet_xy()
+    border = min(abs(yt) - MIC_HOLE / 2 - yi, yo - abs(yt) - MIC_HOLE / 2, (vx1 - vx0 - MIC_HOLE) / 2)
+    verdict(border >= VENT_BORDER - 1e-6, f"mic vent: {vx1 - vx0:.2f} x {yo - yi:.2f} patch of bare {VENT_T:g} ePTFE "
+            f"film (no adhesive): {S.DISP_W / 2 - yi:.2f} of it on the glass under a {VENT_T - S.BEZEL_GASKET:.2f} recess "
+            f"in the lip (the cushions press it up), {yo - RIB_IN:.2f} in a {VENT_SLOT:g} slot over the rib (squeezed "
+            f"{VENT_T - VENT_SLOT:.2f}); outlet {MIC_HOLE} at |y| {abs(yt):.2f}, film border around it >= {border:.2f}")
     ok &= dock_checks(m)
     worst = 0.0
     for a, b in pairs:
-        val = interference(m[a], m[b])
+        val = interference(m[a], m[b]) - (crush if (a, b) == ("top_shell", "pcb") else 0.0)   # ribs crush by design
         worst = max(worst, val)
         if val > 1e-3:
             ok = False
@@ -1504,6 +1591,12 @@ def summary(m):
         sz = s.bounding_box().size
         dens = DENSITY["PETG-CF" if "CF" in mat else "TPU" if "TPU" in mat else "PETG"]
         print(f"{k:<15} {mat:<19} {sz.X:5.1f} x {sz.Y:5.1f} x {sz.Z:4.2f} {vol(s) * dens:6.2f}  {note}")
+    l, w, t, pcm = cell_max()
+    print(f"cell: the pocket takes at most {l:.2f} x {w:.1f} x {t:.2f} incl. the PCM (PCM end <= {pcm:.2f} thick, <= "
+          f"{BAT_RECESS_L:g} long); buy <= {S.BAT_T + 0.05:.2f} thick to keep >= {t - S.BAT_T - 0.05:.2f} of swell room")
+    x0, x1, y0, y1 = vent_box()
+    print(f"mic vent: cut a {x1 - x0:.2f} x {abs(y1 - y0):.2f} patch of bare {VENT_T:g} ePTFE film (no adhesive), lay it "
+          f"on the lip over the outlet and slide its outer edge into the slot (before the bezel gasket)")
 
 
 def export(m):
@@ -1520,12 +1613,22 @@ def export(m):
         kids.append(sh)
     OUT.mkdir(parents=True, exist_ok=True)
     export_step(Compound(children=kids, label="horae_rev_a"), str(OUT / "horae-assembly.step"))
-    meshes = {}
+    from OCP.BRepTools import BRepTools
+    meshes, leaky = {}, []
     for k, (folder, *_ ) in PRINT.items():
         (OUT / folder).mkdir(exist_ok=True)
-        stl = OUT / folder / f"{k}.stl"
-        export_stl(printable(m, k), str(stl), tolerance=0.005, angular_tolerance=0.1)
-        meshes[k] = trimesh.load(stl)
+        stl, part = OUT / folder / f"{k}.stl", printable(m, k)
+        for tol, ang in ((0.005, 0.1), (0.006, 0.1), (0.005, 0.12), (0.008, 0.1)):   # OCCT's mesher can leave a
+            BRepTools.Clean_s(part.wrapped)                                         # non-manifold speck where tiny
+            export_stl(part, str(stl), tolerance=tol, angular_tolerance=ang)        # faces meet: re-mesh a bit coarser
+            mesh = trimesh.load(stl)   # OCCT leaves stray sliver triangles on some faces: slicers flag them as non-manifold
+            meshes[k] = trimesh.util.concatenate([b for b in mesh.split(only_watertight=False) if len(b.faces) > 3])
+            if meshes[k].is_watertight:
+                break
+        else:
+            print(f"WARNING {k}: mesh not watertight (the slicer's repair handles small defects)")
+            leaky.append(k)
+        meshes[k].export(stl)
         trimesh.Scene({k: meshes[k]}).export(OUT / folder / f"{k}.3mf")
     shutil.rmtree(OUT / "plates", ignore_errors=True)
     (OUT / "plates").mkdir()
@@ -1536,18 +1639,23 @@ def export(m):
             scene.add_geometry(meshes[k].copy().apply_translation([x, y, 0] - meshes[k].bounds[0] * [1, 1, 0]),
                                node_name=k, geom_name=k)
         scene.export(OUT / "plates" / f"{plate}.3mf")
+    print(f"meshes: {len(meshes)} parts, " + (f"NOT watertight: {', '.join(leaky)}" if leaky else "all watertight"))
+    return leaky
 
 
 # ---------------------------------------------------------------- colours, materials
 COLORWAYS = {  # name: (case filament, case hex, case finish, TPU filament, TPU hex, TPU finish, strap, strap hex)
-    "Stealth": ("Bambu PETG-CF Black", "#2C2C2C", "cf", "TPU 95A HF Black", "#1A1C22", "tpu", "black FKM", "#1E1F21"),
+    # TPU parts are sized for 90A (95A HF is about twice as stiff): Bambu TPU 90A colours only (CA store, 2026-10)
+    "Stealth": ("Bambu PETG-CF Black", "#2C2C2C", "cf", "TPU 90A Black", "#000000", "tpu", "black FKM", "#1E1F21"),
     "Titanium": ("Bambu PETG-CF Titan Gray", "#5E5F60", "cf", "TPU 90A Quicksilver", "#9EA2A2", "tpu", "charcoal nylon", "#3A3C40"),
     "Arctic": ("Bambu PETG Matte White", "#E9E9E6", "matte", "TPU 90A Crystal Blue", "#7EB4E1", "tpu_clear", "white silicone", "#E6E6E2"),
-    "Galaxy": ("Prusament PETG Galaxy Black", "#1E1F21", "glitter", "TPU 95A HF Blue", "#0072CE", "tpu", "navy", "#1F2A44"),
+    "Galaxy": ("Prusament PETG Galaxy Black", "#1E1F21", "glitter", "TPU 90A Grape Jelly", "#D6ABFF", "tpu_clear", "navy",
+               "#1F2A44"),
     "Indigo": ("Bambu PETG-CF Indigo Blue", "#46527A", "cf", "TPU 90A White", "#F2F2E6", "tpu", "navy", "#1F2A44"),
-    "Malachite": ("Bambu PETG-CF Malachite Green", "#3A8F7C", "cf", "TPU 95A HF Black", "#1A1C22", "tpu", "black", "#1E1F21"),
+    "Malachite": ("Bambu PETG-CF Malachite Green", "#3A8F7C", "cf", "TPU 90A Black", "#000000", "tpu", "black", "#1E1F21"),
     "Paper": ("Bambu PETG Basic Dark Beige", "#DBC8B6", "gloss", "TPU 90A Cocoa Brown", "#5C4738", "tpu", "tan leather", "#A97C55"),
-    "Ember": ("Bambu PETG Matte Black", "#262628", "matte", "TPU 95A HF Red", "#C8102E", "tpu", "black", "#1E1F21"),
+    "Ember": ("Bambu PETG Matte Black", "#262628", "matte", "TPU 90A Blaze", "#D21B3C", "tpu", "black", "#1E1F21"),  # gradient
+    # spool (#F1AAA8 pink to #D21B3C red): the whole TPU plate takes about 10 cm of filament, so it comes out one shade
 }
 INSERTS = {  # CF colorways: plain-PETG antenna/touch windows, matte and colour-matched so they disappear (rendered
     # in the case colour, matte, without the carbon grain); pick the swatch closest to the printed CF part
@@ -2047,6 +2155,68 @@ def render_sealing(m):
              size=(1700, 1500))
 
 
+WIRE_COLORS = {"VBUS": "#c0392b", "GND": "#202124", "USB_DP": "#2e9d4e", "USB_DM": "#f2f2ee"}   # USB cable colours
+USB_SILK = {"VBUS": "VBUS", "GND": "GND", "USB_DP": "D+", "USB_DM": "D-"}   # the 6050's silkscreen at each pad
+
+
+def dock_wiring():
+    """[(pin name in the owner's view, (x, y), net, 6050 pad label)]: tray open (lid off) and seen from above with the
+    USB-C port toward the owner (-Y near, +X right). The pins stand in a 2 x 2 group at the left end."""
+    xs = sorted({x for x, _ in POGO_XY})
+    return [(f"{'back' if y > 0 else 'front'}-{'left' if x == xs[0] else 'right'}", (x, y), net, USB_SILK[net])
+            for x, y, net in sorted(POGO, key=lambda q: (-q[1], q[0]))]
+
+
+def render_dock_wiring(m):
+    """Top view into the open tray (lid off, USB-C port toward the viewer): each spring pin's net, its wire to the
+    labelled 6050 pad, the magnets' poles."""
+    from PIL import Image, ImageDraw
+    w, h, sc, xc, yc = 1700, 1250, 30.0, 1060, 640                    # image, px per mm, image px of the tray centre
+    p = studio(w, h)
+    add(p, m, ["dock_base", "dock_pins", "dock_magnets", "dock_usb"], alpha={"dock_usb": 0.5})
+    for net, sh in dock_wires(nets=True).items():
+        p.add_mesh(pvmesh(sh), color=linear_rgb(WIRE_COLORS[net]), pbr=True, roughness=0.5, smooth_shading=True)
+    finish(p, ssao=False)
+    p.enable_parallel_projection()
+    x0, y0 = (w / 2 - xc) / sc, (yc - h / 2) / sc                    # world xy at the image centre
+    cam(p, (x0, y0, 80), (x0, y0, 0), up=(0, 1, 0))
+    p.camera.parallel_scale = h / 2 / sc
+    p.renderer.ResetCameraClippingRange()
+    img = Image.fromarray(p.screenshot(return_img=True))
+    p.close()
+    px = lambda x, y: (xc + x * sc, yc - y * sc)
+    d, f, fb, ink = ImageDraw.Draw(img), label_font(25), label_font(30), (30, 30, 30)
+    top, bot = px(0, DOCK_HW)[1], px(0, -DOCK_HW)[1]
+    for name, (x, y), net, silk in dock_wiring():                    # leaders out past the tray edge, text to the left
+        x0, y1 = px(x, y)
+        ty = top - (70 if "left" in name else 150) if y > 0 else bot + (70 if "left" in name else 150)
+        d.line([(x0, y1), (x0, ty)], fill=(70, 70, 70), width=2)
+        d.ellipse([x0 - 6, y1 - 6, x0 + 6, y1 + 6], outline=(200, 30, 30), width=3)
+        d.multiline_text((x0 - 12, ty + (30 if y > 0 else -30)), f"{name} pin: {silk}\nwire to the 6050 pad marked {silk}",
+                         font=f, fill=ink, anchor="rd" if y > 0 else "ra", align="right")
+    silk = {USB_SILK[n]: bx for n, bx in USB_BRD["pads"].items()} | {"SBU2": 13.97, "CC1": 11.43, "SBU1": 3.81, "CC2": 1.27}
+    for name, bx in silk.items():                                     # the 8-pad row behind the receptacle
+        tx, ty = px(*usb_xy(bx, USB_BRD["pad_y"]))
+        used = name in USB_SILK.values()
+        d.ellipse([tx - 13, ty - 13, tx + 13, ty + 13], outline=(200, 30, 30) if used else (150, 150, 150), width=3)
+        d.text((tx, ty - 20), name, font=label_font(24 if used else 19), fill=(20, 20, 20) if used else (120, 120, 120),
+               anchor="mb")
+    for x, y in DOCK_MAGS:
+        tx, ty = px(x, y + (2.1 if y > 0 else -2.1))
+        d.text((tx, ty), "S up" if y > 0 else "N up", font=fb, fill=(20, 20, 20), anchor="mm")
+    bx = px(0, 0)[0]
+    d.line([(bx, bot + 15), (bx, bot + 80)], fill=ink, width=4)
+    d.polygon([(bx - 14, bot + 70), (bx + 14, bot + 70), (bx, bot + 95)], fill=ink)
+    d.text((bx, bot + 105), "USB-C port: toward you", font=fb, fill=ink, anchor="mt")
+    d.text((40, 30), "Dock wiring: the open tray (lid off) seen from above, USB-C port toward you", font=label_font(34),
+           fill=ink)
+    d.text((40, 80), "Wires: VBUS red, GND black, D+ green, D- white, from the pin cups along the floor to the 6050 pads.\n"
+           "Magnets: S pole up in the back row, N pole up in the front row, at both ends. SBU and CC pads stay free.",
+           font=label_font(24),
+           fill=(60, 60, 60))
+    img.save(MEDIA / "cad-dock-wiring.png")
+
+
 def render_dock(m):
     """The watch on its charging dock (straps draped) + the dock exploded with the watch lifted off."""
     from PIL import Image, ImageDraw
@@ -2405,12 +2575,14 @@ def render_mic(m, comps):
     fig, ax = plt.subplots(figsize=(16, 9), dpi=100, facecolor="#f4f5f7")
     fig.subplots_adjust(0.02, 0.02, 0.98, 0.92)
     draw_sections(ax, mm, keys, ("x", xd), hatch=("top_shell", "bottom_shell"), flip_y=sy)
-    ay, ad = abs(py), abs(yd)
+    ay, ad, at = abs(py), abs(yd), abs(outlet_xy()[1])
     vx0, vx1, vy0, vy1 = vent_box()
     inner, outer, side = mic_seal_walls()
     zt = S.Z_PCB1
-    notes = [((ad, S.CASE_T - 0.1), (ad - 3.0, S.CASE_T + 0.8), f"outlet {MIC_HOLE:g} mm through the lip"),
-             ((ad - 0.6, S.Z_DISP1 + 0.07), (ad - 8.0, S.CASE_T + 0.35), f"{vx1 - vx0:.1f} x {vy1 - vy0:.1f} mm hydrophobic vent (gasket layer)"),
+    notes = [((at, S.CASE_T - 0.1), (ad - 3.0, S.CASE_T + 0.8), f"outlet {MIC_HOLE:g} mm through the lip"),
+             ((S.DISP_W / 2 - 0.25, S.Z_DISP1 + 0.12), (ad - 8.0, S.CASE_T + 0.35),
+              f"{vx1 - vx0:.1f} x {abs(vy1 - vy0):.1f} mm patch of bare {VENT_T:g} ePTFE: on the glass under a "
+              f"{VENT_T - S.BEZEL_GASKET:.1f} recess in the lip,\nthen in a {VENT_SLOT:g} slot over the rib"),
              ((ad - 1.6, S.Z_DISP1 + 0.07), (ad - 8.0, S.CASE_T - 0.2), "TPU bezel gasket"),
              ((ad + 0.1, (pz + S.Z_DISP1) / 2 + 0.2), (ad + 2.2, S.Z_DISP1 - 0.1), f"duct: {MIC_BORE:g} groove in the rib"),
              ((S.DISP_W / 2 + MIC_RIB_FIT / 2, S.Z_DISP0 + 0.6), (ad + 2.2, S.Z_DISP0 + 0.2), f"{MIC_RIB_FIT:g} glass-edge slit (small leak inward)"),
@@ -2420,8 +2592,8 @@ def render_mic(m, comps):
              ((ad - 1.0, S.Z_PCB0 + 0.3), (ad - 8.0, S.Z_PCB0 + 0.3), "PCB")]
     for xy, txt, label in notes:
         ax.annotate(label, xy, txt, fontsize=12, arrowprops=dict(arrowstyle="-", lw=0.7, color="#333"))
-    ax.annotate("", (ay, pz), (ad, S.CASE_T + 0.45), arrowprops=dict(arrowstyle="<-", lw=1.5, color="#1a73e8"))
-    ax.text(ad + 0.1, S.CASE_T + 0.4, "sound", color="#1a73e8", fontsize=11)
+    ax.annotate("", (ay, pz), (at, S.CASE_T + 0.45), arrowprops=dict(arrowstyle="<-", lw=1.5, color="#1a73e8"))
+    ax.text(at + 0.1, S.CASE_T + 0.4, "sound", color="#1a73e8", fontsize=11)
     ax.set_xlim(ad - 8.5, OW + 3.5)
     ax.set_ylim(S.Z_PCB0 - 0.4, S.CASE_T + 1.1)
     ax.set_aspect("equal")
@@ -2470,12 +2642,12 @@ def main():
     print(f"PCB: {note}")
     ok = checks(m, fit, comps)
     summary(m)
-    export(m)
+    ok &= not export(m)
     print(f"exports -> {OUT.relative_to(ROOT)}/")
     if "--no-render" not in sys.argv and not THIN:
         MEDIA.mkdir(parents=True, exist_ok=True)
         for f in (render_assembled, render_lug, render_colors, render_exploded, render_assembly, render_sealing,
-                  render_section, render_snap, render_scale, render_dock, render_shape_options):
+                  render_section, render_snap, render_scale, render_dock, render_dock_wiring, render_shape_options):
             f(m)
         render_board(m, comps, note)
         render_mic(m, comps)

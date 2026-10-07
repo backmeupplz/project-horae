@@ -1,8 +1,8 @@
 """Quasi-static Z0 / eps_eff of the RF feed trace cross-section (2D finite-difference Laplace solve).
 
-  RF feed (U1 -> C11 -> L3 -> C12 -> AE1): F.Cu 0.20 mm over In1 (0.0994 mm 3313 prepreg, er 4.1; same in the 0.8 and
-          0.6 mm JLC stacks), solder mask 20 um er 3.8. GCPW (0.15 mm gaps to an F.Cu GND pour) or plain microstrip
-          (no F.Cu pour along the feed: the board as built on 2026-10-04).
+  RF feed (U1 -> C11 -> L3 -> C12 -> AE1): F.Cu over In1 (0.0994 mm 3313 prepreg, er 4.1; same in the 0.8 and 0.6 mm
+          JLC stacks), solder mask 20 um er 3.8. GCPW with 0.15 mm gaps to the F.Cu GND pour: 0.15 mm trace since
+          2026-10-06 (0.20 before); microstrip = the 2026-10-04 board, which had no F.Cu pour along the feed.
 Z0 = 1 / (c * sqrt(C * C_air)); eps_eff = C / C_air.
 """
 import numpy as np
@@ -76,7 +76,8 @@ def ms(diel, w=0.2):   # microstrip: no coplanar ground; bigger box so its walls
     return eps, cond, sig
 
 if __name__ == "__main__":
-    z, ee = z0(gcpw)
-    print(f"RF feed 0.20/0.15 GCPW: Z0 = {z:.1f} ohm, eps_eff = {ee:.2f}")
+    for w in (0.15, 0.20):
+        z, ee = z0(lambda d: gcpw(d, w=w))
+        print(f"RF feed {w:.2f}/0.15 GCPW: Z0 = {z:.1f} ohm, eps_eff = {ee:.2f}")
     z, ee = z0(ms)
     print(f"RF feed 0.20 microstrip: Z0 = {z:.1f} ohm, eps_eff = {ee:.2f}")

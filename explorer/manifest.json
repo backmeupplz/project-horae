@@ -39,7 +39,7 @@
     30,
     0
    ],
-   "tris": 61642,
+   "tris": 54354,
    "size": [
     43.1,
     18.0,
@@ -111,11 +111,11 @@
     23,
     0
    ],
-   "tris": 12,
+   "tris": 28,
    "size": [
     1.4,
     1.03,
-    0.15
+    0.3
    ]
   },
   {
@@ -149,9 +149,9 @@
    ],
    "tris": 444,
    "size": [
-    10.05,
+    9.61,
     9.5,
-    0.78
+    1.3
    ]
   },
   {
@@ -167,9 +167,9 @@
    ],
    "tris": 12,
    "size": [
-    3.5,
+    3.0,
     9.5,
-    0.3
+    0.18
    ]
   },
   {
@@ -237,10 +237,10 @@
     -1,
     0
    ],
-   "tris": 20292,
+   "tris": 20536,
    "size": [
     5.84,
-    2.2,
+    2.19,
     2.1
    ]
   },
@@ -255,10 +255,10 @@
     -1,
     0
    ],
-   "tris": 20668,
+   "tris": 21112,
    "size": [
     5.84,
-    2.2,
+    2.19,
     2.1
    ]
   },
@@ -536,7 +536,7 @@
    "key": "pcb",
    "name": "Main board",
    "group": "Electronics",
-   "desc": "33.8 x 16.2 x 0.6 mm, 4 layers, fully assembled by JLCPCB: ESP32-S3, accelerometer, charger, buck regulator, e-paper booster, mic, touch pads, antenna.",
+   "desc": "33.6 x 16 x 0.6 mm, 4 layers, fully assembled by JLCPCB: ESP32-S3, accelerometer, charger, buck regulator, e-paper booster, mic, touch pads, antenna.",
    "role": "pcb",
    "explode": [
     0,
@@ -544,47 +544,29 @@
     0
    ],
    "size": [
-    33.8,
-    16.2,
+    33.6,
+    16.0,
     1.6
    ]
   }
  ],
  "hotspots": [
   {
-   "ref": "Y1",
-   "label": "40 MHz crystal",
+   "ref": "J1",
+   "label": "Display connector",
    "pos": [
-    8.1,
+    -6.6,
     5.3,
-    5.9
+    -0.0
    ]
   },
   {
    "ref": "L4",
    "label": "E-paper booster",
    "pos": [
-    -3.4,
+    -1.1,
     5.3,
-    -0.6
-   ]
-  },
-  {
-   "ref": "J1",
-   "label": "Display connector",
-   "pos": [
-    -8.3,
-    5.3,
-    -0.0
-   ]
-  },
-  {
-   "ref": "U1",
-   "label": "ESP32-S3: Wi-Fi + Bluetooth LE",
-   "pos": [
-    4.8,
-    5.3,
-    -0.0
+    -4.8
    ]
   },
   {
@@ -597,46 +579,64 @@
    ]
   },
   {
+   "ref": "U1",
+   "label": "ESP32-S3: Wi-Fi + Bluetooth LE",
+   "pos": [
+    4.8,
+    5.3,
+    -0.0
+   ]
+  },
+  {
    "ref": "U2",
    "label": "BQ25101 charger",
    "pos": [
-    -14.25,
+    -12.95,
     5.3,
-    -6.2
+    -6.85
    ]
   },
   {
    "ref": "U3",
    "label": "TPS62840 buck regulator",
    "pos": [
-    -10.0,
+    -10.2,
     5.3,
-    6.6
+    6.75
    ]
   },
   {
    "ref": "U6",
    "label": "LIS2DUX12 accelerometer",
    "pos": [
-    -0.485,
+    9.7,
     5.3,
-    -4.599
+    -4.35
+   ]
+  },
+  {
+   "ref": "Y1",
+   "label": "40 MHz crystal",
+   "pos": [
+    7.65,
+    5.3,
+    6.45
    ]
   },
   {
    "ref": "Y2",
    "label": "32 kHz clock crystal",
    "pos": [
-    9.8,
+    7.3,
     5.3,
-    -5.0
+    -6.45
    ]
   },
   {
    "ref": "AE1",
    "label": "2.4 GHz antenna (meander)",
    "pos": [
-    14.0,
+    13.9,
     4.3,
     -0.0
    ]
@@ -647,7 +647,7 @@
    "pos": [
     -5.2,
     4.3,
-    -7.0
+    -6.9
    ]
   },
   {
@@ -656,7 +656,7 @@
    "pos": [
     3.0,
     4.3,
-    -7.0
+    -6.9
    ]
   }
  ],
@@ -670,8 +670,8 @@
    "case": "Bambu PETG-CF Black",
    "case_hex": "#2C2C2C",
    "case_finish": "cf",
-   "tpu": "TPU 95A HF Black",
-   "tpu_hex": "#1A1C22",
+   "tpu": "TPU 90A Black",
+   "tpu_hex": "#000000",
    "tpu_finish": "tpu",
    "strap": "black FKM",
    "strap_hex": "#1E1F21",
@@ -703,9 +703,9 @@
    "case": "Prusament PETG Galaxy Black",
    "case_hex": "#1E1F21",
    "case_finish": "glitter",
-   "tpu": "TPU 95A HF Blue",
-   "tpu_hex": "#0072CE",
-   "tpu_finish": "tpu",
+   "tpu": "TPU 90A Grape Jelly",
+   "tpu_hex": "#D6ABFF",
+   "tpu_finish": "tpu_clear",
    "strap": "navy",
    "strap_hex": "#1F2A44",
    "inserts": null
@@ -725,8 +725,8 @@
    "case": "Bambu PETG-CF Malachite Green",
    "case_hex": "#3A8F7C",
    "case_finish": "cf",
-   "tpu": "TPU 95A HF Black",
-   "tpu_hex": "#1A1C22",
+   "tpu": "TPU 90A Black",
+   "tpu_hex": "#000000",
    "tpu_finish": "tpu",
    "strap": "black",
    "strap_hex": "#1E1F21",
@@ -747,8 +747,8 @@
    "case": "Bambu PETG Matte Black",
    "case_hex": "#262628",
    "case_finish": "matte",
-   "tpu": "TPU 95A HF Red",
-   "tpu_hex": "#C8102E",
+   "tpu": "TPU 90A Blaze",
+   "tpu_hex": "#D21B3C",
    "tpu_finish": "tpu",
    "strap": "black",
    "strap_hex": "#1E1F21",

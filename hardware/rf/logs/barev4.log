@@ -1,0 +1,107 @@
+openEMS - fixed number of threads: 2
+ ---------------------------------------------------------------------- 
+ | openEMS 64bit -- version v0.37.0-rc3-31-g6761a36
+ | (C) 2010-2026 Thorsten Liebig <thorsten.liebig@gmx.de>  GPL license
+ ---------------------------------------------------------------------- 
+	Used external libraries:
+		CSXCAD -- Version: v0.7.0-rc3-7-g65e7591
+		hdf5   -- Version: 1.10.10
+		          compiled against: HDF5 library version: 1.10.10
+		tinyxml -- compiled against: 2.6.2
+		fparser
+		boost  -- compiled against: 1_83
+		vtk -- Version: 9.1.0
+		       compiled against: 9.1.0
+
+Create FDTD operator (compressed SSE + multi-threading)
+FDTD simulation size: 171x183x55 --> 1.72112e+06 FDTD cells 
+FDTD timestep is: 1.95094e-13 s; Nyquist rate: 732 timesteps @3.50118e+09 Hz
+Excitation signal length is: 14685 timesteps (2.86496e-09s)
+Max. number of timesteps: 600000 ( --> 40.858 * Excitation signal length)
+Create FDTD engine (compressed SSE + multi-threading)
+Warning: Unused primitive (type: Box) detected in property: antenna!
+Warning: Unused primitive (type: Box) detected in property: antenna!
+Warning: Unused primitive (type: Polygon) detected in property: gnd!
+Warning: Unused primitive (type: Polygon) detected in property: gnd!
+Warning: Unused primitive (type: Polygon) detected in property: gnd!
+Warning: Unused primitive (type: Polygon) detected in property: gnd!
+Warning: Unused primitive (type: Polygon) detected in property: gnd!
+Warning: Unused primitive (type: Polygon) detected in property: gnd!
+Warning: Unused primitive (type: Polygon) detected in property: gnd!
+Warning: Unused primitive (type: Polygon) detected in property: gnd!
+Warning: Unused primitive (type: Polygon) detected in property: gnd!
+Warning: Unused primitive (type: Polygon) detected in property: gnd!
+Running FDTD engine... this may take a while... grab a cup of coffee?!?
+[@        9s] Timestep:          183 || Speed:   34.5 MC/s (4.986e-02 s/TS) || Energy: ~2.81e-22 (- 0.00dB)
+[@       15s] Timestep:          366 || Speed:   48.7 MC/s (3.533e-02 s/TS) || Energy: ~1.33e-21 (- 0.00dB)
+[@       22s] Timestep:          549 || Speed:   43.0 MC/s (4.002e-02 s/TS) || Energy: ~2.88e-21 (- 0.00dB)
+[@       29s] Timestep:          915 || Speed:  102.9 MC/s (1.673e-02 s/TS) || Energy: ~3.49e-21 (- 0.00dB)
+[@       37s] Timestep:         1281 || Speed:   71.8 MC/s (2.396e-02 s/TS) || Energy: ~8.57e-20 (- 0.00dB)
+[@       43s] Timestep:         1647 || Speed:  103.1 MC/s (1.670e-02 s/TS) || Energy: ~3.15e-19 (- 0.00dB)
+[@       51s] Timestep:         2013 || Speed:   82.8 MC/s (2.080e-02 s/TS) || Energy: ~4.65e-19 (- 0.00dB)
+[@       55s] Timestep:         2196 || Speed:   77.1 MC/s (2.232e-02 s/TS) || Energy: ~2.05e-18 (- 0.00dB)
+[@       59s] Timestep:         2379 || Speed:   76.6 MC/s (2.246e-02 s/TS) || Energy: ~6.33e-18 (- 0.00dB)
+[@     1m07s] Timestep:         2745 || Speed:   81.3 MC/s (2.117e-02 s/TS) || Energy: ~1.41e-17 (- 0.00dB)
+[@     1m15s] Timestep:         3111 || Speed:   79.8 MC/s (2.158e-02 s/TS) || Energy: ~2.62e-17 (- 0.00dB)
+[@     1m23s] Timestep:         3477 || Speed:   80.9 MC/s (2.128e-02 s/TS) || Energy: ~2.03e-16 (- 0.00dB)
+[@     1m31s] Timestep:         3843 || Speed:   79.5 MC/s (2.164e-02 s/TS) || Energy: ~3.04e-16 (- 0.00dB)
+[@     1m39s] Timestep:         4209 || Speed:   76.7 MC/s (2.245e-02 s/TS) || Energy: ~6.48e-16 (- 0.00dB)
+[@     1m47s] Timestep:         4575 || Speed:   81.7 MC/s (2.107e-02 s/TS) || Energy: ~2.92e-15 (- 0.00dB)
+[@     1m54s] Timestep:         4941 || Speed:   80.6 MC/s (2.135e-02 s/TS) || Energy: ~3.37e-15 (- 0.00dB)
+[@     1m58s] Timestep:         5124 || Speed:   78.6 MC/s (2.190e-02 s/TS) || Energy: ~3.70e-15 (- 0.00dB)
+[@     2m02s] Timestep:         5307 || Speed:   77.1 MC/s (2.233e-02 s/TS) || Energy: ~6.98e-15 (- 0.00dB)
+[@     2m10s] Timestep:         5673 || Speed:   81.7 MC/s (2.108e-02 s/TS) || Energy: ~1.98e-14 (- 0.00dB)
+[@     2m18s] Timestep:         6039 || Speed:   77.5 MC/s (2.221e-02 s/TS) || Energy: ~1.99e-14 (- 0.00dB)
+[@     2m26s] Timestep:         6405 || Speed:   82.1 MC/s (2.097e-02 s/TS) || Energy: ~3.44e-14 (- 0.00dB)
+[@     2m30s] Timestep:         6588 || Speed:   77.8 MC/s (2.212e-02 s/TS) || Energy: ~5.41e-14 (- 0.00dB)
+[@     2m38s] Timestep:         6954 || Speed:   77.5 MC/s (2.221e-02 s/TS) || Energy: ~6.88e-14 (- 0.00dB)
+[@     2m46s] Timestep:         7320 || Speed:   81.9 MC/s (2.102e-02 s/TS) || Energy: ~6.42e-14 (- 0.30dB)
+[@     2m54s] Timestep:         7686 || Speed:   81.0 MC/s (2.126e-02 s/TS) || Energy: ~1.16e-13 (- 0.00dB)
+[@     3m01s] Timestep:         8052 || Speed:   80.3 MC/s (2.144e-02 s/TS) || Energy: ~1.18e-13 (- 0.00dB)
+[@     3m09s] Timestep:         8418 || Speed:   81.0 MC/s (2.125e-02 s/TS) || Energy: ~1.05e-13 (- 0.49dB)
+[@     3m17s] Timestep:         8784 || Speed:   81.7 MC/s (2.107e-02 s/TS) || Energy: ~1.46e-13 (- 0.00dB)
+[@     3m21s] Timestep:         8967 || Speed:   73.7 MC/s (2.337e-02 s/TS) || Energy: ~1.36e-13 (- 0.32dB)
+[@     3m29s] Timestep:         9333 || Speed:   82.2 MC/s (2.095e-02 s/TS) || Energy: ~1.03e-13 (- 1.53dB)
+[@     3m37s] Timestep:         9699 || Speed:   81.6 MC/s (2.110e-02 s/TS) || Energy: ~1.19e-13 (- 0.89dB)
+[@     3m41s] Timestep:         9882 || Speed:   70.4 MC/s (2.446e-02 s/TS) || Energy: ~1.05e-13 (- 1.44dB)
+[@     3m49s] Timestep:        10248 || Speed:   81.9 MC/s (2.102e-02 s/TS) || Energy: ~7.27e-14 (- 3.02dB)
+[@     3m53s] Timestep:        10431 || Speed:   78.4 MC/s (2.196e-02 s/TS) || Energy: ~7.80e-14 (- 2.72dB)
+[@     4m01s] Timestep:        10797 || Speed:   80.2 MC/s (2.146e-02 s/TS) || Energy: ~6.33e-14 (- 3.62dB)
+[@     4m08s] Timestep:        11163 || Speed:   81.5 MC/s (2.111e-02 s/TS) || Energy: ~3.87e-14 (- 5.76dB)
+[@     4m13s] Timestep:        11346 || Speed:   75.7 MC/s (2.274e-02 s/TS) || Energy: ~4.29e-14 (- 5.32dB)
+[@     4m20s] Timestep:        11712 || Speed:   82.1 MC/s (2.097e-02 s/TS) || Energy: ~3.25e-14 (- 6.52dB)
+[@     4m24s] Timestep:        11895 || Speed:   78.7 MC/s (2.188e-02 s/TS) || Energy: ~2.11e-14 (- 8.40dB)
+[@     4m31s] Timestep:        12261 || Speed:   89.7 MC/s (1.918e-02 s/TS) || Energy: ~2.05e-14 (- 8.52dB)
+[@     4m38s] Timestep:        12627 || Speed:   91.7 MC/s (1.876e-02 s/TS) || Energy: ~1.49e-14 (- 9.90dB)
+[@     4m45s] Timestep:        12993 || Speed:   87.3 MC/s (1.971e-02 s/TS) || Energy: ~8.03e-15 (-12.59dB)
+[@     4m52s] Timestep:        13359 || Speed:   97.9 MC/s (1.759e-02 s/TS) || Energy: ~9.17e-15 (-12.02dB)
+[@     4m58s] Timestep:        13725 || Speed:  106.2 MC/s (1.621e-02 s/TS) || Energy: ~4.04e-15 (-15.57dB)
+[@     5m04s] Timestep:        14091 || Speed:   98.6 MC/s (1.745e-02 s/TS) || Energy: ~4.29e-15 (-15.32dB)
+[@     5m11s] Timestep:        14457 || Speed:   94.9 MC/s (1.814e-02 s/TS) || Energy: ~2.80e-15 (-17.17dB)
+[@     5m17s] Timestep:        14823 || Speed:   99.8 MC/s (1.724e-02 s/TS) || Energy: ~1.68e-15 (-19.39dB)
+[@     5m23s] Timestep:        15189 || Speed:  103.1 MC/s (1.669e-02 s/TS) || Energy: ~1.79e-15 (-19.10dB)
+[@     5m29s] Timestep:        15555 || Speed:  106.2 MC/s (1.620e-02 s/TS) || Energy: ~7.80e-16 (-22.72dB)
+[@     5m35s] Timestep:        15921 || Speed:  106.2 MC/s (1.620e-02 s/TS) || Energy: ~8.92e-16 (-22.14dB)
+[@     5m41s] Timestep:        16287 || Speed:  105.1 MC/s (1.638e-02 s/TS) || Energy: ~5.23e-16 (-24.46dB)
+[@     5m47s] Timestep:        16653 || Speed:  100.5 MC/s (1.712e-02 s/TS) || Energy: ~3.58e-16 (-26.10dB)
+[@     5m53s] Timestep:        17019 || Speed:  105.9 MC/s (1.625e-02 s/TS) || Energy: ~3.50e-16 (-26.20dB)
+[@     6m00s] Timestep:        17385 || Speed:   96.5 MC/s (1.784e-02 s/TS) || Energy: ~1.55e-16 (-29.74dB)
+[@     6m07s] Timestep:        17751 || Speed:   90.6 MC/s (1.899e-02 s/TS) || Energy: ~1.85e-16 (-28.97dB)
+[@     6m14s] Timestep:        18117 || Speed:   81.4 MC/s (2.115e-02 s/TS) || Energy: ~9.79e-17 (-31.73dB)
+[@     6m19s] Timestep:        18300 || Speed:   72.4 MC/s (2.377e-02 s/TS) || Energy: ~6.95e-17 (-33.22dB)
+[@     6m23s] Timestep:        18483 || Speed:   68.2 MC/s (2.522e-02 s/TS) || Energy: ~7.67e-17 (-32.79dB)
+[@     6m28s] Timestep:        18666 || Speed:   69.2 MC/s (2.489e-02 s/TS) || Energy: ~8.38e-17 (-32.41dB)
+[@     6m32s] Timestep:        18849 || Speed:   72.0 MC/s (2.391e-02 s/TS) || Energy: ~6.77e-17 (-33.34dB)
+[@     6m37s] Timestep:        19032 || Speed:   70.6 MC/s (2.437e-02 s/TS) || Energy: ~4.24e-17 (-35.37dB)
+[@     6m41s] Timestep:        19215 || Speed:   69.1 MC/s (2.492e-02 s/TS) || Energy: ~3.14e-17 (-36.67dB)
+[@     6m46s] Timestep:        19398 || Speed:   64.9 MC/s (2.653e-02 s/TS) || Energy: ~3.55e-17 (-36.14dB)
+[@     6m51s] Timestep:        19581 || Speed:   72.6 MC/s (2.370e-02 s/TS) || Energy: ~3.79e-17 (-35.86dB)
+[@     6m55s] Timestep:        19764 || Speed:   69.8 MC/s (2.466e-02 s/TS) || Energy: ~2.96e-17 (-36.93dB)
+[@     6m59s] Timestep:        19947 || Speed:   71.9 MC/s (2.393e-02 s/TS) || Energy: ~1.84e-17 (-39.00dB)
+[@     7m04s] Timestep:        20130 || Speed:   71.6 MC/s (2.403e-02 s/TS) || Energy: ~1.42e-17 (-40.10dB)
+RunFDTD: end-criteria of -40.00dB reached after 20130 timesteps (-40.10dB)
+Time for 20130 iterations with 1721115.00 cells : 424.30 sec
+Speed: 81.65 MCells/s 
+feed: GCPW 0.15 [1.457 0.58  0.58  0.175]
+bare_v4_trim6.64 cells: [171, 183, 55] 1.721115 M; nf2ff box [[-37.1, 37.9], [-29.0, 29.1], [-21.1, 21.7]]
+bare_v4_trim6.64 rad. efficiency @2.40/2.44/2.48 GHz: [0.789 0.82  0.85 ] fmin: 2.94

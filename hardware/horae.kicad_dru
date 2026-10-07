@@ -1,10 +1,37 @@
 (version 1)
-(rule "RF match chain sits tighter than courtyards (0201 pad gaps stay >= 0.15 mm)"
-  (constraint courtyard_clearance (min -0.6mm))
-  (condition "(A.Reference == 'C11' || A.Reference == 'L3' || A.Reference == 'C12') && (B.Reference == 'C11' || B.Reference == 'L3' || B.Reference == 'C12' || B.Reference == 'U1')"))
-(rule "RF feed keeps a 0.15 mm gap to the GND pour (50-ohm GCPW)"
+(rule "RF feed keeps a 0.15 mm gap to the GND pour (50-ohm GCPW, W0.15/S0.15)"
   (constraint clearance (min 0.15mm))
   (condition "A.NetName == 'RF_CHIP' || A.NetName == 'RF_ANT'"))
+(rule "Touch electrodes: no other copper within 0.5 mm on any layer"
+  (constraint clearance (min 0.5mm))
+  (condition "A.memberOfFootprint('TCH*') && A.NetName != B.NetName"))
+(rule "Touch traces: 0.3 mm to everything but their own series resistor"
+  (constraint clearance (min 0.3mm))
+  (condition "(A.NetName == 'TOUCH_UP_E' && !B.memberOfFootprint('R14')) || (A.NetName == 'TOUCH_DOWN_E' && !B.memberOfFootprint('R15')) || (A.NetName == 'TOUCH_MENU_E' && !B.memberOfFootprint('R16')) || (A.NetName == 'TOUCH_BACK_E' && !B.memberOfFootprint('R17'))"))
+(rule "Touch fan-out at the ESP32 (Espressif: series R within 1 mm of the pin): 0.2 mm inside the fan-out area"
+  (constraint clearance (min 0.2mm))
+  (condition "A.intersectsArea('touch fan-out') && B.intersectsArea('touch fan-out') && ((A.NetName == 'TOUCH_UP_E' && !B.memberOfFootprint('R14')) || (A.NetName == 'TOUCH_DOWN_E' && !B.memberOfFootprint('R15')) || (A.NetName == 'TOUCH_MENU_E' && !B.memberOfFootprint('R16')) || (A.NetName == 'TOUCH_BACK_E' && !B.memberOfFootprint('R17')))"))
+(rule "PA supply and 40 MHz crystal stay on F.Cu (Espressif HDG: no vias)"
+  (constraint disallow via)
+  (condition "A.NetName == 'VDD3P3' || A.NetName == 'XTAL_P' || A.NetName == 'XTAL_N' || A.NetName == 'XTAL_P_L'"))
+(rule "RF match, PA supply LC and EN cap sit tighter than courtyards (pad gaps >= 0.15 mm)"
+  (constraint courtyard_clearance (min -0.6mm))
+  (condition "(A.Reference == 'C11' || A.Reference == 'L3' || A.Reference == 'C12' || A.Reference == 'C3' || A.Reference == 'L2' || A.Reference == 'C10') && (B.Reference == 'C11' || B.Reference == 'L3' || B.Reference == 'C12' || B.Reference == 'C3' || B.Reference == 'L2' || B.Reference == 'C10' || B.Reference == 'U1')"))
+(rule "ESP32 pin decoupling and the crystal series L sit at the pins (pad gaps >= 0.15 mm)"
+  (constraint courtyard_clearance (min -0.8mm))
+  (condition "A.Reference == 'U1' && (B.Reference == 'C6' || B.Reference == 'C36' || B.Reference == 'C34' || B.Reference == 'C20' || B.Reference == 'C8' || B.Reference == 'C9' || B.Reference == 'C18' || B.Reference == 'L1')"))
+(rule "VDDA pair and the 40 MHz crystal cell (pad gaps >= 0.15 mm)"
+  (constraint courtyard_clearance (min -0.4mm))
+  (condition "(A.Reference == 'C6' && B.Reference == 'C36') || (A.Reference == 'Y1' && (B.Reference == 'L1' || B.Reference == 'C1' || B.Reference == 'C2')) || (A.Reference == 'Y2' && (B.Reference == 'C32' || B.Reference == 'C33'))"))
+(rule "Booster pump: C22 and D1 share the PUMP node (pad gaps >= 0.15 mm)"
+  (constraint courtyard_clearance (min -0.2mm))
+  (condition "(A.Reference == 'C22' && B.Reference == 'D1') || (A.Reference == 'D1' && B.Reference == 'C22')"))
+(rule "Touch series resistors in a 0.6 mm column at the ESP32 (pad gaps >= 0.2 mm)"
+  (constraint courtyard_clearance (min -0.4mm))
+  (condition "(A.Reference == 'R14' || A.Reference == 'R15' || A.Reference == 'R16' || A.Reference == 'R17') && (B.Reference == 'R14' || B.Reference == 'R15' || B.Reference == 'R16' || B.Reference == 'R17' || B.Reference == 'U1' || B.Reference == 'C10' || B.Reference == 'C18')"))
+(rule "Charger WCSP satellites (pad gaps >= 0.15 mm)"
+  (constraint courtyard_clearance (min -0.4mm))
+  (condition "(A.Reference == 'U2' || A.Reference == 'R2' || A.Reference == 'R5' || A.Reference == 'R7' || A.Reference == 'C13' || A.Reference == 'C19') && (B.Reference == 'U2' || B.Reference == 'R2' || B.Reference == 'R5' || B.Reference == 'R7' || B.Reference == 'C13' || B.Reference == 'C19' || B.Reference == 'U4')"))
 (rule "Bare test/pogo pads (no parts): courtyards may overlap, copper gaps stay >= 0.5 mm"
   (constraint courtyard_clearance (min -1.5mm))
   (condition "A.Reference == 'TP*' && B.Reference == 'TP*'"))

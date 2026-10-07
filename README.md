@@ -4,6 +4,11 @@ A miniaturized successor to [Watchy](https://watchy.sqfmi.com/), the open-source
 
 Build log: **[projecthorae.com](https://projecthorae.com)**
 
+## Build one
+- [ORDER.md](ORDER.md): the JLCPCB order (files and every order-form setting), the shopping list with Canadian sources, and the totals
+- [ASSEMBLY.md](ASSEMBLY.md): printing, a test-print checklist, bench bring-up, assembly, the dock wiring, and the firmware rules the hardware depends on
+- [hardware/README.md](hardware/README.md): the board design, the pre-order review, what to verify at bring-up, and the cost
+
 ## Research
 - [Displays](research/displays.md): bar-shaped e-paper and memory LCD panels
 - [Batteries](research/batteries.md): thin LiPo, sodium-ion reality check, power budget
@@ -18,7 +23,7 @@ The landing page's interactive model (`explorer/`) is generated from the case CA
 
 ## Printing (Bambu A1 mini, 0.4 nozzle, one filament per job)
 - `cad/out/plates/petg.3mf`: both shells plus the dock's tray and lid, in PETG Basic or Matte. Use 0.1 mm layers **and a 0.1 mm first layer** (it is the skin over the watch's magnets), no supports.
-- `cad/out/plates/tpu.3mf`: every seal and cushion plus the dock's grip pad, in TPU 90A from the external spool, printed slowly.
+- `cad/out/plates/tpu.3mf`: every seal and cushion plus the dock's grip pad, in TPU 90A (not 95A: twice as stiff) from the external spool, printed slowly. Give the bezel gasket 0.08 mm layers.
 - Carbon-fibre version: print `petg-cf.3mf` (PETG-CF, hardened nozzle) and `petg-cf-set.3mf` (the colour-matched PETG parts) instead of `petg.3mf`.
 - Per-part notes (orientation, layer heights, squeeze) are in `PRINT` in `cad/horae.py`, and a full `.venv/bin/python cad/horae.py` run prints them.
 

@@ -16,10 +16,11 @@ display = er 6 glass slab. The shells' 0.05 mm gaps over and under the PCB are k
 solder mask, non-GND copper, FPC, components. wrist: flat dry-skin slab under the case.
 --trim MM: cut from the untrimmed open end (6.64 = the rev A lib footprint).
 Mesh: 0.1 mm at the antenna (0.07 gives the same), AIR (32 mm) of air around everything before the 8 PML cells.
-Results: results/{case}_{V}_trim{T}[_res][_pour][_air].npz; V: v3 = CAD case of 2026-10-05 (two shells, full-height
-ears, pours to the keep-out); v2 = the analytic case of 2026-10-04; no V = the 0.8 mm board of 2026-10-03.
+Results: results/{case}_{V}_trim{T}[_res][_pour][_air].npz, with the feed as built (pour, trace width, line lengths for
+match.py). V: v4 = final board (33.6 x 16.0, 0.15/0.15 GCPW feed) + case with crush ribs, 2026-10-06; v3 = CAD case of
+2026-10-05; v2 = the analytic case of 2026-10-04; no V = the 0.8 mm board of 2026-10-03.
 """
-import json, math, os, sys
+import heapq, json, math, os, sys
 import numpy as np
 from CSXCAD import ContinuousStructure
 from CSXCAD.SmoothMeshLines import SmoothMeshLines
@@ -30,7 +31,7 @@ sys.path.insert(0, "../.."); sys.path.insert(0, ".")
 import spec as S
 import meander
 
-V = "v3"
+V = "v4"
 arg = lambda k, d: type(d)(sys.argv[sys.argv.index(k) + 1]) if k in sys.argv else d
 case = sys.argv[1] if len(sys.argv) > 1 else "bare"
 trim = arg("--trim", meander.LIB_TRIM)
@@ -107,8 +108,36 @@ for f in g["fps"]:
 for v in g["vias"]:
     x, y = K(v["a"])
     if v["net"] == "GND" and near(x, y):
+        r = v["w"] / 2
         gnd.AddBox([x - 0.1, y - 0.1, 0.0], [x + 0.1, y + 0.1, T], priority=10)   # barrel (0.2 drill)
-        gnd.AddBox([x - 0.2, y - 0.2, T], [x + 0.2, y + 0.2, T], priority=10)     # F.Cu ring
+        gnd.AddBox([x - r, y - r, T], [x + r, y + r, T], priority=10)             # F.Cu ring
+
+# ---------------- feed as built, for match.py (the FDTD port is at pad 1; the line and the parts are its circuit model)
+POUR = any(max(x for x, _ in p) - 100 > X_FULL for p in g["fills"].get("F.Cu", []))   # F.Cu GND along the feed: GCPW
+def feed(g):
+    """Trace width and the line lengths chip-C11, C11-L3, L3-C12, C12-pad 1 edge (mm), along the RF tracks."""
+    key = lambda p: (round(p[0], 3), round(p[1], 3))
+    pad = {(f[0], p[0]): (key(p[2:4]), p[4]) for f in g["fps"] for p in f[4] if p[0]}
+    def path(net, a, b):   # Dijkstra over the net's track segments
+        adj = {}
+        for t in g["tracks"]:
+            if t["net"] == net:
+                u, v = key(t["a"]), key(t["b"])
+                adj.setdefault(u, []).append((v, math.dist(u, v))); adj.setdefault(v, []).append((u, math.dist(u, v)))
+        dist, todo = {a: 0.0}, [(0.0, a)]
+        while todo:
+            d, u = heapq.heappop(todo)
+            if u == b: return d
+            for v, w in adj.get(u, []):
+                if d + w < dist.get(v, 1e9): dist[v] = d + w; heapq.heappush(todo, (d + w, v))
+        raise SystemExit(f"no {net} track from {a} to {b}")
+    ends = [k for t in g["tracks"] if t["net"] == "RF_CHIP" for k in (key(t["a"]), key(t["b"]))]
+    chip = next(k for k in ends if ends.count(k) == 1 and k != pad["L3", "1"][0])     # the LNA_IN pin
+    p = lambda r, n: pad[r, n][0]
+    seg = [path("RF_CHIP", chip, p("C11", "1")), path("RF_CHIP", p("C11", "1"), p("L3", "1")),
+           path("RF_ANT", p("L3", "2"), p("C12", "1")), path("RF_ANT", p("C12", "1"), p("AE1", "1")) - pad["AE1", "1"][1] / 2]
+    return min(t["w"] for t in g["tracks"] if t["net"] in ("RF_CHIP", "RF_ANT")), np.round(seg, 3)
+print("feed:", "GCPW" if POUR else "microstrip", *feed(g))
 
 # ---------------- environment: the CAD case (case_stl.py), glass slab, wrist slab
 env = case in ("env", "wrist")
@@ -124,8 +153,8 @@ if env:
         p = mat[m][0].AddPolyhedronReader(os.path.abspath(f"case/{name}.stl"), priority=mat[m][1])
         assert p.ReadFile(), f"case/{name}.stl: run case_stl.py"
     air = CSX.AddMaterial("air", epsilon=1.0)
-    for z0, z1 in ((T + 0.001, T + 0.099), (-0.099, -0.001)):   # 0.05 shell-to-PCB gaps -> one 0.1 air cell
-        air.AddBox([-HL, -HW, z0], [HL, HW, z1], priority=4)
+    for z0, z1 in ((T + 0.001, T + 0.099), (-0.099, -0.001)):   # 0.05 shell-to-PCB gaps -> one 0.1 air cell (board only:
+        air.AddLinPoly(outline, "z", z0, z1 - z0, priority=4)    # the crush ribs at its edge stay)
     glass = CSX.AddMaterial("glass", epsilon=6.0, kappa=kap(6.0, 0.005))
     glass.AddBox([S.DISP_X0, -S.DISP_W / 2, zr(S.Z_DISP0)], [S.DISP_X1, S.DISP_W / 2, zr(S.Z_DISP1)], priority=4)
     if case == "wrist":   # crude flat skin-equivalent slab (2.45 GHz dry skin: er 38, sigma 1.46 S/m) under the case
@@ -181,6 +210,7 @@ res = nf2ff.CalcNF2FF(sim, FE, np.array([90.0]), np.array([0.0]))
 port.CalcPort(sim, FE)
 eff = np.real(res.Prad) / np.real(port.P_acc)
 os.makedirs(OUT, exist_ok=True)
-pour = any(max(x for x, _ in p) - 100 > X_FULL for p in g["fills"].get("F.Cu", []))   # F.Cu GND along the feed: GCPW
-np.savez(f"{OUT}/{tag}.npz", f=f, s11=s11, zin=zin, rad_eff_2g44=float(eff[1]), rad_eff=eff, f_eff=FE, pour=pour)
+w_feed, seg = feed(g)
+np.savez(f"{OUT}/{tag}.npz", f=f, s11=s11, zin=zin, rad_eff_2g44=float(eff[1]), rad_eff=eff, f_eff=FE, pour=POUR,
+         feed_w=w_feed, feed_seg=seg)
 print(tag, "rad. efficiency @2.40/2.44/2.48 GHz:", np.round(eff, 3), "fmin:", f[np.argmin(abs(s11))] / 1e9)

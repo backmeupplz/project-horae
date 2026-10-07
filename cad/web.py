@@ -178,12 +178,12 @@ def compress(raw, out, whole=False):
 
 
 def hotspots():
-    """Board component positions from the JLC placement file (CPL y is already physical, y up)."""
+    """Board component positions from the JLC placement file: gerber frame, y up, board centre at (100, -100)."""
     spots = []
     for row in csv.DictReader(open(ROOT / "hardware" / "out" / "jlc-cpl.csv")):
         ref = row["Designator"]
         if ref in HOTSPOTS:
-            x, y = float(row["Mid X"].rstrip("mm")), float(row["Mid Y"].rstrip("mm"))
+            x, y = float(row["Mid X"].rstrip("mm")) - 100, float(row["Mid Y"].rstrip("mm")) + 100
             spots.append(dict(ref=ref, label=HOTSPOTS[ref], pos=to_view((x, y, S.Z_PCB1 + 1.0)).round(3).tolist()))
     ant = (S.PCB_L / 2 - 2.9, 0.0, S.Z_PCB1)                       # antenna meander centre (gen_pcb pins it there)
     spots.append(dict(ref="AE1", label="2.4 GHz antenna (meander)", pos=to_view(ant).round(3).tolist()))

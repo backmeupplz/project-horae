@@ -10,6 +10,11 @@ hardware/out/*
 !hardware/out/horae-gerbers.zip
 !hardware/out/jlc-bom.csv
 !hardware/out/jlc-cpl.csv
+!hardware/out/panel-gerbers.zip
+!hardware/out/jlc-cpl-panel.csv
+!hardware/out/panel-top.png
+!hardware/out/pcb-top.png
+!hardware/out/pcb-bottom.png
 !hardware/out/erc.json
 !hardware/out/drc.json
 hardware/*.kicad_prl

@@ -1,10 +1,9 @@
 """Pi match (C11 shunt chip side, L3 series, C12 shunt antenna side) from the FDTD antenna impedance -> plots + report.
 
-Circuit (0.6 mm board, geom.json of 2026-10-04), chip pin -> antenna pad 1, F.Cu 0.20 mm over In1 (lines.py):
-  chip -- 1.05 mm -- C11 -- 0.5 mm -- L3 -- 0.42 mm -- C12 -- 1.215 mm -- antenna pad 1 (edge; the pad is in the FDTD)
-  F.Cu GND pour along the feed (board since 2026-10-05; sim.py stores it as "pour"): GCPW Z0 43.9 ohm, eps_eff 3.21,
-  0.1 nH cap grounds; without it (v2 board, 2026-10-04): microstrip 46.5 ohm, eps_eff 3.28, C11 ~0.1 nH, C12 ~0.2 nH;
-  eps_eff 3.21, 0.1 nH for both.
+Circuit, chip pin -> antenna pad 1 on F.Cu over In1: chip -- l0 -- C11 -- l1 -- L3 -- l2 -- C12 -- l3 -- pad 1 edge (the
+pad is in the FDTD). sim.py stores each run's feed (pour, trace width, l0..l3 along the tracks); Z0 / eps_eff from
+lines.py: v4 0.15/0.15 GCPW 50.2 ohm / 3.20 (l = 1.457, 0.58, 0.58, 0.175 mm); v3 0.20/0.15 GCPW 43.9 / 3.21 (1.05,
+0.5, 0.42, 1.215); v2 0.20 microstrip 46.5 / 3.28. Cap grounds: 0.1 nH into the pour (v2: C11 0.1, C12 0.2 nH).
 Parts: 0201 C0G, ESL 0.2 nH, ESR 0.3 ohm; 0201 thick-film L, Q 20 at 2.44 GHz (R ~ sqrt f), C_par 0.08 pF.
 Run on the host: ../../.venv/bin/python match.py SUFFIX [--plots DIR]
   SUFFIX e.g. _v3_trim6.64 -> results/{bare,env,wrist}_v3_trim6.64.npz; every results/{env,wrist}SUFFIX_*.npz (mesh,
@@ -21,9 +20,8 @@ FA, FB = 2.40e9, 2.48e9
 PARTS = json.load(open("jlc_parts.json"))
 CAPS = sorted(float(v) for v, h in PARTS["C"].items() if h)
 INDS = sorted(float(v) for v, h in PARTS["L"].items() if h)
-LINES = {False: ((46.5, 3.28), (0.1e-9, 0.2e-9)),   # as built: microstrip; C11 / C12 ground path
-         True: ((43.9, 3.21), (0.1e-9, 0.1e-9))}    # F.Cu pour to the keep-out: GCPW (lines.py)
-SEG = (1.05, 0.5, 0.42, 1.215)                       # mm: chip-C11, C11-L3, L3-C12, C12-pad 1
+LINES = {(True, 0.15): (50.2, 3.20), (True, 0.2): (43.9, 3.21), (False, 0.2): (46.5, 3.28)}   # (pour, w): Z0, eps_eff
+GND_L = {True: (0.1e-9, 0.1e-9), False: (0.1e-9, 0.2e-9)}   # C11 / C12 ground path, with / without the F.Cu pour
 _d = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../design.py")).read()
 NOW = tuple(float((re.search(rf'"{r}",\s*(?:"Device:L",\s*)?"([\d.]+|DNP)', _d).group(1)).replace("DNP", "0"))
             for r in ("C11", "L3", "C12"))           # rev A as built (design.py)
@@ -49,18 +47,21 @@ def zind(f, l_nh, q=20.0, cpar=0.08e-12):
     zl = w * L / q * np.sqrt(f / 2.44e9) + 1j * w * L    # R ~ sqrt(f) (skin) around the Q spec point
     return 1 / (1 / zl + 1j * w * cpar)
 
-def chain(f, c, pour=False):
-    (z, ee), (g11, g12) = LINES[pour]
+def chain(f, c, feed):
+    pour, w, seg = feed
+    (z, ee), (g11, g12) = LINES[pour, w], GND_L[pour]
     t = lambda l: tl(f, l, z, ee)
-    return mm(t(SEG[0]), sh(1 / zcap(f, c[0], lvia=g11)), t(SEG[1]), ser(zind(f, c[1])), t(SEG[2]),
-              sh(1 / zcap(f, c[2], lvia=g12)), t(SEG[3]))
+    return mm(t(seg[0]), sh(1 / zcap(f, c[0], lvia=g11)), t(seg[1]), ser(zind(f, c[1])), t(seg[2]),
+              sh(1 / zcap(f, c[2], lvia=g12)), t(seg[3]))
 
 def s11(z): return (z - Z0) / (z + Z0)
 db = lambda g: 20 * np.log10(np.abs(g))
 
-def feed_pour(tag):   # F.Cu GND pour along the feed? (sim.py stores it; older runs: "pour" in the tag)
+def feed_of(tag):   # (pour, trace width, line lengths) as stored by sim.py; older runs: v3 / v2 values
     d = np.load(f"results/{tag}.npz")
-    return bool(d["pour"]) if "pour" in d else "pour" in tag
+    if "feed_seg" in d:
+        return bool(d["pour"]), round(float(d["feed_w"]), 3), tuple(float(v) for v in d["feed_seg"])
+    return (bool(d["pour"]) if "pour" in d else "pour" in tag), 0.2, (1.05, 0.5, 0.42, 1.215)
 
 def load(tag):
     d = np.load(f"results/{tag}.npz")
@@ -73,13 +74,13 @@ def tloss_db(A, zl):
     vs = A[0, 0] + A[0, 1] * il + Z0 * (A[1, 0] + A[1, 1] * il)
     return -10 * np.log10(0.5 * np.real(il) / (np.abs(vs) ** 2 / (8 * Z0)))
 
-def best(fs, zants, pour=False):
+def best(fs, zants, feed):
     """Minimax over the band and the environments of the transducer loss (a lossy match can look like a good S11).
     Discrete JLC values only. -> [(worst loss dB, worst S11 dB, C11, L3, C12)], best first."""
     band = (fs >= FA) & (fs <= FB); fb = fs[band]
     res = []
     for c in itertools.product(CAPS + [0.0], INDS, CAPS + [0.0]):
-        A = chain(fb, c, pour)
+        A = chain(fb, c, feed)
         res.append((max(tloss_db(A, za[band]).max() for za in zants),
                     max(db(s11(zin(A, za[band]))).max() for za in zants)) + c)
     res.sort()
@@ -112,12 +113,12 @@ if __name__ == "__main__":
     trim = sfx.split("trim")[1].split("_")[0]
     name = f", 0.6 mm board, trim {trim} mm"
     tags = [t for t in ("bare", "env", "wrist") if os.path.exists(f"results/{t}{sfx}.npz")]
-    pour = feed_pour(tags[0] + sfx)
+    feed = feed_of(tags[0] + sfx)
     data = {t: load(t + sfx) for t in tags}
     variants = sorted(os.path.basename(p)[:-4] for p in glob.glob(f"results/env{sfx}_*.npz") + glob.glob(f"results/wrist{sfx}_*.npz"))
     fs = data[tags[0]][0]
     band = (fs >= FA) & (fs <= FB)
-    M = lambda f, z, c, p=pour: zin(chain(f, c, p), z)
+    M = lambda f, z, c, p=feed: zin(chain(f, c, p), z)
     rep = [f"# Antenna{sfx} at pad 1 (vs In1), 50 ohm reference; rad. eff. = P_rad / P_accepted at 2.40 / 2.44 / 2.48 GHz\n"]
     for t, (f, z, eff) in [(t, data[t]) for t in tags] + [(v, load(v)) for v in variants]:
         g = s11(z); i = np.argmin(np.abs(g)); x0 = f[np.where(np.diff(np.sign(z.imag)) > 0)[0]] / 1e9
@@ -125,7 +126,7 @@ if __name__ == "__main__":
         rep.append(f"{t}: X=0 rising at {np.round(x0, 3)} GHz; S11 min {db(g[i]):.1f} dB at {f[i]/1e9:.3f}; "
                    f"Z [{zs}]; rad. eff. {' / '.join(f'{e:.2f}' for e in eff)}")
     envs = [t for t in ("env", "wrist") if t in data] or tags
-    r = best(fs, [data[t][1] for t in envs], pour)
+    r = best(fs, [data[t][1] for t in envs], feed)
     design = r[0][2:]
     if "--match" in sys.argv:   # evaluate / plot these values instead of the minimax pick, e.g. --match 0.3/1.2/DNP
         design = tuple(float(v.replace("DNP", "0")) for v in sys.argv[sys.argv.index("--match") + 1].split("/"))
@@ -135,7 +136,7 @@ if __name__ == "__main__":
     for lbl, c in (("--match" in sys.argv and "chosen" or "minimax pick", design), (f"rev A as built {now}", NOW)):
         for t in tags:
             z, eff = data[t][1], data[t][2]
-            g = s11(M(fs, z, c)); tl_ = tloss_db(chain(fs, c, pour), z)
+            g = s11(M(fs, z, c)); tl_ = tloss_db(chain(fs, c, feed), z)
             tot = [eff[k] * 10 ** (-np.interp(fe, fs, tl_) / 10) for k, fe in enumerate((FA, 2.44e9, FB))]
             rep.append(f"  {lbl} -> {t}: band S11 {db(g[band]).max():.1f} .. {db(g[band]).min():.1f} dB; -10 dB band {bw(fs, g)}; "
                        f"worst in-band transducer loss {tl_[band].max():.2f} dB; total eff. (rad x transducer) "
@@ -153,7 +154,7 @@ if __name__ == "__main__":
                    for a in (-0.1, 0.1) for b in (-dl, dl) for c in ((-0.1, 0.1) if c12 else (0,))]
         rep.append(f"  {t}: shift {out[0]} / {out[1]}; part corners worst {max(corners):.1f}")
     for v in variants:
-        f, z, eff = load(v); p = feed_pour(v)
+        f, z, eff = load(v); p = feed_of(v)
         g = s11(M(f, z, design, p)); tl_ = tloss_db(chain(f, design, p), z)
         rep.append(f"  {v}: band S11 {db(g[band]).max():.1f} .. {db(g[band]).min():.1f} dB; worst transducer loss "
                    f"{tl_[band].max():.2f} dB; rad. eff. {' / '.join(f'{e:.2f}' for e in eff)}")

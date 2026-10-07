@@ -13,11 +13,11 @@ spec = importlib.util.spec_from_file_location("horae", HERE.parents[1] / "cad" /
 H = importlib.util.module_from_spec(spec); spec.loader.exec_module(H)
 from build123d import Plane, Pos, export_stl, mirror
 
+CP = H.case_parts()   # the CAD's installed case set (top shell with its touch pockets, bottom shell, soft parts)
 PARTS = {  # stl -> (sim.py material, builder); display = sim.py's glass box, board = geom.json
-    "top_shell": ("petg", H.top_shell),
-    "bottom_shell": ("petg", H.bottom_shell),
-    "tpu": ("tpu", lambda: H.union([H.bottom_seal(), H.bezel_gasket(), H.cushions(), H.pogo_seals(), H.motor_pad(),
-                                    H.mic_seal()])),
+    "top_shell": ("petg", lambda: CP["top_shell"]),
+    "bottom_shell": ("petg", lambda: CP["bottom_shell"]),
+    "tpu": ("tpu", lambda: H.union([CP[k] for k in H.SOFT if k != "vent"])),   # (the vent membrane is ~0.2 mm of ePTFE)
     "strap": ("strap", H.nato),
     "metal": ("pec", lambda: H.union([H.spring_bars(), H.rf_pin(), H.battery()[0], H.union(H.watch_magnets()),
                                       H.motor()[0]])),
