@@ -3,20 +3,28 @@ on:
   pull_request:
   push:
     branches: [main]
+concurrency:
+  group: waitlist-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
   waitlist-tests:
-    runs-on: ubuntu-latest
+    # Our own runs use the Mac runners (brew Python and Node); outsiders' PRs (AGit via the github bot) stay on Linux
+    runs-on: ${{ (github.event_name != 'pull_request' || contains(fromJSON('["backmeupplz","renovate","claude"]'), github.event.pull_request.user.login)) && 'macos-latest' || 'ubuntu-latest' }}
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - if: runner.os == 'Linux'
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - uses: actions/setup-node@v4
+      - if: runner.os == 'Linux'
+        uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: python -m unittest discover -s waitlist -v
-      - run: node --test tests/waitlist.test.cjs
+      - run: |
+          python3 -m unittest discover -s waitlist -v &
+          node --test tests/waitlist.test.cjs &
+          for job in $(jobs -p); do wait $job || exit 1; done
       - run: git diff --check
