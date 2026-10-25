@@ -14,7 +14,14 @@ jobs:
     runs-on: ${{ (github.event_name != 'pull_request' || contains(fromJSON('["backmeupplz","renovate","claude"]'), github.event.pull_request.user.login)) && 'macos-latest' || 'ubuntu-latest' }}
     timeout-minutes: 5
     steps:
+      # The tests read only waitlist/, tests/ and root files (index.html, waitlist.js); skip the ~280 MB of cad,
+      # hardware and media blobs, whose download was most of the job.
       - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            waitlist
+            tests
       - if: runner.os == 'Linux'
         uses: actions/setup-python@v5
         with:
