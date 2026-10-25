@@ -4,11 +4,11 @@ The root site remains static GitHub Pages (main, repository root, .nojekyll).
 The independent API is Python 3.12+ / standard library SQLite; no packages,
 custom image, email sending, payment integration, or public subscriber reads.
 
-## Easypanel service contract
+## Tugport service contract
 
-- Native **Nixpacks** app, Git repository backmeupplz/project-horae, branch main,
-  build context/root **/waitlist**. Its requirements.txt triggers Python detection;
-  nixpacks.toml starts **python server.py**. .python-version selects Python 3.12.
+- **Dockerfile** app, Git repository backmeupplz/project-horae, branch main,
+  build context/root **/waitlist**. The Dockerfile (Python 3.12 slim, no packages)
+  starts **python server.py**.
 - **One replica**, stop-first updates, persistent local Easypanel volume mounted
   at **/data**. Do not deploy without the mount or scale this SQLite app across
   hosts/replicas. Keep the same volume across restarts/redeploys.

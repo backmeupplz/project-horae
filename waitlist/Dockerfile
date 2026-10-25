@@ -1,0 +1,5 @@
+FROM python:3.12.15-slim
+WORKDIR /app
+ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
+COPY . .
+CMD ["python", "server.py"]
