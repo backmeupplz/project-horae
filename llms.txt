@@ -1,0 +1,7 @@
+# Project Horae
+
+> A thinner, band-shaped, open-source e-paper watch built in public: a miniaturized successor to SQFMI's Watchy.
+
+- [Build log](https://projecthorae.com/): the timeline of every milestone, newest first, with renders and photos.
+- [Source](https://github.com/backmeupplz/project-horae): CAD (build123d), the KiCad board, research notes, the order and assembly guides.
+- [Research](https://github.com/backmeupplz/project-horae/tree/main/research): displays, batteries, electronics and CAD tool write-ups.

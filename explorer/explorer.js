@@ -330,7 +330,7 @@ function listParts() {
     seen.add(p.info.name); (groups[p.info.group] ||= []).push(p.info);
   }
   $("ex-parts").innerHTML = order.filter(g => groups[g]).map(g =>
-    `<div class="ex-group"><h4 class="mono">${g}</h4>${groups[g].map(i => `<button type="button" data-key="${i.key}" aria-pressed="false">${i.name}</button>`).join("")}</div>`).join("");
+    `<div class="ex-group"><h3 class="mono">${g}</h3>${groups[g].map(i => `<button type="button" data-key="${i.key}" aria-pressed="false">${i.name}</button>`).join("")}</div>`).join("");
   $("ex-parts").querySelectorAll("button").forEach(b => b.onclick = () => select(state.selected === b.dataset.key ? null : b.dataset.key));
   refreshHighlight();
 }
@@ -364,8 +364,5 @@ function frame() {
 function start() { if (raf === null) frame(); }
 function stop() { if (raf !== null) cancelAnimationFrame(raf); raf = null; }
 
-// ---------------------------------------------------------------- boot: load when asked, or when scrolled to on a roomy connection
-$("ex-load").onclick = init;
-document.querySelector(".ex-panel").addEventListener("click", () => { if (!started) init(); }, { capture: true });
-const roomy = innerWidth >= 900 && !(navigator.connection && navigator.connection.saveData);
-if (roomy) new IntersectionObserver(([e], o) => { if (e.isIntersecting) { o.disconnect(); init(); } }, { rootMargin: "200px" }).observe(stage);
+// ---------------------------------------------------------------- boot: index.html imports this module when the explorer is wanted
+init();

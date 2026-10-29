@@ -22,9 +22,11 @@
 <meta name="twitter:image" content="https://projecthorae.com/og.png">
 <meta name="twitter:image:alt" content="Project Horae: a slim band-shaped e-paper watch showing 10:42">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 32'><rect x='1' y='1' width='14' height='30' rx='5' fill='%23111'/><rect x='3' y='5' width='10' height='22' rx='2' fill='%23e8e6df'/></svg>">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="preload" href="fonts/plex-sans.woff2" as="font" type="font/woff2" crossorigin>
 <style>
+@font-face { font-family: "IBM Plex Sans"; font-style: normal; font-weight: 400 600; font-display: swap; src: url(fonts/plex-sans.woff2) format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 400; font-display: swap; src: url(fonts/plex-mono-400.woff2) format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 500; font-display: swap; src: url(fonts/plex-mono-500.woff2) format("woff2"); }
 :root {
   --paper: #ecebe4; --ink: #151515; --muted: #6b6a63; --line: #c9c7bd; --card: #f6f5f0; --accent: #151515;
 }
@@ -122,7 +124,7 @@ footer { border-top: 1px solid var(--line); padding: 24px 0 48px; font-size: 13p
 .ex-cw { margin: 2px 0 0; font-size: 11px; color: var(--muted); min-height: 1.4em; }
 #ex-parts { display: flex; flex-direction: column; gap: 8px; }
 .ex-group { display: flex; flex-wrap: wrap; gap: 4px; }
-.ex-group h4 { flex: 0 0 100%; margin: 0; font-size: 11px; font-weight: 500; color: var(--muted); }
+.ex-group h3 { flex: 0 0 100%; margin: 0; font-size: 11px; font-weight: 500; color: var(--muted); }
 .ex-info { border-top: 1px solid var(--line); padding-top: 12px; }
 .ex-info h3 { margin: 0 0 4px; font-size: 16px; }
 .ex-info p { margin: 0 0 8px; }
@@ -143,7 +145,7 @@ footer { border-top: 1px solid var(--line); padding: 24px 0 48px; font-size: 13p
 </style>
 </head>
 <body>
-<div class="wrap">
+<main class="wrap">
 
 <header>
   <div>
@@ -174,7 +176,7 @@ footer { border-top: 1px solid var(--line); padding: 24px 0 48px; font-size: 13p
   </div>
   <div class="ex-grid">
     <div class="ex-stage" id="ex-stage">
-      <img class="ex-poster" src="media/2026-10-05/cad-assembled.png" alt="Rendered Horae rev A on its strap" loading="lazy">
+      <img class="ex-poster" src="media/2026-10-05/cad-assembled.webp" alt="Rendered Horae rev A on its strap" width="1200" height="750" fetchpriority="high">
       <div class="ex-dims mono" id="ex-dims">35.6 × 18.0 × 6.80 mm</div>
       <div class="ex-tools">
         <button type="button" id="ex-reset" aria-label="Reset the view" title="Reset the view">↺</button>
@@ -209,7 +211,17 @@ footer { border-top: 1px solid var(--line); padding: 24px 0 48px; font-size: 13p
   <noscript><p>The 3D explorer needs JavaScript; the rendered views are in the build log below.</p></noscript>
 </section>
 <script type="importmap">{"imports": {"three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
-<script type="module" src="explorer/explorer.js"></script>
+<script type="module">
+// three.js and the model load only when asked: a click on the explorer, or on a roomy screen once the
+// visitor scrolls or moves the pointer while the stage is in view (explorer.js starts itself on import).
+const load = () => import("./explorer/explorer.js");
+document.getElementById("ex-load").addEventListener("click", load);
+document.querySelector(".ex-panel").addEventListener("click", load, { capture: true });
+if (innerWidth >= 900 && !(navigator.connection && navigator.connection.saveData)) {
+  const watch = () => new IntersectionObserver(([e], o) => { if (e.isIntersecting) { o.disconnect(); load(); } }, { rootMargin: "200px" }).observe(document.getElementById("ex-stage"));
+  for (const type of ["pointermove", "scroll", "keydown", "touchstart"]) addEventListener(type, watch, { once: true, passive: true });
+}
+</script>
 
 <section class="waitlist" aria-labelledby="waitlist-title">
   <h2 id="waitlist-title">Join the waitlist to get email when it's done and available to purchase</h2>
@@ -499,7 +511,7 @@ footer { border-top: 1px solid var(--line); padding: 24px 0 48px; font-size: 13p
 </ol>
 
 <footer class="mono">Project Horae · <a href="https://github.com/backmeupplz/project-horae">source</a> · The Horae were the Greek goddesses of the hours.</footer>
-</div>
+</main>
 <dialog id="lb" aria-label="Photo viewer">
   <figure><img alt=""><figcaption></figcaption></figure>
   <button class="prev" aria-label="Previous photo">&#8249;</button>
